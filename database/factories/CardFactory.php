@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Board>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Card>
  */
-class BoardFactory extends Factory
+class CardFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,6 +19,8 @@ class BoardFactory extends Factory
         return [
             'title' => $this->faker->sentence,
             'description' => $this->faker->sentence,
+            'status' => $this->faker->randomElement(['todo', 'in_progress', 'done']),
+            'points' => $this->faker->numberBetween(1, 5),
         ];
     }
 }

@@ -3,21 +3,20 @@
 namespace Database\Seeders;
 
 use App\Models\Board;
-use App\Models\Group;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class BoardSeeder extends Seeder
+class ColumnSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $groups = Group::all();
+        $boards = Board::all();
 
-        foreach ($groups as $group) {
-            Board::factory()->count(5)->create(['group_id' => $group->id]);
+        foreach ($boards as $board) {
+            \App\Models\Column::factory()->count(5)->create(['board_id' => $board->id]);
         }
     }
 }
