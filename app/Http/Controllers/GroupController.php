@@ -13,13 +13,20 @@ class GroupController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'admin') {
-            return view('group.admin' ,[
+            return view('admin.groups.index' ,[
                 'groups' => Group::all(),
             ]);
         }
 
-        return view('group.index', [
+        return view('groups.index', [
             'groups' => $user->groups,
+        ]);
+    }
+
+    public function show(Group $group)
+    {
+        return view('groups.show', [
+            'group' => $group,
         ]);
     }
 }
