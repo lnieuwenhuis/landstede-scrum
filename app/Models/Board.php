@@ -3,13 +3,35 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Board extends Model
 {
-    protected $fillable = ['title', 'description'];
+    use HasFactory;
+
+    protected $fillable = [
+        'title', 
+        'description'
+    ];
+
+    protected $casts = [
+        'group_id' => 'integer',
+    ];
 
     private $rules = [
         'title' => 'required|string|max:255',
         'description' => 'nullable|string',
     ];
+
+    public function group(): BelongsTo 
+    {
+        return $this->belongsTo(Group::class);
+    }
+
+    public function columns(): HasMany
+    {
+        return $this->hasMany(Column::class);
+    }
 }

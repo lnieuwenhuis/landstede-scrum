@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             GroupSeeder::class,
             UserSeeder::class,
             BoardSeeder::class,
+            ColumnSeeder::class,
+            CardSeeder::class,
         ]);
     }
 }

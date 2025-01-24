@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Board;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Board>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Column>
  */
-class BoardFactory extends Factory
+class ColumnFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,7 +19,6 @@ class BoardFactory extends Factory
     {
         return [
             'title' => $this->faker->sentence,
-            'description' => $this->faker->sentence,
         ];
     }
 }
