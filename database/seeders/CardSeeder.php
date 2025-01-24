@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Column;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class CardSeeder extends Seeder
