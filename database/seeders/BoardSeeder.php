@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Board;
 use App\Models\Group;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BoardSeeder extends Seeder
