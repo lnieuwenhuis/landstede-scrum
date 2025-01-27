@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Board;
+use App\Models\Column;
 
 class BoardController extends Controller
 {
@@ -29,14 +30,21 @@ class BoardController extends Controller
 
         return Inertia::render('Boards/Show', [
             'board' => $board,
-            'columns' => $board->columns->map(function ($column) {
-                return [
-                    'id' => $column->id,
-                    'title' => $column->title,
-                    'cards' => $column->cards,
-                ];
-            }),
+            'columns' => $board->columns,
             'users' => $board->group->users,
         ]);
+    }
+
+    public function getColumnCards($columnId)
+    {
+        $column = Column::find($columnId);
+
+        if (!$column) {
+            return response()->json(['error' => 'Column not found'], 404);
+        }
+
+        $cards = $column->cards;
+
+        return response()->json($cards);
     }
 }
