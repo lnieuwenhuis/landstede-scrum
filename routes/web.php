@@ -28,4 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('boards', BoardController::class);
 });
 
+
+// API ROUTES
+Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
+
 require __DIR__.'/auth.php';
