@@ -7,8 +7,6 @@ const { props } = usePage();
 const board = props.board;
 const columns = props.columns;
 const users = props.users;
-
-console.log(columns);
 </script>
 
 
