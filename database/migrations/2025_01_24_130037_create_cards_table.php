@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('description');
-            $table->string('status');
-            $table->integer('points');
+            $table->string('description')->nullable();
+            $table->string('status')->nullable();
+            $table->integer('points')->nullable();
             $table->foreignId('column_id')->constrained('columns')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->timestamp('status_updated_at')->nullable();
             $table->timestamps();
         });
     }

@@ -16,6 +16,7 @@ class Card extends Model
         'description', 
         'status',
         'points',
+        'status_updated_at',
     ];
 
     protected $casts = [
