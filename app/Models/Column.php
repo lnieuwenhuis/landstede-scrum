@@ -16,6 +16,7 @@ class Column extends Model
 
     protected $casts = [
         'board_id' => 'integer',
+        'is_done_column' => 'boolean',
     ];
 
     public static function boot()

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('columns', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->boolean('is_done_column')->default(false);
             $table->foreignId('board_id')->constrained('boards')->cascadeOnDelete();
             $table->timestamps();
         });
