@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Board;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use App\Models\Board;
 
 class BoardController extends Controller
 {
@@ -12,21 +13,30 @@ class BoardController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role === 'admin') {
-            return view('admin.boards.index' ,[
-                'boards' => Board::all(),
+        if ($user->role == 'admin') {
+            return Inertia::render('Admin/Boards/Index');
+        } else {
+            return Inertia::render('Boards/Index', [
+                'boards' => $user->boards,
             ]);
         }
-
-        return view('boards.index', [
-            'boards' => $user->groups->map->boards->flatten(),
-        ]);
     }
 
-    public function show(Board $board)
+    public function show($id)
     {
-        return view('boards.show', [
+        $user = Auth::user();
+        $board = Board::findOrFail($id);
+
+        return Inertia::render('Boards/Show', [
             'board' => $board,
+            'columns' => $board->columns->map(function ($column) {
+                return [
+                    'id' => $column->id,
+                    'title' => $column->title,
+                    'cards' => $column->cards,
+                ];
+            }),
+            'users' => $board->group->users,
         ]);
     }
 }
