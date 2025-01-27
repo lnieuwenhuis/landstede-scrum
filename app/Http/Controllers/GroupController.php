@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Group;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class GroupController extends Controller
 {
@@ -11,21 +12,23 @@ class GroupController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role === 'admin') {
-            return view('admin.groups.index' ,[
-                'groups' => Group::all(),
+        if ($user->role == 'admin') {
+            return Inertia::render('Admin/Groups/Index');
+        } else {
+            return Inertia::render('Groups/Index', [
+                'groups' => $user->groups
             ]);
         }
-
-        return view('groups.index', [
-            'groups' => $user->groups,
-        ]);
     }
 
-    public function show(Group $group)
+    public function show ($id)
     {
-        return view('groups.show', [
-            'group' => $group,
+        $user = Auth::user();
+
+        return Inertia::render('Groups/Show', [
+            'group' => $user->groups->find($id),
+            'users' => $user->groups->find($id)->users,
+            'boards' => $user->groups->find($id)->boards
         ]);
     }
 }
