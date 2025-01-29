@@ -34,11 +34,15 @@ class GroupController extends Controller
         ]);
     }
 
-    public function addUser($groupId, $email)
+    public function addUser($groupId, $userString)
     {
         $group = Group::find($groupId);
-        $user = User::where('email', $email)->first();
+        $user = User::where('email', $userString)->first() ?? User::where('name', $userString)->first();
     
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
         $group->addUser($user);
 
         return response()->json(['message' => 'User added to group', 'user' => $user]);
@@ -48,6 +52,10 @@ class GroupController extends Controller
     {
         $group = Group::find($groupId);
         $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
         $group->users()->detach($user);
 

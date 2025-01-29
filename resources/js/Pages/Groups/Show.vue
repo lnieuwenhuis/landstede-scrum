@@ -3,22 +3,29 @@ import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import { addUser, removeUser } from '../../Api/Groups/GroupsFunctions';
+import { useToast } from 'vue-toastification';
 
 let { group, boards } = usePage().props;
 const users = ref(usePage().props.users);
 const email = ref('');
+const toast = useToast();
 
 const handleAddUser = async () => {
     const newUser = await addUser(group.id, email.value);
-    if (newUser) {
-        users.value.push(newUser);
+    if (!newUser) {
+        toast.error('User not found');
+        return;
     }
+    email.value = '';
+    users.value.push(newUser);
+    toast.success('User added');
 };
 
 const handleRemoveUser = async (userId) => {
     const removedUser = await removeUser(group.id, userId);
     if (removedUser) {
         users.value = users.value.filter(user => user.id !== userId);
+        toast.success('User removed');
     }
 };
 </script>
