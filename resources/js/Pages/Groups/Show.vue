@@ -2,37 +2,23 @@
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
+import { addUser, removeUser } from '../../Api/Groups/GroupsFunctions';
 
-let { group, users, boards } = usePage().props;
+let { group, boards } = usePage().props;
+const users = ref(usePage().props.users);
 const email = ref('');
 
-const addUser = async (groupId, emailValue) => {
-    if (!emailValue.trim()) {
-        console.error('Email is required');
-        return;
-    }
-
-    try {
-        const response = await axios.get(`/api/addUserToGroup/${groupId}/${emailValue}`);
-        
-        users.push(response.data.user);
-        email.value = '';
-
-        window.location.reload();
-    } catch (e) {
-        console.error('Failed to add user', e);
+const handleAddUser = async () => {
+    const newUser = await addUser(group.id, email.value);
+    if (newUser) {
+        users.value.push(newUser);
     }
 };
 
-const removeUser = async (groupId, userId) => {
-    try {
-        await axios.get(`/api/removeUserFromGroup/${groupId}/${userId}`);
-        users = users.filter((user) => user.id !== userId);
-
-        window.location.reload();
-    } catch (e) {
-        console.error('Failed to remove user', e);
+const handleRemoveUser = async (userId) => {
+    const removedUser = await removeUser(group.id, userId);
+    if (removedUser) {
+        users.value = users.value.filter(user => user.id !== userId);
     }
 };
 </script>
@@ -49,14 +35,14 @@ const removeUser = async (groupId, userId) => {
             <ul>
                 <li v-for="user in users" :key="user.id">
                     {{ user.name }}
-                    <button @click="removeUser(group.id, user.id)">Remove</button>
+                    <button @click="handleRemoveUser(user.id)">Remove</button>
                 </li>
             </ul>
             <br>
 
             <h2>Add Member</h2>
             <input type="text" v-model="email" placeholder="Email">
-            <button @click="addUser(group.id, email)">Add</button>
+            <button @click="handleAddUser">Add</button>
             <br>
 
             <h2>Boards</h2>
