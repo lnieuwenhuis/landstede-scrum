@@ -58,11 +58,11 @@ class GroupController extends Controller
         $user = User::find($userId);
 
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            return response()->json(['error' => 'User not found']);
         }
 
         if (! $group->users->contains($user)) {
-            return response()->json(['error' => 'User not in group'], 404);
+            return response()->json(['error' => 'User not in group']);
         }
 
         $group->users()->detach($user);
