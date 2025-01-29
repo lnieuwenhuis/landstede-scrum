@@ -32,4 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // API ROUTES
 Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
 
+Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
+Route::get('api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
+
 require __DIR__.'/auth.php';

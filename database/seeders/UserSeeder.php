@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Group;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
@@ -22,5 +23,12 @@ class UserSeeder extends Seeder
                 $user->groups()->attach($group->id);
             }
         }
+
+        $admin = User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@admin.admin',
+            'password' => Hash::make('password'),
+            'role' => 'admin',
+        ]);
     }
 }
