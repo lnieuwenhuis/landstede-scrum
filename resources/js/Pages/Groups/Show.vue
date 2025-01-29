@@ -13,8 +13,6 @@ const toast = useToast();
 const handleAddUser = async () => {
     const response = await addUser(group.id, email.value);
 
-    console.log(response);
-
     if (! response.user) {
         toast.error(response.error);
         return;

@@ -8,8 +8,6 @@ export const addUser = async (groupId, userString) => {
 
     try {
         const response = await axios.get(`/api/addUserToGroup/${groupId}/${userString}`);
-
-        console.log(response);
         
         if (response.data.error) {
             console.error(response.data.error);
