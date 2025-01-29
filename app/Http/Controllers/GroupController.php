@@ -40,7 +40,11 @@ class GroupController extends Controller
         $user = User::where('email', $userString)->first() ?? User::where('name', $userString)->first();
     
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            return response()->json(['error' => 'User not found']);
+        }
+
+        if ($group->users->contains($user)) {
+            return response()->json(['error' => 'User already in group']);
         }
 
         $group->addUser($user);
@@ -55,6 +59,10 @@ class GroupController extends Controller
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
+        }
+
+        if (! $group->users->contains($user)) {
+            return response()->json(['error' => 'User not in group'], 404);
         }
 
         $group->users()->detach($user);

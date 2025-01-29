@@ -8,13 +8,15 @@ export const addUser = async (groupId, userString) => {
 
     try {
         const response = await axios.get(`/api/addUserToGroup/${groupId}/${userString}`);
+
+        console.log(response);
         
         if (response.data.error) {
             console.error(response.data.error);
-            return null;
+            return response.data;
         }
 
-        return response.data.user;
+        return response.data;
     } catch (e) {
         console.error('Failed to add user', e);
         return null;
@@ -27,10 +29,10 @@ export const removeUser = async (groupId, userId) => {
         
         if (response.data.error) {
             console.error(response.data.error);
-            return null;
+            return response.data;
         }
 
-        return response.data.user;
+        return response.data;
     } catch (e) {
         console.error('Failed to remove user', e);
         return null;
