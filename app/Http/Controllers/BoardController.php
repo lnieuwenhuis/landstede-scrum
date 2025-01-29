@@ -40,7 +40,7 @@ class BoardController extends Controller
         $column = Column::find($columnId);
 
         if (!$column) {
-            return response()->json(['error' => 'Column not found'], 404);
+            return response()->json(['error' => 'Column not found']);
         }
 
         $cards = $column->cards;

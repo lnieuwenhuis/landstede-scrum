@@ -11,10 +11,10 @@ export const addUser = async (groupId, userString) => {
         
         if (response.data.error) {
             console.error(response.data.error);
-            return null;
+            return response.data;
         }
 
-        return response.data.user;
+        return response.data;
     } catch (e) {
         console.error('Failed to add user', e);
         return null;
@@ -27,10 +27,10 @@ export const removeUser = async (groupId, userId) => {
         
         if (response.data.error) {
             console.error(response.data.error);
-            return null;
+            return response.data;
         }
 
-        return response.data.user;
+        return response.data;
     } catch (e) {
         console.error('Failed to remove user', e);
         return null;
