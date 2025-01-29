@@ -30,7 +30,13 @@ class BoardController extends Controller
 
         return Inertia::render('Boards/Show', [
             'board' => $board,
-            'columns' => $board->columns,
+            'columns' => $board->columns->map(function ($column) {
+                return [
+                    'id' => $column->id,
+                    'title' => $column->title,
+                    'cards' => $column->cards
+                ];
+            }),
             'users' => $board->group->users,
         ]);
     }
