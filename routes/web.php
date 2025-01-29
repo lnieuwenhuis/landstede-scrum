@@ -4,9 +4,10 @@ use App\Http\Controllers\BoardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
-    return view('welcome');
+    return Inertia::render('Welcome'); // Matches Welcome.vue
 });
 
 Route::resource('groups', GroupController::class)->middleware('auth');
