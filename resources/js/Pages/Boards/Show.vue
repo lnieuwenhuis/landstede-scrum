@@ -3,6 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import axios from 'axios';
+import { useToast } from 'vue-toastification';
+const toast = useToast();
 
 const { props } = usePage();
 
@@ -10,7 +12,23 @@ const board = props.board;
 const columns = ref(props.columns);
 const users = props.users;
 
-const cardOpen = ref({}); // Track form state per column
+const cardOpen = ref({});
+
+const toggleEditCard = (columnId) => {
+    cardOpen.value[columnId] = !cardOpen.value[columnId];
+};
+
+const showDeleteConfirmation = ref(false);
+const cardToDelete = ref(null);
+const toggleDeleteCard = (cardId = null) => {
+    if (document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = '';
+    } else {
+        document.body.style.overflow = 'hidden';
+    }
+    showDeleteConfirmation.value = !showDeleteConfirmation.value;
+    cardToDelete.value = cardId;
+};
 
 const toggleAddCard = (columnId) => {
     cardOpen.value[columnId] = !cardOpen.value[columnId];
@@ -21,23 +39,31 @@ const cardDesc = ref('');
 const cardPoints = ref(0);
 
 const handleAddCard = async (columnId) => {
-    const response = await axios.get(`/api/addCardToColumn/${cardTitle.value}/${cardDesc.value}/${cardPoints.value}/${columnId}`, {
-        title: cardTitle.value,
-        description: cardDesc.value,
-        points: cardPoints.value,
-        column_id: columnId,
-    });
+    const response = await axios.get(`/api/addCardToColumn/${cardTitle.value}/${cardDesc.value}/${cardPoints.value}/${columnId}`);
 
     if (response.data.card) {
         const column = columns.value.find(col => col.id === columnId);
         if (column) {
             column.cards.push(response.data.card);
         }
-        // Reset form state for this column
         cardOpen.value[columnId] = false;
         cardTitle.value = '';
         cardDesc.value = '';
         cardPoints.value = 0;
+    }
+};
+
+const handleDeleteCard = async () => {
+    const response = await axios.get(`/api/deleteCard/${cardToDelete.value}`);
+
+    if (response.data.message) {
+        columns.value.forEach(column => {
+            column.cards = column.cards.filter(card => card.id !== cardToDelete.value);
+        });
+        toggleDeleteCard();
+        showDeleteConfirmation.value = false;
+        cardToDelete.value = null;
+        toast.success(response.data.message);
     }
 };
 </script>
@@ -88,6 +114,15 @@ const handleAddCard = async (columnId) => {
                                 </div>
                             </div>
                             <button v-if="!cardOpen[column.id]" class="mt-3 text-blue-500 hover:text-blue-700" @click="toggleAddCard(column.id)">+ Add Card</button>
+                            <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-lg font-semibold mb-4">Are you sure you want to delete this card?</h3>
+                                    <div class="flex justify-end space-x-4">
+                                        <button @click="handleDeleteCard" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes</button>
+                                        <button @click="toggleDeleteCard" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">No</button>
+                                    </div>
+                                </div>
+                            </div>
                             <div v-if="cardOpen[column.id]" class="mt-3">
                                 <input v-model="cardTitle" type="text" class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter card title" />
                                 <textarea v-model="cardDesc" class="w-full resize-none mt-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter card description"></textarea>

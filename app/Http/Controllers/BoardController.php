@@ -77,6 +77,22 @@ class BoardController extends Controller
         return response()->json(['message' => 'Card added to column', 'card' => $card]);
     }
 
+    public function updateCardInColumn($cardId, $title, $description, $points)
+    {
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        $card->title = $title;
+        $card->description = $description;
+        $card->points = $points;
+        $card->save();
+
+        return response()->json(['message' => 'Card updated', 'card' => $card]);
+    }
+
     public function moveCardToColumn($cardId, $columnId)
     {
         $card = Card::find($cardId);
@@ -95,5 +111,19 @@ class BoardController extends Controller
         $card->save();
 
         return response()->json(['message' => 'Card moved to column', 'card' => $card]);
+    }
+
+    public function deleteCard($cardId)
+    {
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        $card->column()->dissociate();
+        $card->delete();
+
+        return response()->json(['message' => 'Card deleted']);
     }
 }

@@ -37,5 +37,7 @@ Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'ad
 Route::get('api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
 
 Route::get('/api/addCardToColumn/{title}/{description}/{points}/{columnId}', [BoardController::class, 'addCardToColumn']);
+Route::get('/api/updateCardInColumn/{cardId}/{title}/{description}/{points}', [BoardController::class, 'updateCardInColumn']);
+Route::get('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
 
 require __DIR__.'/auth.php';
