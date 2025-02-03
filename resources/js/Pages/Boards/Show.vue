@@ -45,6 +45,24 @@ const toggleNewColumn = () => {
     showNewColumn.value = !showNewColumn.value; 
 }
 
+const showNewColumn = ref(false);
+const toggleNewColumn = () => {
+    showNewColumn.value = !showNewColumn.value; 
+}
+
+const toggleEditColumn = (columnId) => {
+    cardOpen.value[columnId] = !cardOpen.value[columnId];
+};
+
+const columnEditTitle = ref('');
+const columnEditDone = ref(false);
+const handleEditColumn = async (columnId) => {
+    const response = await axios.post(`/api/updateColumn/${columnId}`, {
+        title: columnEditTitle.value,
+        done: columnEditDone.value
+    });
+}
+
 const handleAddCard = async (columnId) => {
     const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
         title: cardTitle.value,
@@ -113,6 +131,17 @@ const handleAddColumn = async () => {
         resetNewColumnForm();
         toggleNewColumn();
         toast.success('Column added successfully!');
+    }
+};
+
+const handleDeleteColumn = async (columnId) => {
+    const response = await axios.post(`/api/deleteColumn`, {
+        column_id: columnId
+    });
+
+    if (response.data.message) {
+        columns.value = columns.value.filter(column => column.id !== columnId);
+        toast.success(response.data.message);
     }
 };
 
@@ -202,6 +231,10 @@ const resetNewColumnForm = () => {
                                         Cancel
                                     </button>
                                 </div>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <button @click="toggleEditColumn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Edit</button>
+                                <button @click="handleDeleteColumn(column.id)" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" >Delete</button>
                             </div>
                         </div>
                         <div v-if="showNewColumn" class="w-1/4 bg-black/5 shadow-md rounded-lg p-4">

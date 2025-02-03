@@ -153,4 +153,18 @@ class BoardController extends Controller
             'column' => $column
         ]);
     }
+  
+    public function deleteColumn(Request $request)
+    {
+        $column = Column::find($request->column_id);
+
+        if (!$column) {
+            return response()->json(['error' => 'Column not found']);
+        }
+
+        $column->cards()->delete();
+        $column->delete();
+
+        return response()->json(['message' => 'Column deleted']);
+    }
 }
