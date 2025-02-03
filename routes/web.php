@@ -40,4 +40,6 @@ Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCard
 Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
 Route::get('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
 
+Route::post('api/addColumn', [BoardController::class, 'addColumn']);
+
 require __DIR__.'/auth.php';
