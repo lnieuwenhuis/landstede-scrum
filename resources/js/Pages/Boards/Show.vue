@@ -38,6 +38,11 @@ const cardTitle = ref('');
 const cardDesc = ref('');
 const cardPoints = ref(0);
 
+const showNewColumn = ref(false);
+const toggleNewColumn = () => {
+    showNewColumn.value = !showNewColumn.value; 
+}
+
 const handleAddCard = async (columnId) => {
     const response = await axios.get(`/api/addCardToColumn/${cardTitle.value}/${cardDesc.value}/${cardPoints.value}/${columnId}`);
 
@@ -66,6 +71,36 @@ const handleDeleteCard = async () => {
         toast.success(response.data.message);
     }
 };
+
+const resetForm = () => {
+    cardEditing.value = null;
+    cardTitle.value = '';
+    cardDesc.value = '';
+    cardPoints.value = 0;
+};
+
+const newColumnTitle = ref('');
+const newColumnDone = ref(false);
+
+const handleAddColumn = async () => {
+    const response = await axios.post('/api/addColumn', {
+        title: newColumnTitle.value,
+        done: newColumnDone.value,
+        board_id: board.id
+    });
+
+    if (response.data.column) {
+        columns.value.push(response.data.column);
+        resetNewColumnForm();
+        toggleNewColumn();
+        toast.success('Column added successfully!');
+    }
+};
+
+const resetNewColumnForm = () => {
+    newColumnTitle.value = '';
+    newColumnDone.value = false;
+};
 </script>
 
 <template>
@@ -75,8 +110,8 @@ const handleDeleteCard = async () => {
         <div class="container mx-auto p-6">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
-                <button class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                    Create Board
+                <button @click="toggleNewColumn" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+                    Create Column
                 </button>
             </div>
 
@@ -133,7 +168,41 @@ const handleDeleteCard = async () => {
                                 </div>
                             </div>
                         </div>
+                        <div v-if="showNewColumn" class="w-1/4 bg-black/5 shadow-md rounded-lg p-4">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">New Column</h2>
+
+                            <div class="space-y-4">
+                                <input v-model="newColumnTitle" type="text" class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter column title" />
+                                <label class="flex items-center mt-2">
+                                    <input v-model="newColumnDone" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600" />
+                                    <span class="ml-2 text-gray-700">Done</span>
+                                </label>
+                            </div>
+
+                            <div class="flex justify-between mt-4">
+                                <button @click="handleAddColumn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    Add
+                                </button>
+                                <button @click="toggleNewColumn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <p class="text-gray-800 mb-4">Are you sure you want to delete this card?</p>
+                <div class="flex justify-between">
+                    <button @click="handleDeleteCard" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Delete
+                    </button>
+                    <button @click="toggleDeleteCard" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
