@@ -126,4 +126,44 @@ class BoardController extends Controller
 
         return response()->json(['message' => 'Card deleted']);
     }
+
+    public function addColumn(Request $request)
+    {
+        $user = Auth::user();
+        $board = Board::find($request->board_id);
+
+        $title = $request->input('title');
+        $done = $request->input('done');
+
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+
+        $column = Column::factory()->create([
+            'title' => $title,
+            'is_done_column' => $done,
+            'board_id' => $board->id,
+        ]);
+
+        $column->save();
+
+        return response()->json([
+            'message' => 'Column added',
+            'column' => $column
+        ]);
+    }
+
+    public function deleteColumn(Request $request)
+    {
+        $column = Column::find($request->column_id);
+
+        if (!$column) {
+            return response()->json(['error' => 'Column not found']);
+        }
+
+        $column->cards()->delete();
+        $column->delete();
+
+        return response()->json(['message' => 'Column deleted']);
+    }
 }

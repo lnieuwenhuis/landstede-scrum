@@ -38,6 +38,24 @@ const cardTitle = ref('');
 const cardDesc = ref('');
 const cardPoints = ref(0);
 
+const showNewColumn = ref(false);
+const toggleNewColumn = () => {
+    showNewColumn.value = !showNewColumn.value; 
+}
+
+const toggleEditColumn = (columnId) => {
+    cardOpen.value[columnId] = !cardOpen.value[columnId];
+};
+
+const columnEditTitle = ref('');
+const columnEditDone = ref(false);
+const handleEditColumn = async (columnId) => {
+    const response = await axios.post(`/api/updateColumn/${columnId}`, {
+        title: columnEditTitle.value,
+        done: columnEditDone.value
+    });
+}
+
 const handleAddCard = async (columnId) => {
     const response = await axios.get(`/api/addCardToColumn/${cardTitle.value}/${cardDesc.value}/${cardPoints.value}/${columnId}`);
 
@@ -65,6 +83,47 @@ const handleDeleteCard = async () => {
         cardToDelete.value = null;
         toast.success(response.data.message);
     }
+};
+
+const resetForm = () => {
+    cardEditing.value = null;
+    cardTitle.value = '';
+    cardDesc.value = '';
+    cardPoints.value = 0;
+};
+
+const newColumnTitle = ref('');
+const newColumnDone = ref(false);
+
+const handleAddColumn = async () => {
+    const response = await axios.post('/api/addColumn', {
+        title: newColumnTitle.value,
+        done: newColumnDone.value,
+        board_id: board.id
+    });
+
+    if (response.data.column) {
+        columns.value.push(response.data.column);
+        resetNewColumnForm();
+        toggleNewColumn();
+        toast.success('Column added successfully!');
+    }
+};
+
+const handleDeleteColumn = async (columnId) => {
+    const response = await axios.post(`/api/deleteColumn`, {
+        column_id: columnId
+    });
+
+    if (response.data.message) {
+        columns.value = columns.value.filter(column => column.id !== columnId);
+        toast.success(response.data.message);
+    }
+};
+
+const resetNewColumnForm = () => {
+    newColumnTitle.value = '';
+    newColumnDone.value = false;
 };
 </script>
 
@@ -131,6 +190,10 @@ const handleDeleteCard = async () => {
                                     <button @click="handleAddCard(column.id)" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Add</button>
                                     <button class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" @click="toggleAddCard(column.id)">Cancel</button>
                                 </div>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <button @click="toggleEditColumn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Edit</button>
+                                <button @click="handleDeleteColumn(column.id)" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" >Delete</button>
                             </div>
                         </div>
                     </div>
