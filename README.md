@@ -13,7 +13,7 @@ Landstede-Scrum is een lichtgewicht Scrum-board geïnspireerd door Jira, met ing
 
 1. **Kloon de repository**
    ```bash
-   git clone https://github.com/jouw-gebruikersnaam/landstede-scrum.git
+   git clone https://github.com/lnieuwenhuis/landstede-scrum.git
    cd landstede-scrum
    ```
 2. **Installeer afhankelijkheden**
