@@ -93,21 +93,16 @@ class BoardController extends Controller
         return response()->json(['message' => 'Card updated', 'card' => $card]);
     }
 
-    public function moveCardToColumn($cardId, $columnId)
+    public function moveCardToColumn(Request $request, $cardId)
     {
         $card = Card::find($cardId);
-        $column = Column::find($columnId);
 
         if (!$card) {
             return response()->json(['error' => 'Card not found']);
         }
 
-        if (!$column) {
-            return response()->json(['error' => 'Column not found']);
-        }
-
-        $card->status_updated_at = now();
-        $card->column()->associate($column);
+        $card->column()->dissociate();
+        $card->column()->associate(Column::find($request->column_id));
         $card->save();
 
         return response()->json(['message' => 'Card moved to column', 'card' => $card]);
@@ -115,6 +110,10 @@ class BoardController extends Controller
 
     public function deleteCard($cardId)
     {
+        $user = Auth::user();
+        if (!user) {
+            return response()->json(['error' => 'Not Logged In!']);
+        }
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -130,6 +129,9 @@ class BoardController extends Controller
     public function addColumn(Request $request)
     {
         $user = Auth::user();
+        if (!user) {
+            return response()->json(['error' => 'Not Logged In!']);
+        }
         $board = Board::find($request->board_id);
 
         $title = $request->input('title');
@@ -155,6 +157,10 @@ class BoardController extends Controller
 
     public function deleteColumn(Request $request)
     {
+        $user = Auth::user();
+        if (!user) {
+            return response()->json(['error' => 'Not Logged In!']);
+        }
         $column = Column::find($request->column_id);
 
         if (!$column) {

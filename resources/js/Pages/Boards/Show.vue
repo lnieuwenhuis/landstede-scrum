@@ -125,6 +125,61 @@ const resetNewColumnForm = () => {
     newColumnTitle.value = '';
     newColumnDone.value = false;
 };
+
+const currentDragColumnId = ref(null);
+const dragCard = ref(null);
+const dragColumn = ref(null);
+
+const handleDragStart = (event, cardId, columnId) => {
+    event.dataTransfer.setData('text/plain', JSON.stringify({ cardId, columnId }));
+    dragCard.value = cardId;
+    dragColumn.value = columnId;
+    event.dataTransfer.effectAllowed = 'move';
+};
+
+const handleDragOver = (event, columnId) => {
+    event.preventDefault();
+    currentDragColumnId.value = columnId;
+    event.dataTransfer.dropEffect = 'move';
+};
+
+const handleDragLeave = () => {
+    currentDragColumnId.value = null;
+};
+
+const handleDrop = async (event, targetColumnId) => {
+    event.preventDefault();
+    currentDragColumnId.value = null;
+    
+    const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+    const { cardId, columnId: sourceColumnId } = data;
+
+    if (sourceColumnId === targetColumnId) return;
+
+    const sourceColumn = columns.value.find(col => col.id == sourceColumnId);
+    const targetColumn = columns.value.find(col => col.id == targetColumnId);
+    const cardIndex = sourceColumn.cards.findIndex(c => c.id == cardId);
+
+    if (cardIndex === -1) return;
+
+    // Remove from source column
+    const [movedCard] = sourceColumn.cards.splice(cardIndex, 1);
+    
+    // Add to target column
+    targetColumn.cards.push(movedCard);
+
+    try {
+        await axios.post(`/api/cards/${cardId}/move`, {
+            column_id: targetColumnId
+        });
+        toast.success('Card moved successfully');
+    } catch (error) {
+        // Revert changes if API call fails
+        sourceColumn.cards.splice(cardIndex, 0, movedCard);
+        targetColumn.cards.pop();
+        toast.error('Failed to move card');
+    }
+};
 </script>
 
 <template>
@@ -153,12 +208,24 @@ const resetNewColumnForm = () => {
 
                 <div class="flex-1">
                     <div class="flex flex-wrap gap-6">
-                        <div v-for="column in columns" :key="column.id"
-                            class="w-1/4 bg-black/5 shadow-md rounded-lg p-4">
+                        <div 
+                            v-for="column in columns" 
+                            :key="column.id"
+                            @dragover.prevent="handleDragOver($event, column.id)"
+                            @dragleave="handleDragLeave"
+                            @drop.prevent="handleDrop($event, column.id)"
+                            :class="{ 'bg-blue-100': currentDragColumnId === column.id }"
+                            class="w-1/4 bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200"
+                        >
                             <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
                             <div class="space-y-4">
-                                <div v-for="card in column.cards" :key="card.id"
-                                    class="bg-white p-3 rounded-lg shadow-sm">
+                                <div 
+                                    v-for="card in column.cards" 
+                                    :key="card.id"
+                                    draggable="true"
+                                    @dragstart="handleDragStart($event, card.id, column.id)"
+                                    class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-transform duration-200 hover:scale-[1.02]"
+                                >
                                     <p class="text-gray-700">{{ card.title }}</p>
                                     <p class="text-gray-500">{{ card.description }}</p>
                                     <span class="text-gray-500">Points: {{ card.points }}</span>
