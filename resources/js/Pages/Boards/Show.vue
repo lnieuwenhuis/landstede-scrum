@@ -93,8 +93,7 @@ const handleEditCard = async (columnId, cardId) => {
 };
 
 const handleDeleteCard = async () => {
-    const response = await axios.get(`/api/deleteCard/${cardToDelete.value}`);
-
+    const response = await axios.post(`/api/deleteCard/${cardToDelete.value}`);
     if (response.data.message) {
         columns.value.forEach(column => {
             column.cards = column.cards.filter(card => card.id !== cardToDelete.value);
@@ -243,25 +242,34 @@ const handleDrop = async (event, targetColumnId) => {
                                     @dragstart="handleDragStart($event, card.id, column.id)"
                                     class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-transform duration-200 hover:scale-[1.02]"
                                 >
-                                    <p class="text-gray-700">{{ card.title }}</p>
-                                    <p class="text-gray-500">{{ card.description }}</p>
-                                    <span class="text-gray-500">Points: {{ card.points }}</span>
-                                    <div>
-                                        <button @click="toggleEditCard(column.id)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600 mr-1">
-                                            Edit
-                                        </button>
-                                        <button @click="toggleDeleteCard(card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
-                                            Delete
-                                        </button>
+                                    <!-- Display Card Details -->
+                                    <div v-if="cardEditing !== card.id">
+                                        <p class="text-gray-700">{{ card.title }}</p>
+                                        <p class="text-gray-500">{{ card.description }}</p>
+                                        <span class="text-gray-500">Points: {{ card.points }}</span>
+                                        <div>
+                                            <button @click="toggleEditCard(card)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600 mr-1">
+                                                Edit
+                                            </button>
+                                            <button @click="toggleDeleteCard(card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                                <div class="bg-white p-6 rounded-lg shadow-lg">
-                                    <h3 class="text-lg font-semibold mb-4">Are you sure you want to delete this card?</h3>
-                                    <div class="flex justify-end space-x-4">
-                                        <button @click="handleDeleteCard" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes</button>
-                                        <button @click="toggleDeleteCard" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">No</button>
+
+                                    <!-- Edit Card Form -->
+                                    <div v-else class="mt-2">
+                                        <input v-model="cardTitle" type="text" placeholder="Title" class="w-full p-2 border rounded mb-2" />
+                                        <textarea v-model="cardDesc" placeholder="Description" class="w-full p-2 border rounded mb-2"></textarea>
+                                        <input v-model="cardPoints" type="number" placeholder="Points" class="w-full p-2 border rounded mb-2" />
+                                        <div class="flex justify-between">
+                                            <button @click="handleEditCard(column.id, card.id)" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                                Save
+                                            </button>
+                                            <button @click="resetForm" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                                                Cancel
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

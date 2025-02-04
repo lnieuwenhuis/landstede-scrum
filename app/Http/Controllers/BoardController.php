@@ -127,10 +127,6 @@ class BoardController extends Controller
 
     public function deleteCard($cardId)
     {
-        $user = Auth::user();
-        if (!user) {
-            return response()->json(['error' => 'Not Logged In!']);
-        }
         $card = Card::find($cardId);
 
         if (!$card) {

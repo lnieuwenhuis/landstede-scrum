@@ -39,7 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
     Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
-    Route::get('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
+    Route::post('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
 
     Route::post('/api/addColumn', [BoardController::class, 'addColumn']);
     Route::post('/api/deleteColumn', [BoardController::class, 'deleteColumn']);
