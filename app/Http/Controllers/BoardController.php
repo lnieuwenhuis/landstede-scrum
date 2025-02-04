@@ -55,10 +55,14 @@ class BoardController extends Controller
         return response()->json($cards);
     }
     
-    public function addCardToColumn($title, $description, $points, $columnId)
+    public function addCardToColumn(Request $request, $columnId)
     {
         $user = Auth::user();
         $column = Column::find($columnId);
+
+        $title = $request->input('title');
+        $description = $request->input('description');
+        $points = $request->input('points');
 
         if (!$column) {
             return response()->json(['error' => 'Column not found']);
@@ -108,6 +112,19 @@ class BoardController extends Controller
         return response()->json(['message' => 'Card moved to column', 'card' => $card]);
     }
 
+    public function updateCard(Request $request, $cardId)
+    {
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        $card->update($request->all());
+
+        return response()->json(['message' => 'Card updated', 'card' => $card]);
+    }
+
     public function deleteCard($cardId)
     {
         $user = Auth::user();
@@ -154,7 +171,7 @@ class BoardController extends Controller
             'column' => $column
         ]);
     }
-
+  
     public function deleteColumn(Request $request)
     {
         $user = Auth::user();
