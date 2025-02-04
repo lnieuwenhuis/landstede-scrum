@@ -5,6 +5,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
+const currentUser = usePage().props.auth.user;
 const toast = useToast();
 const { props } = usePage();
 
@@ -229,8 +230,8 @@ const handleRemoveUser = async (userId) => {
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Members</h2>
                     <ul class="space-y-4">
                         <li v-for="user in users" :key="user.id" class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
-                            <span class="text-gray-700">{{ user.name }}</span>
-                            <button @click="handleRemoveUser(user.id)" class="text-red-600 hover:text-red-800 focus:outline-none">
+                            <span class="text-gray-700">{{ user.name }} {{  user.id === currentUser.id ? '(You)' : '' }}</span>
+                            <button v-if="user.id !== currentUser.id" @click="handleRemoveUser(user.id)" class="text-red-600 hover:text-red-800 focus:outline-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
