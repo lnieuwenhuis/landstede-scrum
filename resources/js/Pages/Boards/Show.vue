@@ -310,7 +310,7 @@ const handleDrop = async (event, targetColumnId) => {
                         </div>
                         
                         <button v-if="!showNewColumn" @click="toggleNewColumn"
-                            class="w-1/4 min-w-[250px] h-20 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center shrink-0">
+                            class="w-1/4 h-20 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center shrink-0">
                             + Create Column
                         </button>
                     </div>
