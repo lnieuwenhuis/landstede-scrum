@@ -10,7 +10,7 @@ const { props } = usePage();
 
 const board = props.board;
 const columns = ref(props.columns);
-const users = props.users;
+const users = ref(props.users);
 
 const cardOpen = ref({});
 const cardEditing = ref(null); // Track editing card ID
@@ -198,6 +198,19 @@ const handleDrop = async (event, targetColumnId) => {
         toast.error('Failed to move card');
     }
 };
+
+const handleRemoveUser = async (userId) => {
+    const response = await axios.post(`/api/users/${board.group.id}/remove`, {
+        user_id: userId
+    });
+
+    if (response.data.message) {
+        users.value = users.value.filter(user => user.id !== userId);
+        toast.success(response.data.message);
+    } else {
+        toast.error('Failed to remove user');
+    }
+}
 </script>
 
 <template>
@@ -212,13 +225,19 @@ const handleDrop = async (event, targetColumnId) => {
             <p class="mb-6">{{ board.description }}</p>
 
             <div class="flex space-x-12">
-                <div class="w-1/4">
+                <div class="w-1/6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Members</h2>
                     <ul class="space-y-4">
-                        <li v-for="user in users" :key="user.id" class="text-gray-700">
-                            {{ user.name }}
+                        <li v-for="user in users" :key="user.id" class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
+                            <span class="text-gray-700">{{ user.name }}</span>
+                            <button @click="handleRemoveUser(user.id)" class="text-red-600 hover:text-red-800 focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </li>
                     </ul>
+                    
                 </div>
 
                 <div class="flex-1">

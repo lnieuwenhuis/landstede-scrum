@@ -51,4 +51,9 @@ class Group extends Model
     {
         $this->users()->attach($user);
     }
+
+    public function removeUser(User $user)
+    {
+        $this->users()->detach($user);
+    }
 }

@@ -32,19 +32,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // API ROUTES
 Route::middleware(['auth', 'verified'])->group(function () {
+    //Board API Routes
     Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
-
     Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
-    Route::get('api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
-
+    Route::get('/api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
     Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
     Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
     Route::post('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
-
     Route::post('/api/addColumn', [BoardController::class, 'addColumn']);
     Route::post('/api/deleteColumn', [BoardController::class, 'deleteColumn']);
-
     Route::post('/api/cards/{cardId}/move', [BoardController::class, 'moveCardToColumn']);
+
+    //Group API Routes
+    Route::get('/api/users/{groupId}', [GroupController::class, 'getUsers']);
+    Route::post('/api/users/{groupId}/add', [GroupController::class, 'addUserToGroup']);
+    Route::post('/api/users/{groupId}/remove', [GroupController::class, 'removeUser']);
 });
 
 require __DIR__.'/auth.php';

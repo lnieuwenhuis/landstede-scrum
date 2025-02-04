@@ -52,21 +52,17 @@ class GroupController extends Controller
         return response()->json(['message' => 'User added to group', 'user' => $user]);
     }
 
-    public function removeUser($groupId, $userId)
+    public function removeUser(Request $request, $groupId)
     {
         $group = Group::find($groupId);
-        $user = User::find($userId);
+        $user = User::find($request->user_id);
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found']);
+        if (!$group || !$user) {
+            return response()->json(['error' => 'Group or user not found']);
         }
 
-        if (! $group->users->contains($user)) {
-            return response()->json(['error' => 'User not in group']);
-        }
+        $group->removeUser($user);
 
-        $group->users()->detach($user);
-
-        return response()->json(['message' => 'User removed from group', 'user' => $user]);
+        return response()->json(['message' => 'User removed from group']);
     }
 }
