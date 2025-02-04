@@ -129,9 +129,6 @@ const resetNewColumnForm = () => {
         <div class="container mx-auto p-6">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
-                <button @click="toggleNewColumn" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                    Create Column
-                </button>
             </div>
 
             <p class="mb-6">{{ board.description }}</p>
@@ -224,6 +221,11 @@ const resetNewColumnForm = () => {
                                 </button>
                             </div>
                         </div>
+                        
+                        <button v-if="!showNewColumn" @click="toggleNewColumn"
+                            class="w-1/4 min-w-[250px] h-20 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center shrink-0">
+                            + Create Column
+                        </button>
                     </div>
                 </div>
             </div>
