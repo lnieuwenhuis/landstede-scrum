@@ -45,11 +45,6 @@ const toggleNewColumn = () => {
     showNewColumn.value = !showNewColumn.value; 
 }
 
-const showNewColumn = ref(false);
-const toggleNewColumn = () => {
-    showNewColumn.value = !showNewColumn.value; 
-}
-
 const toggleEditColumn = (columnId) => {
     cardOpen.value[columnId] = !cardOpen.value[columnId];
 };
@@ -149,6 +144,61 @@ const resetNewColumnForm = () => {
     newColumnTitle.value = '';
     newColumnDone.value = false;
 };
+
+const currentDragColumnId = ref(null);
+const dragCard = ref(null);
+const dragColumn = ref(null);
+
+const handleDragStart = (event, cardId, columnId) => {
+    event.dataTransfer.setData('text/plain', JSON.stringify({ cardId, columnId }));
+    dragCard.value = cardId;
+    dragColumn.value = columnId;
+    event.dataTransfer.effectAllowed = 'move';
+};
+
+const handleDragOver = (event, columnId) => {
+    event.preventDefault();
+    currentDragColumnId.value = columnId;
+    event.dataTransfer.dropEffect = 'move';
+};
+
+const handleDragLeave = () => {
+    currentDragColumnId.value = null;
+};
+
+const handleDrop = async (event, targetColumnId) => {
+    event.preventDefault();
+    currentDragColumnId.value = null;
+    
+    const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+    const { cardId, columnId: sourceColumnId } = data;
+
+    if (sourceColumnId === targetColumnId) return;
+
+    const sourceColumn = columns.value.find(col => col.id == sourceColumnId);
+    const targetColumn = columns.value.find(col => col.id == targetColumnId);
+    const cardIndex = sourceColumn.cards.findIndex(c => c.id == cardId);
+
+    if (cardIndex === -1) return;
+
+    // Remove from source column
+    const [movedCard] = sourceColumn.cards.splice(cardIndex, 1);
+    
+    // Add to target column
+    targetColumn.cards.push(movedCard);
+
+    try {
+        await axios.post(`/api/cards/${cardId}/move`, {
+            column_id: targetColumnId
+        });
+        toast.success('Card moved successfully');
+    } catch (error) {
+        // Revert changes if API call fails
+        sourceColumn.cards.splice(cardIndex, 0, movedCard);
+        targetColumn.cards.pop();
+        toast.error('Failed to move card');
+    }
+};
 </script>
 
 <template>
@@ -177,41 +227,45 @@ const resetNewColumnForm = () => {
 
                 <div class="flex-1">
                     <div class="flex flex-wrap gap-6">
-                        <div v-for="column in columns" :key="column.id" class="w-1/4 bg-black/5 shadow-md rounded-lg p-4">
+                        <div 
+                            v-for="column in columns" 
+                            :key="column.id"
+                            @dragover.prevent="handleDragOver($event, column.id)"
+                            @dragleave="handleDragLeave"
+                            @drop.prevent="handleDrop($event, column.id)"
+                            :class="{ 'bg-blue-100': currentDragColumnId === column.id }"
+                            class="w-1/4 bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200"
+                        >
                             <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
 
                             <div class="space-y-4">
-                                <div v-for="card in column.cards" :key="card.id" class="bg-white p-3 rounded-lg shadow-sm">
-                                    <template v-if="cardEditing === card.id">
-                                        <!-- Edit Mode -->
-                                        <input v-model="cardTitle" type="text" class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter card title" />
-                                        <textarea v-model="cardDesc" class="w-full resize-none mt-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter card description"></textarea>
-                                        <input v-model="cardPoints" type="number" class="w-full mt-2 px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter card points" />
-
-                                        <div class="flex justify-between mt-2">
-                                            <button @click="handleEditCard(column.id, card.id)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600 mr-1">
-                                                Save
-                                            </button>
-                                            <button @click="resetForm" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </template>
-
-                                    <template v-else>
-                                        <!-- Normal View -->
-                                        <p class="text-gray-700">{{ card.title }}</p>
-                                        <p class="text-gray-500">{{ card.description }}</p>
-                                        <span class="text-gray-500">Points: {{ card.points }}</span>
-                                        <div>
-                                            <button @click="toggleEditCard(card)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600 mr-1">
-                                                Edit
-                                            </button>
-                                            <button @click="toggleDeleteCard(card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </template>
+                                <div 
+                                    v-for="card in column.cards" 
+                                    :key="card.id"
+                                    draggable="true"
+                                    @dragstart="handleDragStart($event, card.id, column.id)"
+                                    class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-transform duration-200 hover:scale-[1.02]"
+                                >
+                                    <p class="text-gray-700">{{ card.title }}</p>
+                                    <p class="text-gray-500">{{ card.description }}</p>
+                                    <span class="text-gray-500">Points: {{ card.points }}</span>
+                                    <div>
+                                        <button @click="toggleEditCard(column.id)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600 mr-1">
+                                            Edit
+                                        </button>
+                                        <button @click="toggleDeleteCard(card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-lg font-semibold mb-4">Are you sure you want to delete this card?</h3>
+                                    <div class="flex justify-end space-x-4">
+                                        <button @click="handleDeleteCard" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes</button>
+                                        <button @click="toggleDeleteCard" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">No</button>
+                                    </div>
                                 </div>
                             </div>
 

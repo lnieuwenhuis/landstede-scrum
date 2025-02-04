@@ -31,16 +31,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
 // API ROUTES
-Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
 
-Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
-Route::get('api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
+    Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
+    Route::get('api/removeUserFromGroup/{groupId}/{userId}', [GroupController::class, 'removeUser']);
 
-Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
-Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
-Route::get('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
+    Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
+    Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
+    Route::get('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
 
-Route::post('/api/addColumn', [BoardController::class, 'addColumn']);
-Route::post('/api/deleteColumn', [BoardController::class, 'deleteColumn']);
+    Route::post('/api/addColumn', [BoardController::class, 'addColumn']);
+    Route::post('/api/deleteColumn', [BoardController::class, 'deleteColumn']);
+
+    Route::post('/api/cards/{cardId}/move', [BoardController::class, 'moveCardToColumn']);
+});
 
 require __DIR__.'/auth.php';
