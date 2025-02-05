@@ -35,7 +35,7 @@ class Group extends Model
     /**
      * The boards that belong to the Group
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function board(): HasOne
     {
