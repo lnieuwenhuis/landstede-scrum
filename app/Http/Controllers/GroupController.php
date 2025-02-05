@@ -23,16 +23,18 @@ class GroupController extends Controller
         }
     }
 
-    public function show ($id)
+    public function show($id)
     {
         $user = Auth::user();
+        $group = $user->groups->find($id);
 
         return Inertia::render('Groups/Show', [
-            'group' => $user->groups->find($id),
-            'users' => $user->groups->find($id)->users,
-            'boards' => $user->groups->find($id)->boards
+            'group' => $group,
+            'users' => $group->users,
+            'board' => $group->board, 
         ]);
     }
+
 
     public function addUser($groupId, $userString)
     {

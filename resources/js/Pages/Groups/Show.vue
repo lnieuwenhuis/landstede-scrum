@@ -5,7 +5,7 @@ import { Head, usePage } from '@inertiajs/vue3';
 import { addUser, removeUser } from '../../Api/Groups/GroupsFunctions';
 import { useToast } from 'vue-toastification';
 
-let { group, boards } = usePage().props;
+let { group, board } = usePage().props;
 const users = ref(usePage().props.users);
 const email = ref('');
 const toast = useToast();
@@ -70,13 +70,17 @@ const handleRemoveUser = async (userId) => {
             </section>
 
             <section class="mt-8">
-                <h2 class="text-2xl font-semibold text-gray-800">Boards</h2>
-                <ul class="mt-4 space-y-2">
-                    <li v-for="board in boards" :key="board.id" class="text-blue-600 hover:text-blue-800">
-                        <a :href="`/boards/${board.id}`">{{ board.title }}</a>
-                    </li>
-                </ul>
+                <h2 class="text-2xl font-semibold text-gray-800">Board</h2>
+                <div v-if="board">
+                    <a :href="`/boards/${board.id}`" class="text-blue-600 hover:text-blue-800">
+                        {{ board.title }}
+                    </a>
+                </div>
+                <div v-else>
+                    <p>No board available for this group.</p>
+                </div>
             </section>
+
         </div>
     </AuthenticatedLayout>
 </template>
