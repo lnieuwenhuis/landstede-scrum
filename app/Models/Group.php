@@ -36,9 +36,9 @@ class Group extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function boards(): HasMany
+    public function board(): HasOne
     {
-        return $this->hasMany(Board::class);
+        return $this->hasOne(Board::class);
     }
 
     /**
