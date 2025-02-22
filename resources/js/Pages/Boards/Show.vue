@@ -13,6 +13,8 @@ const board = props.board;
 const columns = ref(props.columns);
 const users = ref(props.users);
 
+const activeTab = ref('board');
+
 const cardOpen = ref({});
 const cardEditing = ref(null); // Track editing card ID
 
@@ -225,24 +227,38 @@ const handleRemoveUser = async (userId) => {
 
             <p class="mb-6">{{ board.description }}</p>
 
-            <div class="flex space-x-12">
-                <div class="w-1/6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Members</h2>
-                    <ul class="space-y-4">
-                        <li v-for="user in users" :key="user.id" class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm">
-                            <span class="text-gray-700">{{ user.name }} {{  user.id === currentUser.id ? '(You)' : '' }}</span>
-                            <button v-if="user.id !== currentUser.id" @click="handleRemoveUser(user.id)" class="text-red-600 hover:text-red-800 focus:outline-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </li>
-                    </ul>
-                    
-                </div>
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <button
+                        @click="activeTab = 'board'"
+                        :class="[
+                            activeTab === 'board'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                        ]"
+                    >
+                        Board View
+                    </button>
+                    <button
+                        @click="activeTab = 'list'"
+                        :class="[
+                            activeTab === 'list'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                        ]"
+                    >
+                        List View
+                    </button>
+                </nav>
+            </div>
 
-                <div class="flex-1">
-                    <div class="flex flex-wrap gap-6">
+            <!-- Replace the Board View section -->
+            <div v-if="activeTab === 'board'" class="flex-1">
+                <div class="overflow-x-auto pb-4" style="min-height: calc(100vh - 250px)">
+                    <div class="flex gap-6 flex-nowrap min-w-full">
                         <div 
                             v-for="column in columns" 
                             :key="column.id"
@@ -250,7 +266,7 @@ const handleRemoveUser = async (userId) => {
                             @dragleave="handleDragLeave"
                             @drop.prevent="handleDrop($event, column.id)"
                             :class="{ 'bg-blue-100': currentDragColumnId === column.id }"
-                            class="w-1/4 bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200"
+                            class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200"
                         >
                             <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
 
@@ -313,10 +329,11 @@ const handleRemoveUser = async (userId) => {
                             </div>
                             <div class="flex justify-between mt-2">
                                 <button @click="toggleEditColumn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Edit</button>
-                                <button @click="handleDeleteColumn(column.id)" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" >Delete</button>
+                                <button @click="handleDeleteColumn(column.id)" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Delete</button>
                             </div>
                         </div>
-                        <div v-if="showNewColumn" class="w-1/4 bg-black/5 shadow-md rounded-lg p-4">
+
+                        <div v-if="showNewColumn" class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4">
                             <h2 class="text-xl font-semibold text-gray-800 mb-4">New Column</h2>
 
                             <div class="space-y-4">
@@ -338,9 +355,24 @@ const handleRemoveUser = async (userId) => {
                         </div>
                         
                         <button v-if="!showNewColumn" @click="toggleNewColumn"
-                            class="w-1/4 h-20 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center shrink-0">
+                            class="w-[300px] h-20 flex-none bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center">
                             + Create Column
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div v-else-if="activeTab === 'list'" class="space-y-8">
+                <div v-for="column in columns" :key="column.id" class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ column.title }}</h3>
+                    <div class="space-y-4">
+                        <div v-for="card in column.cards" :key="card.id" 
+                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                            <h4 class="font-medium text-gray-900">{{ card.title }}</h4>
+                            <p class="text-gray-500 mt-1">{{ card.description }}</p>
+                            <div class="mt-2 text-sm text-gray-500">Points: {{ card.points }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
