@@ -264,8 +264,8 @@ const generateBurndownData = () => {
 
         // Check each card in done column
         doneColumn.cards.forEach(card => {
-            // On the last day, count all cards in done column
-            if (currentDate.getTime() === end.getTime()) {
+            // On the last day or later, count all cards in done column
+            if (currentDate.getTime() >= end.getTime()) {
                 remainingPoints -= card.points;
             } 
             // Otherwise, only count cards completed before or on the current date
