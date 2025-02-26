@@ -16,7 +16,7 @@ class BoardSeeder extends Seeder
         $groups = Group::all();
 
         foreach ($groups as $group) {
-            Board::factory()->create(['group_id' => $group->id]);
+            Board::factory()->create(['group_id' => $group->id, 'start_date' => '2023-01-01', 'end_date' => '2023-01-31']);
         }
     }
 }

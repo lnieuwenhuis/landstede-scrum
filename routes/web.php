@@ -3,6 +3,7 @@
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,7 +15,9 @@ Route::resource('groups', GroupController::class)->middleware('auth');
 Route::resource('boards', BoardController::class)->middleware('auth');
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return Inertia::render('Dashboard', [
+        'groups' => Auth::user()->groups,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -24,8 +27,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('groups', GroupController::class);
-
     Route::resource('boards', BoardController::class);
 });
 

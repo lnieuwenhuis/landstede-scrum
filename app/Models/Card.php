@@ -33,4 +33,13 @@ class Card extends Model
     {
         return $this->belongsTo(Column::class);
     }
+
+    public function last_updated_at(): \Carbon\Carbon
+    {
+        $last_updated_at = $this->created_at;
+        if ($this->status_updated_at) {
+            $last_updated_at = $this->status_updated_at;
+        }
+        return $last_updated_at;
+    }
 }

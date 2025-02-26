@@ -15,7 +15,8 @@ class ColumnSeeder extends Seeder
         $boards = Board::all();
 
         foreach ($boards as $board) {
-            \App\Models\Column::factory()->count(5)->create(['board_id' => $board->id]);
+            \App\Models\Column::factory()->count(4)->create(['board_id' => $board->id]);
+            \App\Models\Column::factory()->create(['board_id' => $board->id, 'is_done_column' => true, 'title' => 'Done']);
         }
     }
 }
