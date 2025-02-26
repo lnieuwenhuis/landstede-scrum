@@ -246,41 +246,43 @@ const calculateTotalPoints = () => {
 const generateBurndownData = () => {
     const labels = generateDateLabels();
     const totalPoints = calculateTotalPoints();
-    const data = new Array(labels.length).fill(totalPoints);
+    const data = [];
     
     // Find the done column
-    const doneColumn = columns.value.find(col => col.is_done_column);
-    if (!doneColumn) return data;
+    const doneColumn = columns.value.find(col => col.is_done_column === true);
+    if (!doneColumn) {
+        return new Array(labels.length).fill(totalPoints);
+    }
 
-    // Sort done cards by last_status_update
-    const doneCards = doneColumn.cards
-        .filter(card => card.last_status_update)
-        .sort((a, b) => new Date(a.last_status_update) - new Date(b.last_status_update));
-
-    // Calculate remaining points for each day
-    let remainingPoints = totalPoints;
-    let cardIndex = 0;
+    const start = new Date(board.start_date);
+    const end = new Date(board.end_date);
     
-    return labels.map(label => {
-        const currentDate = new Date(board.start_date);
+    // For each day in the sprint
+    for (let currentDate = new Date(start); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
         currentDate.setHours(0, 0, 0, 0);
-        
-        // Subtract points for cards completed before or on this date
-        while (cardIndex < doneCards.length) {
-            const cardDate = new Date(doneCards[cardIndex].last_status_update);
-            cardDate.setHours(0, 0, 0, 0);
-            
-            if (cardDate <= currentDate) {
-                remainingPoints -= doneCards[cardIndex].points;
-                cardIndex++;
-            } else {
-                break;
+        let remainingPoints = totalPoints;
+
+        // Check each card in done column
+        doneColumn.cards.forEach(card => {
+            // On the last day, count all cards in done column
+            if (currentDate.getTime() === end.getTime()) {
+                remainingPoints -= card.points;
+            } 
+            // Otherwise, only count cards completed before or on the current date
+            else if (card.status_updated_at) {
+                const cardDate = new Date(card.status_updated_at);
+                cardDate.setHours(0, 0, 0, 0);
+                
+                if (cardDate <= currentDate) {
+                    remainingPoints -= card.points;
+                }
             }
-        }
-        
-        currentDate.setDate(currentDate.getDate() + 1);
-        return Math.max(0, remainingPoints);
-    });
+        });
+
+        data.push(Math.max(0, remainingPoints));
+    }
+    
+    return data;
 };
 
 const chartData = ref({
@@ -289,7 +291,7 @@ const chartData = ref({
         label: 'Remaining Points',
         data: generateBurndownData(),
         borderColor: '#3b82f6',
-        tension: 0.4,
+        tension: 0.1,
         fill: false
     }, {
         label: 'Ideal Burndown',
