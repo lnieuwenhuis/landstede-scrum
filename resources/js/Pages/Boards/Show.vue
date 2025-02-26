@@ -1,11 +1,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'vue-chartjs';
 
-const currentUser = usePage().props.auth.user;
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
 const toast = useToast();
 const { props } = usePage();
 
@@ -16,7 +19,7 @@ const users = ref(props.users);
 const activeTab = ref('board');
 
 const cardOpen = ref({});
-const cardEditing = ref(null); // Track editing card ID
+const cardEditing = ref(null);
 
 const showDeleteConfirmation = ref(false);
 const cardToDelete = ref(null);
@@ -213,7 +216,119 @@ const handleRemoveUser = async (userId) => {
     } else {
         toast.error('Failed to remove user');
     }
-}
+};
+
+//Generating Burndown Chart
+const generateDateLabels = () => {
+    const labels = [];
+    const start = new Date(board.start_date);
+    const end = new Date(board.end_date);
+    
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        labels.push(date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+        }));
+    }
+    return labels;
+};
+
+const calculateTotalPoints = () => {
+    let total = 0;
+    columns.value.forEach(column => {
+        column.cards.forEach(card => {
+            total += card.points;
+        });
+    });
+    return total;
+};
+
+const generateBurndownData = () => {
+    const labels = generateDateLabels();
+    const totalPoints = calculateTotalPoints();
+    const data = new Array(labels.length).fill(totalPoints);
+    
+    // Find the done column
+    const doneColumn = columns.value.find(col => col.is_done_column);
+    if (!doneColumn) return data;
+
+    // Sort done cards by last_status_update
+    const doneCards = doneColumn.cards
+        .filter(card => card.last_status_update)
+        .sort((a, b) => new Date(a.last_status_update) - new Date(b.last_status_update));
+
+    // Calculate remaining points for each day
+    let remainingPoints = totalPoints;
+    let cardIndex = 0;
+    
+    return labels.map(label => {
+        const currentDate = new Date(board.start_date);
+        currentDate.setHours(0, 0, 0, 0);
+        
+        // Subtract points for cards completed before or on this date
+        while (cardIndex < doneCards.length) {
+            const cardDate = new Date(doneCards[cardIndex].last_status_update);
+            cardDate.setHours(0, 0, 0, 0);
+            
+            if (cardDate <= currentDate) {
+                remainingPoints -= doneCards[cardIndex].points;
+                cardIndex++;
+            } else {
+                break;
+            }
+        }
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+        return Math.max(0, remainingPoints);
+    });
+};
+
+const chartData = ref({
+    labels: generateDateLabels(),
+    datasets: [{
+        label: 'Remaining Points',
+        data: generateBurndownData(),
+        borderColor: '#3b82f6',
+        tension: 0.4,
+        fill: false
+    }, {
+        label: 'Ideal Burndown',
+        data: (() => {
+            const totalDays = generateDateLabels().length;
+            const totalPoints = calculateTotalPoints();
+            const pointsPerDay = totalPoints / (totalDays - 1);
+            return Array.from({ length: totalDays }, (_, i) => Math.max(0, totalPoints - (i * pointsPerDay)));
+        })(),
+        borderColor: '#dc2626',
+        borderDash: [5, 5],
+        tension: 0,
+        fill: false
+    }]
+});
+
+const chartOptions = ref({
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        y: {
+            beginAtZero: true,
+            title: {
+                display: true,
+                text: 'Story Points'
+            }
+        },
+        x: {
+            title: {
+                display: true,
+                text: 'Sprint Days'
+            }
+        }
+    }
+});
+
+watch(columns, () => {
+    chartData.value.datasets[0].data = generateBurndownData();
+}, { deep: true });
 </script>
 
 <template>
@@ -252,10 +367,28 @@ const handleRemoveUser = async (userId) => {
                     >
                         List View
                     </button>
+                    <button
+                        @click="activeTab = 'burndown'"
+                        :class="[
+                            activeTab === 'burndown'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                        ]"
+                    >
+                        Burndown
+                    </button>
                 </nav>
             </div>
 
-            <!-- Replace the Board View section -->
+            <div v-if="activeTab === 'burndown'" class="flex-1">
+                <div class="flex justify-center items-center h-full">
+                    <div class="w-full h-[500px]">
+                        <Line :data="chartData" :options="chartOptions" />
+                    </div>
+                </div>
+            </div>
+
             <div v-if="activeTab === 'board'" class="flex-1">
                 <div class="overflow-x-auto pb-4" style="min-height: calc(100vh - 250px)">
                     <div class="flex gap-6 flex-nowrap min-w-full">
@@ -362,7 +495,6 @@ const handleRemoveUser = async (userId) => {
                 </div>
             </div>
 
-            <!-- List View -->
             <div v-else-if="activeTab === 'list'" class="space-y-8">
                 <div v-for="column in columns" :key="column.id" class="bg-white rounded-lg shadow p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ column.title }}</h3>

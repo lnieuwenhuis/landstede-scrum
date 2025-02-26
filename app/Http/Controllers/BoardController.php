@@ -35,7 +35,8 @@ class BoardController extends Controller
                 return [
                     'id' => $column->id,
                     'title' => $column->title,
-                    'cards' => $column->cards
+                    'cards' => $column->cards,
+                    'is_done_column' => $column->is_done_column,
                 ];
             }),
             'users' => $board->group->users,
@@ -107,6 +108,7 @@ class BoardController extends Controller
 
         $card->column()->dissociate();
         $card->column()->associate(Column::find($request->column_id));
+        $card->status_updated_at = \Carbon\Carbon::now();
         $card->save();
 
         return response()->json(['message' => 'Card moved to column', 'card' => $card]);
@@ -142,7 +144,7 @@ class BoardController extends Controller
     public function addColumn(Request $request)
     {
         $user = Auth::user();
-        if (!user) {
+        if (! $user) {
             return response()->json(['error' => 'Not Logged In!']);
         }
         $board = Board::find($request->board_id);
@@ -167,11 +169,11 @@ class BoardController extends Controller
             'column' => $column
         ]);
     }
-  
+
     public function deleteColumn(Request $request)
     {
         $user = Auth::user();
-        if (!user) {
+        if (! $user) {
             return response()->json(['error' => 'Not Logged In!']);
         }
         $column = Column::find($request->column_id);
