@@ -120,8 +120,6 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
         points
     });
 
-    console.log(response)
-
     if (response.data.card) {
         // Replace temp card with real one
         const column = columns.value.find(col => col.id === columnId);
