@@ -20,110 +20,131 @@ const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
 
-// Card state
-const cardOpen = ref({});
-const cardEditing = ref(null);
-const cardTitle = ref('');
-const cardDesc = ref('');
-const cardPoints = ref(0);
-
 // Delete confirmation
 const showDeleteConfirmation = ref(false);
 const cardToDelete = ref(null);
 
-// Column state
-const showNewColumn = ref(false);
-const newColumnTitle = ref('');
-const newColumnDone = ref(false);
-const currentDragColumnId = ref(null);
-
 // Card handlers
-const toggleDeleteCard = (cardId = null) => {
-    document.body.style.overflow = showDeleteConfirmation.value ? '' : 'hidden';
-    showDeleteConfirmation.value = !showDeleteConfirmation.value;
-    cardToDelete.value = cardId;
-};
-
-const toggleAddCard = (columnId) => {
-    cardOpen.value[columnId] = !cardOpen.value[columnId];
-    cardEditing.value = null;
-};
-
-const toggleEditCard = (card) => {
-    cardEditing.value = card.id;
-    cardTitle.value = card.title;
-    cardDesc.value = card.description;
-    cardPoints.value = card.points;
-};
-
-const handleAddCard = async (columnId) => {
-    const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
-        title: cardTitle.value,
-        description: cardDesc.value,
-        points: cardPoints.value
-    });
-
-    if (response.data.card) {
-        const column = columns.value.find(col => col.id === columnId);
-        if (column) {
-            column.cards.push(response.data.card);
+const handleUpdateCard = async ({ cardId, columnId, title, description, points }) => {
+    // Update card optimistically
+    columns.value.forEach(column => {
+        const cardIndex = column.cards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+            column.cards[cardIndex] = {
+                ...column.cards[cardIndex],
+                title,
+                description,
+                points
+            };
         }
-        resetForm();
-    }
-};
-
-const handleEditCard = async (columnId, cardId) => {
-    const response = await axios.post(`/api/updateCard/${cardId}`, {
-        title: cardTitle.value,
-        description: cardDesc.value,
-        points: cardPoints.value
     });
 
-    if (response.data.message) {
+    // Send to backend
+    const response = await axios.post(`/api/updateCard/${cardId}`, {
+        title,
+        description,
+        points
+    });
+
+    if (!response.data.message) {
+        // Revert changes if failed
         columns.value.forEach(column => {
             const cardIndex = column.cards.findIndex(c => c.id === cardId);
             if (cardIndex !== -1) {
                 column.cards[cardIndex] = response.data.card;
             }
         });
-        resetForm();
+        toast.error('Failed to update card');
+    } else {
+        toast.success('Card updated successfully');
     }
 };
 
-const handleDeleteCard = async () => {
-    const response = await axios.post(`/api/deleteCard/${cardToDelete.value}`);
-    if (response.data.message) {
-        columns.value.forEach(column => {
-            column.cards = column.cards.filter(card => card.id !== cardToDelete.value);
-        });
-        toggleDeleteCard();
+const toggleDeleteCard = (cardId = null) => {
+    document.body.style.overflow = showDeleteConfirmation.value ? '' : 'hidden';
+    showDeleteConfirmation.value = !showDeleteConfirmation.value;
+    cardToDelete.value = cardId;
+};
+
+const handleDeleteCard = async (cardId) => {
+    // Store card data for potential rollback
+    let deletedCard;
+    let deletedFromColumn;
+
+    // Remove card optimistically
+    columns.value.forEach(column => {
+        const cardIndex = column.cards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+            deletedCard = column.cards[cardIndex];
+            deletedFromColumn = column;
+            column.cards = column.cards.filter(card => card.id !== cardId);
+        }
+    });
+
+    // Close modal
+    toggleDeleteCard();
+
+    // Send to backend
+    const response = await axios.post(`/api/deleteCard/${cardId}`);
+    if (!response.data.message) {
+        // Revert changes if failed
+        if (deletedCard && deletedFromColumn) {
+            deletedFromColumn.cards.push(deletedCard);
+        }
+        toast.error('Failed to delete card');
+    } else {
         toast.success(response.data.message);
     }
 };
 
-const resetForm = () => {
-    cardEditing.value = null;
-    cardTitle.value = '';
-    cardDesc.value = '';
-    cardPoints.value = 0;
+const generateTempId = () => `temp-${Date.now()}`;
+
+const handleAddCard = async ({ columnId, title, description, points }) => {
+    // Add card optimistically
+    const tempId = generateTempId();
+    const column = columns.value.find(col => col.id === columnId);
+    if (column) {
+        const tempCard = {
+            id: tempId,
+            title,
+            description,
+            points
+        };
+        column.cards.push(tempCard);
+    }
+
+    // Send to backend
+    const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
+        title,
+        description,
+        points
+    });
+
+    console.log(response)
+
+    if (response.data.card) {
+        // Replace temp card with real one
+        const column = columns.value.find(col => col.id === columnId);
+        if (column) {
+            const index = column.cards.findIndex(c => c.id === tempId);
+            if (index !== -1) {
+                column.cards[index] = response.data.card;
+            }
+        }
+        toast.success('Card added successfully');
+    }
 };
 
 // Column handlers
-const toggleNewColumn = () => {
-    showNewColumn.value = !showNewColumn.value; 
-};
-
-const handleAddColumn = async () => {
+const handleAddColumn = async ({ title, done, board_id }) => {
     const response = await axios.post('/api/addColumn', {
-        title: newColumnTitle.value,
-        done: newColumnDone.value,
-        board_id: board.id
+        title,
+        done,
+        board_id
     });
 
     if (response.data.column) {
         columns.value.push(response.data.column);
-        resetNewColumnForm();
-        toggleNewColumn();
         toast.success('Column added successfully!');
     }
 };
@@ -139,43 +160,14 @@ const handleDeleteColumn = async (columnId) => {
     }
 };
 
-const resetNewColumnForm = () => {
-    newColumnTitle.value = '';
-    newColumnDone.value = false;
-};
-
-// Drag and drop handlers
-const handleDragStart = (event, cardId, columnId) => {
-    event.dataTransfer.setData('text/plain', JSON.stringify({ cardId, columnId }));
-    event.dataTransfer.effectAllowed = 'move';
-};
-
-const handleDragOver = (event, columnId) => {
-    event.preventDefault();
-    currentDragColumnId.value = columnId;
-    event.dataTransfer.dropEffect = 'move';
-};
-
-const handleDragLeave = () => {
-    currentDragColumnId.value = null;
-};
-
-const handleDrop = async (event, targetColumnId) => {
-    event.preventDefault();
-    currentDragColumnId.value = null;
-    
-    const { cardId, columnId: sourceColumnId } = JSON.parse(event.dataTransfer.getData('text/plain'));
-    if (sourceColumnId === targetColumnId) return;
-
+// Card movement handler
+const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     const sourceColumn = columns.value.find(col => col.id == sourceColumnId);
     const targetColumn = columns.value.find(col => col.id == targetColumnId);
     const cardIndex = sourceColumn.cards.findIndex(c => c.id == cardId);
     if (cardIndex === -1) return;
 
-    // Remove from source column
     const [movedCard] = sourceColumn.cards.splice(cardIndex, 1);
-    
-    // Add to target column
     targetColumn.cards.push(movedCard);
 
     try {
@@ -240,29 +232,13 @@ watch(columns, () => {
             <div v-if="activeTab === 'board'" class="flex-1">
                 <Scrumboard 
                     :columns="columns"
-                    :cardOpen="cardOpen"
-                    :cardEditing="cardEditing"
-                    v-model:cardTitle="cardTitle"
-                    v-model:cardDesc="cardDesc"
-                    v-model:cardPoints="cardPoints"
-                    :showNewColumn="showNewColumn"
-                    v-model:newColumnTitle="newColumnTitle"
-                    v-model:newColumnDone="newColumnDone"
-                    :currentDragColumnId="currentDragColumnId"
-                    @toggleAddCard="toggleAddCard"
-                    @toggleEditCard="toggleEditCard"
-                    @toggleDeleteCard="toggleDeleteCard"
-                    @handleEditCard="handleEditCard"
-                    @resetForm="resetForm"
-                    @handleAddCard="handleAddCard"
-                    @toggleEditColumn="toggleEditColumn"
-                    @handleDeleteColumn="handleDeleteColumn"
-                    @handleDragStart="handleDragStart"
-                    @handleDragOver="handleDragOver"
-                    @handleDragLeave="handleDragLeave"
-                    @handleDrop="handleDrop"
-                    @toggleNewColumn="toggleNewColumn"
-                    @handleAddColumn="handleAddColumn"
+                    :board="board"
+                    @updateCard="handleUpdateCard"
+                    @deleteCard="toggleDeleteCard"
+                    @addCard="handleAddCard"
+                    @deleteColumn="handleDeleteColumn"
+                    @addColumn="handleAddColumn"
+                    @moveCard="handleMoveCard"
                 />
             </div>
 
@@ -286,10 +262,10 @@ watch(columns, () => {
             <div class="bg-white p-6 rounded-lg shadow-lg">
                 <p class="text-gray-800 mb-4">Are you sure you want to delete this card?</p>
                 <div class="flex justify-between">
-                    <button @click="handleDeleteCard" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <button @click="handleDeleteCard(cardToDelete)" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
                         Delete
                     </button>
-                    <button @click="toggleDeleteCard" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
+                    <button @click="toggleDeleteCard()" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
                         Cancel
                     </button>
                 </div>
