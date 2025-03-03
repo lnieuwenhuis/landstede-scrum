@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         $groups = Group::all();
 
         foreach ($groups as $group) {
-            $users = User::factory()->count(5)->create();
+            $users = User::factory()->count(4)->create();
 
             foreach ($users as $user) {
                 $user->groups()->attach($group->id);
