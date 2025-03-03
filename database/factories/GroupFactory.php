@@ -20,7 +20,7 @@ class GroupFactory extends Factory
         return [
             'title' => $this->faker->sentence,
             'description' => $this->faker->sentence,
-            'creator_id' => User::factory()
+            'creator_id' => User::factory(),
         ];
     }
 }
