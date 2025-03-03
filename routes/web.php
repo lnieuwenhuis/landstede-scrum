@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/users/{groupId}/remove', [GroupController::class, 'removeUser']);
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
+    Route::delete('/api/groups/{groupId}/users/{userId}', [GroupController::class, 'removeUser']);
 });
 
 require __DIR__.'/auth.php';
