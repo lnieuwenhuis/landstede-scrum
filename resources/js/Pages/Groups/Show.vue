@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
-import { addUser, removeUser } from '../../Api/Groups/GroupsFunctions';
+import { addUser, removeUser } from '@/Helpers/GroupsHelper';
 import { useToast } from 'vue-toastification';
 
 let { group, board } = usePage().props;

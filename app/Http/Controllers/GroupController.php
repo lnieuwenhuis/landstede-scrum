@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Models\Group;
+use App\Models\Board;
 use App\Models\User;
 
 class GroupController extends Controller
@@ -35,6 +36,61 @@ class GroupController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return Inertia::render('Groups/Create');
+    }
+
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'boardTitle' =>'required|string|max:255',
+            'boardDescription' =>'required|string',
+            'startDate' =>'required|date',
+            'endDate' =>'required|date',       
+        ]);
+
+        $group = new Group([
+            'title' => $validatedData['title'],
+            'description' => $validatedData['description'],
+            'creator_id' => $user->id,
+        ]);
+        $group->save();
+
+        $board = Board::factory()->create([
+            'title' => $validatedData['boardTitle'],
+            'description' => $validatedData['boardDescription'],
+            'start_date' => $validatedData['startDate'],
+            'end_date' => $validatedData['endDate'],
+            'group_id' => $group->id,
+        ]);
+        $board->save();
+        
+        $group->addUser($user);
+
+        return response()->json([
+            'message' => 'Group created', 
+            'status' => 'redirect',        
+        ]);
+    }
+
+    public function destroy(Request $request)
+    {
+        $user = Auth::user();
+
+        $group = Group::find($request->groupId);
+        if ($group && $group->creator_id == $user->id) {
+            $groupTitle = $group->title;
+            $group->delete();
+        } else {
+            return response()->json(['error' => 'Group not found or not owned by user']);
+        }
+        return response()->json(['message' => 'Group "' . $groupTitle . '" has been deleted']);
+    }
 
     public function addUser($groupId, $userString)
     {
@@ -54,9 +110,9 @@ class GroupController extends Controller
         return response()->json(['message' => 'User added to group', 'user' => $user]);
     }
 
-    public function removeUser(Request $request, $groupId)
+    public function removeUser(Request $request)
     {
-        $group = Group::find($groupId);
+        $group = Group::find($request->group_id);
         $user = User::find($request->user_id);
 
         if (!$group || !$user) {

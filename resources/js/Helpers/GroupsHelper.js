@@ -23,7 +23,7 @@ export const addUser = async (groupId, userString) => {
 
 export const removeUser = async (groupId, userId) => {
     try {
-        const response = await axios.get(`/api/removeUserFromGroup/${groupId}/${userId}`);
+        const response = await axios.post(`/api/removeUserFromGroup`, { groupId, userId });
         
         if (response.data.error) {
             console.error(response.data.error);

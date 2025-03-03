@@ -19,6 +19,7 @@ class Group extends Model
     private $rules = [
         'title' => 'required|string|max:255',
         'description' => 'nullable|string',
+        'creator_id' => 'required|integer'
     ];
 
     /**
@@ -56,5 +57,10 @@ class Group extends Model
     public function removeUser(User $user)
     {
         $this->users()->detach($user);
+    }
+
+    public function getCreator(): User
+    {
+        return User::find($this->creator_id);
     }
 }
