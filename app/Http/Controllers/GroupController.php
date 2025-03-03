@@ -110,17 +110,22 @@ class GroupController extends Controller
         return response()->json(['message' => 'User added to group', 'user' => $user]);
     }
 
-    public function removeUser(Request $request)
+    public function removeUser($groupId, $userId)
     {
-        $group = Group::find($request->group_id);
-        $user = User::find($request->user_id);
-
-        if (!$group || !$user) {
-            return response()->json(['error' => 'Group or user not found']);
+        try {
+            $group = Group::findOrFail($groupId);
+            
+            // Check if user has permission to modify the group
+            if (!$group->users->contains(auth()->id())) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+    
+            // Remove the user from the group
+            $group->users()->detach($userId);
+    
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to remove user'], 500);
         }
-
-        $group->removeUser($user);
-
-        return response()->json(['message' => 'User removed from group']);
     }
 }

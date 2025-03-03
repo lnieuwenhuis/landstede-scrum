@@ -27,6 +27,11 @@ const handleRemoveUser = async (userId) => {
     if (removedUser) {
         users.value = users.value.filter(user => user.id !== userId);
         toast.success('User removed');
+        
+        // If the current user removed themselves, redirect to dashboard
+        if (userId === usePage().props.auth.user.id) {
+            window.location.href = '/dashboard';
+        }
     }
 };
 </script>
