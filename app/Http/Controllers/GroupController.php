@@ -110,22 +110,46 @@ class GroupController extends Controller
         return response()->json(['message' => 'User added to group', 'user' => $user]);
     }
 
-    public function removeUser($groupId, $userId)
+    public function removeUser(Request $request)
     {
-        try {
-            $group = Group::findOrFail($groupId);
-            
-            // Check if user has permission to modify the group
-            if (!$group->users->contains(auth()->id())) {
-                return response()->json(['error' => 'Unauthorized'], 403);
+        $group = Group::findOrFail($request->groupId);
+        $currentUser = Auth::user();
+        
+        // If not the creator, can only remove self
+        if ($group->creator_id !== $currentUser->id) {
+            if ($request->userId != $currentUser->id) {
+                return response()->json(['error' => 'You are not authorized to remove this user']);
             }
-    
-            // Remove the user from the group
-            $group->users()->detach($userId);
-    
+            
+            $group->users()->detach($currentUser->id);
+            return response()->json(['success' => true, 'redirect' => '/dashboard']);
+        }
+        
+        // Creator removing someone (including self)
+        if ($request->userId == $currentUser->id) {
+            // Creator removing self
+            if ($request->userId == $currentUser->id) {
+                $oldestMember = $group->users()
+                    ->where('users.id', '!=', $currentUser->id)
+                    ->orderBy('group_user.id')  // Using ID to determine the oldest member
+                    ->first();
+
+                if ($oldestMember) {
+                    // Transfer ownership to oldest member
+                    $group->creator_id = $oldestMember->id;
+                    $group->save();
+                    $group->users()->detach($currentUser->id);
+                    return response()->json(['success' => true, 'redirect' => '/dashboard']);
+                } else {
+                    // No other members, delete the group
+                    $group->delete();
+                    return response()->json(['success' => true, 'redirect' => '/dashboard']);
+                }
+            }
+        } else {
+            // Creator removing another user
+            $group->users()->detach($request->userId);
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to remove user'], 500);
         }
     }
 }

@@ -23,15 +23,16 @@ const handleAddUser = async () => {
 };
 
 const handleRemoveUser = async (userId) => {
-    const removedUser = await removeUser(group.id, userId);
-    if (removedUser) {
+    const responseData = await removeUser(group.id, userId);
+    
+    if (responseData.success) {
         users.value = users.value.filter(user => user.id !== userId);
         toast.success('User removed');
-        
-        // If the current user removed themselves, redirect to dashboard
-        if (userId === usePage().props.auth.user.id) {
-            window.location.href = '/dashboard';
+        if (responseData.redirect) {
+            window.location.href = responseData.redirect;
         }
+    } else {
+        toast.error(responseData.error);
     }
 };
 </script>

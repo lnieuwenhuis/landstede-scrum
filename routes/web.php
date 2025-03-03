@@ -36,7 +36,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Board API Routes
     Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
     Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
-    Route::post('/api/removeUserFromGroup', [GroupController::class, 'removeUser']);
     Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
     Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
     Route::post('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
@@ -50,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/users/{groupId}/remove', [GroupController::class, 'removeUser']);
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
-    Route::delete('/api/groups/{groupId}/users/{userId}', [GroupController::class, 'removeUser']);
+    Route::post('/api/groups/removeUser', [GroupController::class, 'removeUser']);
 });
 
 require __DIR__.'/auth.php';
