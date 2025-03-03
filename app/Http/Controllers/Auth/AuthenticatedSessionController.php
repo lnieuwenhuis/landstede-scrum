@@ -24,7 +24,7 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    /**
+        /**
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
@@ -33,7 +33,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        session(['justLoggedIn' => true]);
+
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    public function disableLoginMessage(Request $request)
+    {
+        return session(['justLoggedIn' => false]);
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
@@ -17,6 +18,7 @@ Route::resource('boards', BoardController::class)->middleware('auth');
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard', [
         'groups' => Auth::user()->groups,
+        'justLoggedIn' => session('justLoggedIn', false),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -50,6 +52,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
     Route::post('/api/groups/removeUser', [GroupController::class, 'removeUser']);
+
+    //Other API Routes
+    Route::post('/api/disableLoginMessage', [AuthenticatedSessionController::class,'disableLoginMessage']);
 });
 
 require __DIR__.'/auth.php';

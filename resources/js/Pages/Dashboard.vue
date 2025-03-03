@@ -1,19 +1,21 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import axios from 'axios';
+import { ref, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();
+const page = usePage();
 
-const showMessage = ref(true);
-const { props } = usePage();
-const groups = ref(props.groups);
+const showMessage = ref(page.props.justLoggedIn ?? false);
+const groups = ref(page.props.groups);
 const showDeleteConfirmation = ref(false);
 const groupToDelete = ref(null);
 
 const hideMessage = () => {
     showMessage.value = false;
+    axios.post(`/api/disableLoginMessage`);
 };
 
 const toggleDeleteConfirmation = (groupId = null) => {
