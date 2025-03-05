@@ -19,11 +19,6 @@ const selectedVacation = ref(null);
 const selectedDates = ref([])
 const datesJson = JSON.stringify(selectedDates.value);
 
-watch(datesJson, (newValue, oldValue) => {
-    console.log('New value:', newValue);
-    console.log('Old value:', oldValue);
-})
-
 // New vacation form
 const showNewVacationForm = ref(false);
 const newVacation = ref({
