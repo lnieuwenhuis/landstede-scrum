@@ -67,8 +67,6 @@ const createVacation = () => {
     // Ensure vacation_dates is properly formatted as JSON string
     newVacation.value.vacation_dates = JSON.stringify(vacationDates.value);
     
-    console.log('Sending data:', newVacation.value);
-
     axios.post('/api/vacations/createVacation', newVacation.value)
         .then(response => {
             if (response.data.vacation) {
