@@ -69,6 +69,7 @@ const createVacation = () => {
     
     axios.post('/api/vacations/createVacation', newVacation.value)
         .then(response => {
+            //HIER GAAT HET FOUT
             if (response.data.vacation) {
                 vacations.value.push(response.data.vacation);
                 selectedVacationId.value = response.data.vacation.id;
