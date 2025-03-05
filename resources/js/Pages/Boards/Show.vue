@@ -204,7 +204,7 @@ watch(columns, () => {
             <div class="border-b border-gray-200 mb-6">
                 <nav class="flex space-x-8" aria-label="Tabs">
                     <button
-                        v-for="tab in ['board', 'list', 'burndown']"
+                        v-for="tab in ['board', 'list', 'burndown', 'users']"
                         :key="tab"
                         @click="activeTab = tab"
                         :class="[
@@ -219,6 +219,7 @@ watch(columns, () => {
                 </nav>
             </div>
 
+            <!-- Existing tabs content -->
             <div v-if="activeTab === 'burndown'" class="flex-1">
                 <div class="flex justify-center items-center h-full">
                     <div class="w-full h-[500px]">
@@ -250,6 +251,30 @@ watch(columns, () => {
                             <p class="text-gray-500 mt-1">{{ card.description }}</p>
                             <div class="mt-2 text-sm text-gray-500">Points: {{ card.points }}</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Users Tab -->
+            <div v-else-if="activeTab === 'users'" class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Board Members</h3>
+                <div class="space-y-4">
+                    <div v-if="users && users.length > 0">
+                        <div v-for="user in users" :key="user.id" 
+                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 flex items-center">
+                            <div class="flex-shrink-0 mr-4">
+                                <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+                                    {{ user.name.charAt(0).toUpperCase() }}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">{{ user.name }}</h4>
+                                <p class="text-gray-500 text-sm">{{ user.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-gray-500 text-center py-4">
+                        No users assigned to this board.
                     </div>
                 </div>
             </div>

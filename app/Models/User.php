@@ -47,9 +47,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function groups()
+    public function boards()
     {
-        return $this->belongsToMany(Group::class);
+        return $this->belongsToMany(Board::class, 'board_user');
     }
 
     public function role(): string

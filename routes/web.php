@@ -12,15 +12,7 @@ Route::get('/', function () {
     return Inertia::render('Welcome'); // Matches Welcome.vue
 });
 
-Route::resource('groups', GroupController::class)->middleware('auth');
-Route::resource('boards', BoardController::class)->middleware('auth');
-
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'groups' => Auth::user()->groups,
-        'justLoggedIn' => session('justLoggedIn', false),
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [BoardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -31,7 +23,6 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('boards', BoardController::class);
 });
-
 
 // API ROUTES
 Route::middleware(['auth', 'verified'])->group(function () {

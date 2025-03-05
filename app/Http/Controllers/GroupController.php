@@ -11,19 +11,6 @@ use App\Models\User;
 
 class GroupController extends Controller
 {
-    public function index()
-    {
-        $user = Auth::user();
-
-        if ($user->role == 'admin') {
-            return Inertia::render('Admin/Groups/Index');
-        } else {
-            return Inertia::render('Groups/Index', [
-                'groups' => $user->groups
-            ]);
-        }
-    }
-
     public function show($id)
     {
         $user = Auth::user();

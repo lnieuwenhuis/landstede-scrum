@@ -16,13 +16,9 @@ class Board extends Model
         'description'
     ];
 
-    protected $casts = [
-        'group_id' => 'integer',
-    ];
-
-    public function group(): BelongsTo 
+    public function users()
     {
-        return $this->belongsTo(Group::class);
+        return $this->belongsToMany(User::class, 'board_user');
     }
 
     public function columns(): HasMany
@@ -33,5 +29,20 @@ class Board extends Model
     public function doneColumns(): HasMany
     {
         return $this->hasMany(Column::class)->where('is_done_column', true);
+    }
+
+    public function addUser(User $user)
+    {
+        $this->users()->attach($user);
+    }
+
+    public function removeUser(User $user)
+    {
+        $this->users()->detach($user);
+    }
+
+    public function getCreator(): User
+    {
+        return User::find($this->creator_id);
     }
 }

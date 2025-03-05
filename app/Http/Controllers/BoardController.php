@@ -16,10 +16,12 @@ class BoardController extends Controller
         $user = Auth::user();
 
         if ($user->role == 'admin') {
-            return Inertia::render('Admin/Boards/Index');
+            return Inertia::render('Admin/Dashboard', [
+                'boards' => Board::all()
+            ]);
         } else {
-            return Inertia::render('Boards/Index', [
-                'boards' => $user->boards,
+            return Inertia::render('Dashboard', [
+                'boards' => $user->boards
             ]);
         }
     }
@@ -39,7 +41,7 @@ class BoardController extends Controller
                     'is_done_column' => $column->is_done_column,
                 ];
             }),
-            'users' => $board->group->users,
+            'users' => $board->users,
         ]);
     }
 

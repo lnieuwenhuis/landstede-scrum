@@ -18,7 +18,7 @@ class CardSeeder extends Seeder
         $endDate = Carbon::create(2023, 1, 31);
 
         foreach ($columns as $column) {
-            $user = $column->board->group->users()->inRandomOrder()->first();
+            $user = $column->board->users()->inRandomOrder()->first();
         
             \App\Models\Card::factory()->count(5)->create([
                 'column_id' => $column->id,
