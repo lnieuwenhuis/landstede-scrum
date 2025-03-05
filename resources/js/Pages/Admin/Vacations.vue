@@ -15,6 +15,8 @@ const showDeleteConfirmation = ref(false);
 const vacationToDelete = ref(null);
 const selectedVacationId = ref(null);
 const selectedVacation = ref(null);
+const showEditDates = ref(false);
+const editingDates = ref([]);
 
 const selectedDates = ref([])
 
@@ -69,7 +71,6 @@ const createVacation = () => {
     
     axios.post('/api/vacations/createVacation', newVacation.value)
         .then(response => {
-            //HIER GAAT HET FOUT
             if (response.data.vacation) {
                 vacations.value.push(response.data.vacation);
                 selectedVacationId.value = response.data.vacation.id;
@@ -144,6 +145,35 @@ const handleDelete = () => {
             console.error('Error deleting vacation:', error);
             toast.error('Failed to delete vacation');
         });
+};
+
+const openEditDates = () => {
+    showEditDates.value = true;
+    // Convert string dates to Date objects for the date picker
+    editingDates.value = selectedVacation.value.vacation_dates.map(date => new Date(date));
+    selectedDates.value = editingDates.value;
+};
+
+const handleUpdateDates = async () => {
+    const updatedDates = vacationDates.value;
+    try {
+        const response = await axios.post(`/api/vacations/editVacation`, {
+            vacationId: selectedVacation.value.id,
+            schoolyear: selectedVacation.value.schoolyear,
+            vacation_dates: JSON.stringify(updatedDates)
+        });
+        
+        if (response.data.vacation) {
+            selectedVacation.value.vacation_dates = updatedDates;
+            showEditDates.value = false;
+            selectedDates.value = [];
+            vacationDates.value = [];
+            toast.success('Vacation dates updated successfully');
+        }
+    } catch (error) {
+        console.error('Error updating vacation dates:', error);
+        toast.error('Failed to update vacation dates');
+    }
 };
 </script>
 
@@ -251,12 +281,66 @@ const handleDelete = () => {
                         <div v-if="selectedVacation" class="mt-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h4 class="font-medium text-gray-900">Vacation Dates for {{ selectedVacation.schoolyear }}</h4>
-                                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                <button 
+                                    @click="openEditDates"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
                                     Add Date
                                 </button>
                             </div>
+                            
+                            <!-- Edit Dates Form -->
+                            <div v-if="showEditDates" class="mt-6 p-4 border border-gray-200 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-4">Edit Vacation Dates</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Select Vacation Dates</label>
+                                        <div class="mt-1">
+                                            <VueDatePicker 
+                                                v-model="selectedDates" 
+                                                multi-dates 
+                                                :enable-time-picker="false"
+                                                placeholder="Select vacation dates"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    <!-- Selected Dates List -->
+                                    <div v-if="vacationDates.length > 0 && !showEditDates" class="mt-4">
+                                        <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Dates:</h5>
+                                        <div class="space-y-2">
+                                            <div v-for="date in vacationDates" :key="date" 
+                                                class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 flex justify-between items-center">
+                                                <div>
+                                                    <span class="text-gray-900">{{ new Date(date).toLocaleDateString() }}</span>
+                                                </div>
+                                                <button @click="removeDate(date)" class="text-red-500 hover:text-red-700">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end space-x-2">
+                                        <button 
+                                            @click="showEditDates = false; selectedDates.value = []; vacationDates.value = []" 
+                                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            @click="handleUpdateDates" 
+                                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                        >
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- Vacation Dates List -->
-                            <div class="space-y-2">
+                            <div class="space-y-2" :class="{ 'mt-2': showEditDates }">
                                 <div v-if="!selectedVacation.vacation_dates.length" class="text-center py-4 text-gray-500">
                                     No dates have been added to this vacation.
                                 </div>

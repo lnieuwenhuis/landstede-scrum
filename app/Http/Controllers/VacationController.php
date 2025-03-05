@@ -11,7 +11,7 @@ class VacationController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Admin/Vacations', ['vacations' => Vacation::all()->sortBy('schoolyear')]);
+        return Inertia::render('Admin/Vacations', ['vacations' => Vacation::all()]);
     }
 
     public function createVacation(Request $request)
