@@ -10,6 +10,8 @@ const users = ref(usePage().props.users);
 const email = ref('');
 const toast = useToast();
 
+const ownerId = users.value.length > 0 ? users.value[0].id : null;
+
 const handleAddUser = async () => {
     const response = await addUser(group.id, email.value);
 
@@ -71,7 +73,12 @@ const handleRemoveUser = async (userId) => {
                 <h2 class="text-2xl font-semibold text-gray-900">Members</h2>
                 <ul class="mt-4 divide-y divide-gray-200">
                     <li v-for="user in users" :key="user.id" class="flex justify-between items-center p-4 bg-gray-50 rounded-lg shadow-sm mt-2">
-                        <span class="text-gray-800">{{ user.name }}</span>
+                        <div class="flex items-center max-h-1">
+                            <span v-if="user.id === ownerId" class="mr-2 pb-1 text-yellow-500" title="Group Owner">
+                                👑
+                            </span>
+                            <span class="text-gray-800">{{ user.name }}</span>
+                        </div>
                         <button
                             @click="handleRemoveUser(user.id)"
                             class="text-red-600 hover:text-red-800"
