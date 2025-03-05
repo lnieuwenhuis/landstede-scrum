@@ -17,7 +17,6 @@ const selectedVacationId = ref(null);
 const selectedVacation = ref(null);
 
 const selectedDates = ref([])
-const datesJson = JSON.stringify(selectedDates.value);
 
 // New vacation form
 const showNewVacationForm = ref(false);
