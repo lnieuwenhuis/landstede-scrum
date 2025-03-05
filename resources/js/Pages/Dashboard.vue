@@ -81,10 +81,10 @@ const handleDelete = () => {
                         </div>
                         <div class="space-y-4">
                             <div v-for="group in groups" :key="group.id" 
-                                class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 max-h-28">
+                                class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                                 <div class="flex justify-between items-center">
                                     <div>
-                                        <h4 class="font-medium text-gray-900">{{ group.name }}</h4>
+                                        <h4 class="font-medium text-gray-900">{{ group.title }}</h4>
                                         <p class="text-gray-500 mt-1">{{ group.description }}</p>
                                     </div>
                                     <div class="flex items-center space-x-2">
