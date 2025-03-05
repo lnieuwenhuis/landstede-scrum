@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ColumnSeeder::class,
             CardSeeder::class,
+            VacationSeeder::class,
         ]);
     }
 }

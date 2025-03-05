@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VacationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -22,6 +23,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('boards', BoardController::class);
+
+    Route::get('/admin/vacations', [VacationController::class, 'index'])->name('admin.vacations');
 });
 
 // API ROUTES
@@ -43,6 +46,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
     Route::post('/api/groups/removeUser', [GroupController::class, 'removeUser']);
+
+    //Vacation API Routes
+    Route::post('/api/vacations/getVacation', [VacationController::class,'getVacation']);
+    Route::post('/api/vacations/createVacation', [VacationController::class,'createVacation']);
+    Route::post('/api/vacations/deleteVacation', [VacationController::class,'deleteVacation']);
+    Route::post('/api/vacations/editVacation', [VacationController::class,'editVacation']);
 
     //Other API Routes
     Route::post('/api/disableLoginMessage', [AuthenticatedSessionController::class,'disableLoginMessage']);
