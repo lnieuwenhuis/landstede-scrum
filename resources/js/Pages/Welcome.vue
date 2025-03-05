@@ -1,4 +1,10 @@
+<script setup>
+import {Head} from "@inertiajs/vue3"
+</script>
+
 <template>
+    <Head title="Home" />
+
     <div class="min-h-screen flex flex-col bg-white text-gray-900">
       <!-- Header -->
       <header class="flex justify-between items-center p-6 bg-pink-100 shadow-md">
