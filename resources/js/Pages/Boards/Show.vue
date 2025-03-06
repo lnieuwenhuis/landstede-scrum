@@ -181,6 +181,8 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     }
 };
 
+const ownerId = users.value.length > 0 ? users.value[0].id : null;
+
 //Generating Burndown Chart with a custom helper function
 const { chartData, chartOptions } = buildChart(board, columns);
 
@@ -261,14 +263,17 @@ watch(columns, () => {
                 <div class="space-y-4">
                     <div v-if="users && users.length > 0">
                         <div v-for="user in users" :key="user.id" 
-                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 flex items-center">
+                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 flex items-center mt-2">
                             <div class="flex-shrink-0 mr-4">
                                 <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
                                     {{ user.name.charAt(0).toUpperCase() }}
                                 </div>
                             </div>
                             <div>
-                                <h4 class="font-medium text-gray-900">{{ user.name }}</h4>
+                                <span class="font-medium text-gray-900">{{ user.name }}</span>
+                                <span v-if="user.id === ownerId" class="mr-2 pb-1 text-yellow-500" title="Scrum master">
+                                👑
+                                </span>
                                 <p class="text-gray-500 text-sm">{{ user.email }}</p>
                             </div>
                         </div>

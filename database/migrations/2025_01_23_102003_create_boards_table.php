@@ -18,12 +18,7 @@ return new class extends Migration
             $table->timestamp('start_date');
             $table->timestamp('end_date');
             $table->json('sprints')->nullable();
-            $table->json('non_working_days')->default('
-                [
-                    "Saturday",
-                    "Sunday"
-                ]'
-            );
+            $table->json('non_working_days');
             $table->string('status');
             $table->foreignId('creator_id')->constrained('users');
             $table->timestamps();

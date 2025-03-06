@@ -57,20 +57,20 @@ class BoardController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'startDate' =>'required|date',
-            'endDate' =>'required|date',       
-            'sprints' => 'nullable|json',
-            'non_working_days' => 'required|json',
+            'startDate' =>'required|string',
+            'endDate' =>'required|string',       
+            'sprints' => 'nullable|string',
+            'non_working_days' => 'required|string',
             'status' =>'required|string',
         ]);
 
         $board = Board::factory()->create([
             'title' => $validatedData['title'],
             'description' => $validatedData['description'],
-            'start_date' => $validatedData['startDate'],
-            'end_date' => $validatedData['endDate'],
-            'sprints' => $validatedData['sprints'] ?? null,
-            'non_working_days' => $validatedData['non_working_days'],
+            'start_date' => date("Y-m-d H:i:s", strtotime($validatedData['startDate'])),
+            'end_date' => date("Y-m-d H:i:s", strtotime($validatedData['endDate'])),
+            'sprints' => json_encode($validatedData['sprints']) ?? null,
+            'non_working_days' => json_encode($validatedData['non_working_days']),
             'status' => $validatedData['status'],
             'creator_id' => $user->id,
         ]);

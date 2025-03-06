@@ -27,6 +27,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/vacations', [VacationController::class, 'index'])->name('admin.vacations');
 });
 
+Route::middleware('auth:sanctum')->post('/boards/storeBoard', [App\Http\Controllers\BoardController::class, 'storeBoard']);
+
 // API ROUTES
 Route::middleware(['auth', 'verified'])->group(function () {
     //Board API Routes
