@@ -76,7 +76,8 @@ const generateSprints = () => {
         sprints.push({
             name: `Sprint ${i + 1}`,
             start_date: formatDate(sprintStart),
-            end_date: formatDate(sprintEnd)
+            end_date: formatDate(sprintEnd),
+            status: 'inactive'
         });
     }
     
