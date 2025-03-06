@@ -175,6 +175,44 @@ const handleUpdateDates = async () => {
         toast.error('Failed to update vacation dates');
     }
 };
+
+const groupDatesByMonth = (dates) => {
+    if (!dates || !dates.length) return {};
+    
+    // Sort dates chronologically first
+    const sortedDates = [...dates].sort((a, b) => new Date(a) - new Date(b));
+    
+    const grouped = {};
+    sortedDates.forEach(date => {
+        const d = new Date(date);
+        const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`; // Pad month for correct string sorting
+        if (!grouped[key]) {
+            grouped[key] = {
+                year: d.getFullYear(),
+                month: d.getMonth(),
+                dates: []
+            };
+        }
+        grouped[key].dates.push(d.getDate());
+    });
+    
+    // Sort by year and month using the padded key format
+    return Object.fromEntries(
+        Object.entries(grouped).sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    );
+};
+
+const getMonthName = (month) => {
+    return new Date(2000, month, 1).toLocaleString('default', { month: 'long' });
+};
+
+const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+};
+
+const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay();
+};
 </script>
 
 <template>
@@ -249,20 +287,40 @@ const handleUpdateDates = async () => {
                                         />
                                     </div>
                                 </div>
-                                <!-- Selected Dates List -->
+                                <!-- Selected Dates Calendar View -->
                                 <div v-if="vacationDates.length > 0" class="mt-4">
                                     <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Dates:</h5>
-                                    <div class="space-y-2">
-                                        <div v-for="date in vacationDates" :key="date" 
-                                            class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 flex justify-between items-center">
-                                            <div>
-                                                <span class="text-gray-900">{{ new Date(date).toLocaleDateString() }}</span>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        <div v-for="(monthData, key) in groupDatesByMonth(vacationDates)" :key="key" 
+                                            class="border border-gray-200 rounded-lg p-3 bg-white">
+                                            <h3 class="font-medium text-gray-800 mb-2">{{ getMonthName(monthData.month) }} {{ monthData.year }}</h3>
+                                            <div class="grid grid-cols-7 gap-1 text-center">
+                                                <!-- Day headers - Monday to Sunday -->
+                                                <div v-for="day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']" :key="day" class="text-xs font-medium text-gray-500">
+                                                    {{ day }}
+                                                </div>
+                                                
+                                                <!-- Empty cells for days before the 1st (adjusted for Monday start) -->
+                                                <div v-for="n in (getFirstDayOfMonth(monthData.year, monthData.month) || 7) - 1" :key="`empty-${n}`" class="h-7"></div>
+                                                
+                                                <!-- Calendar days -->
+                                                <div v-for="day in getDaysInMonth(monthData.year, monthData.month)" :key="day"
+                                                    class="h-7 w-7 flex items-center justify-center text-xs rounded-full mx-auto relative group"
+                                                    :class="{
+                                                        'bg-blue-500 text-white': monthData.dates.includes(day),
+                                                        'text-gray-700': !monthData.dates.includes(day)
+                                                    }">
+                                                    {{ day }}
+                                                    <!-- Delete button overlay on hover -->
+                                                    <button 
+                                                        v-if="monthData.dates.includes(day)"
+                                                        @click="removeDate(new Date(monthData.year, monthData.month, day).toISOString().split('T')[0])"
+                                                        class="absolute inset-0 flex items-center justify-center bg-red-500 bg-opacity-0 hover:bg-opacity-80 rounded-full text-transparent hover:text-white transition-all duration-200"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button @click="removeDate(date)" class="text-red-500 hover:text-red-700">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                                </svg>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -340,20 +398,36 @@ const handleUpdateDates = async () => {
                             </div>
                             
                             <!-- Vacation Dates List -->
-                            <div class="space-y-2" :class="{ 'mt-2': showEditDates }">
+                            <div :class="{ 'mt-2': showEditDates }">
                                 <div v-if="!selectedVacation.vacation_dates.length" class="text-center py-4 text-gray-500">
                                     No dates have been added to this vacation.
                                 </div>
-                                <div v-else v-for="date in selectedVacation.vacation_dates" :key="date" 
-                                    class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 flex justify-between items-center">
-                                    <div>
-                                        <span class="text-gray-900">{{ new Date(date).toLocaleDateString() }}</span>
+                                <div v-else>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        <div v-for="(monthData, key) in groupDatesByMonth(selectedVacation.vacation_dates)" :key="key" 
+                                            class="border border-gray-200 rounded-lg p-3 bg-white">
+                                            <h3 class="font-medium text-gray-800 mb-2">{{ getMonthName(monthData.month) }} {{ monthData.year }}</h3>
+                                            <div class="grid grid-cols-7 gap-1 text-center">
+                                                <!-- Day headers - Monday to Sunday -->
+                                                <div v-for="day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']" :key="day" class="text-xs font-medium text-gray-500">
+                                                    {{ day }}
+                                                </div>
+                                                
+                                                <!-- Empty cells for days before the 1st (adjusted for Monday start) -->
+                                                <div v-for="n in (getFirstDayOfMonth(monthData.year, monthData.month) || 7) - 1" :key="`empty-${n}`" class="h-7"></div>
+                                                
+                                                <!-- Calendar days -->
+                                                <div v-for="day in getDaysInMonth(monthData.year, monthData.month)" :key="day"
+                                                    class="h-7 w-7 flex items-center justify-center text-xs rounded-full mx-auto"
+                                                    :class="{
+                                                        'bg-blue-500 text-white': monthData.dates.includes(day),
+                                                        'text-gray-700': !monthData.dates.includes(day)
+                                                    }">
+                                                    {{ day }}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button class="text-red-500 hover:text-red-700">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -385,9 +459,9 @@ const handleUpdateDates = async () => {
 
 <style scoped>
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s;
+    transition: opacity 0.3s;
 }
 .fade-enter-from, .fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 </style>
