@@ -23,48 +23,6 @@ class GroupController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('Groups/Create');
-    }
-
-    public function store(Request $request)
-    {
-        $user = Auth::user();
-
-        $validatedData = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'boardTitle' =>'required|string|max:255',
-            'boardDescription' =>'required|string',
-            'startDate' =>'required|date',
-            'endDate' =>'required|date',       
-        ]);
-
-        $group = new Group([
-            'title' => $validatedData['title'],
-            'description' => $validatedData['description'],
-            'creator_id' => $user->id,
-        ]);
-        $group->save();
-
-        $board = Board::factory()->create([
-            'title' => $validatedData['boardTitle'],
-            'description' => $validatedData['boardDescription'],
-            'start_date' => $validatedData['startDate'],
-            'end_date' => $validatedData['endDate'],
-            'group_id' => $group->id,
-        ]);
-        $board->save();
-        
-        $group->addUser($user);
-
-        return response()->json([
-            'message' => 'Group created', 
-            'status' => 'redirect',        
-        ]);
-    }
-
     public function destroy(Request $request)
     {
         $user = Auth::user();

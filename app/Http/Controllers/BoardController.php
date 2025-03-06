@@ -45,6 +45,47 @@ class BoardController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        return Inertia::render('Boards/Create');
+    }
+
+    public function storeBoard(Request $request)
+    {
+        $user = Auth::user();
+
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'startDate' =>'required|date',
+            'endDate' =>'required|date',       
+            'sprints' => 'nullable|json',
+            'non_working_days' => 'required|json',
+            'status' =>'required|string',
+        ]);
+
+        $board = Board::factory()->create([
+            'title' => $validatedData['title'],
+            'description' => $validatedData['description'],
+            'start_date' => $validatedData['startDate'],
+            'end_date' => $validatedData['endDate'],
+            'sprints' => $validatedData['sprints'] ?? null,
+            'non_working_days' => $validatedData['non_working_days'],
+            'status' => $validatedData['status'],
+            'creator_id' => $user->id,
+        ]);
+        $board->sprints;
+        $board->save();
+
+        $board->addUser($user);
+
+        return response()->json([
+            'message' => 'Board created',
+            'board_id' => $board->id, 
+            'status' => 'redirect',        
+        ]);
+    }
+
     public function getColumnCards($columnId)
     {
         $column = Column::find($columnId);
