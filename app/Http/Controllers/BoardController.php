@@ -79,6 +79,27 @@ class BoardController extends Controller
 
         $board->addUser($user);
 
+        $column = Column::factory()->create([
+            'title' => 'Project Backlog',
+            'is_done_column' => false,
+            'board_id' => $board->id,
+        ]);
+        $column->save();
+
+        $column = Column::factory()->create([
+            'title' => 'Sprint Backlog',
+            'is_done_column' => false,
+            'board_id' => $board->id,
+        ]);
+        $column->save();
+
+        $column = Column::factory()->create([
+            'title' => 'Done',
+            'is_done_column' => true,
+            'board_id' => $board->id,
+        ]);
+        $column->save();
+
         return response()->json([
             'message' => 'Board created',
             'board_id' => $board->id, 
