@@ -324,17 +324,6 @@ const submitForm = async () => {
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <!-- Selected Non-working Days -->
-                                <div v-if="board.non_working_days.length > 0" class="mt-4">
-                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Non-working Days:</h5>
-                                    <div class="flex flex-wrap gap-2">
-                                        <div v-for="date in board.non_working_days" :key="date" 
-                                            class="bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-700">
-                                            {{ new Date(date).toLocaleDateString() }}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- Submit Button -->

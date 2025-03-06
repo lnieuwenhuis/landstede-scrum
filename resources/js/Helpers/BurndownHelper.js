@@ -17,6 +17,7 @@ export const generateDateLabels = (board) => {
 export const calculateTotalPoints = (columns) => {
     let total = 0;
     columns.value.forEach(column => {
+        if (!column.cards) return;
         column.cards.forEach(card => {
             total += card.points;
         });

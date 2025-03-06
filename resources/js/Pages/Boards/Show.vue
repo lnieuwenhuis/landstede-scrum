@@ -134,26 +134,70 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
 };
 
 // Column handlers
-const handleAddColumn = async ({ title, done, board_id }) => {
-    const response = await axios.post('/api/addColumn', {
+const handleAddColumn = async ({ title, done, board_id, status }) => {
+    if (!status) status = "active";
+    const tempId = generateTempId();
+    
+    // Add column optimistically
+    const tempColumn = {
+        id: tempId,
         title,
         done,
-        board_id
-    });
+        board_id,
+        status,
+        cards: []
+    };
+    columns.value.push(tempColumn);
 
-    if (response.data.column) {
-        columns.value.push(response.data.column);
-        toast.success('Column added successfully!');
+    try {
+        // Send to backend
+        const response = await axios.post('/api/addColumn', {
+            title,
+            done,
+            board_id,
+            status
+        });
+
+        if (response.data && response.data.column) {
+            // Replace temp column with real one
+            const index = columns.value.findIndex(col => col.id === tempId);
+            if (index !== -1) {
+                // Create a new array with the updated column to ensure reactivity
+                const updatedColumns = [...columns.value];
+                updatedColumns[index] = response.data.column;
+                columns.value = updatedColumns;
+            }
+            toast.success('Column added successfully!');
+        } else {
+            throw new Error('No column data received');
+        }
+    } catch (error) {
+        // Remove temp column if request failed
+        columns.value = columns.value.filter(col => col.id !== tempId);
+        toast.error('Failed to add column');
     }
 };
 
 const handleDeleteColumn = async (columnId) => {
+    // Store column data for potential rollback
+    const deletedColumn = columns.value.find(col => col.id === columnId);
+    const columnIndex = columns.value.findIndex(col => col.id === columnId);
+    
+    // Remove column optimistically
+    columns.value = columns.value.filter(column => column.id !== columnId);
+
+    // Send to backend
     const response = await axios.post(`/api/deleteColumn`, {
         column_id: columnId
     });
 
-    if (response.data.message) {
-        columns.value = columns.value.filter(column => column.id !== columnId);
+    if (!response.data.message) {
+        // Revert changes if failed
+        if (deletedColumn && columnIndex !== -1) {
+            columns.value.splice(columnIndex, 0, deletedColumn);
+        }
+        toast.error('Failed to delete column');
+    } else {
         toast.success(response.data.message);
     }
 };

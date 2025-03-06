@@ -18,6 +18,7 @@ class ColumnFactory extends Factory
     {
         return [
             'title' => $this->faker->sentence,
+            'status' => 'active'
         ];
     }
 }

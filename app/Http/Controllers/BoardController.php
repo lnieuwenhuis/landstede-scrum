@@ -83,6 +83,7 @@ class BoardController extends Controller
             'title' => 'Project Backlog',
             'is_done_column' => false,
             'board_id' => $board->id,
+            'status' => 'active'
         ]);
         $column->save();
 
@@ -90,6 +91,7 @@ class BoardController extends Controller
             'title' => 'Sprint Backlog',
             'is_done_column' => false,
             'board_id' => $board->id,
+            'status'=> 'active'
         ]);
         $column->save();
 
@@ -97,6 +99,7 @@ class BoardController extends Controller
             'title' => 'Done',
             'is_done_column' => true,
             'board_id' => $board->id,
+            'status'=> 'active'
         ]);
         $column->save();
 
@@ -105,6 +108,16 @@ class BoardController extends Controller
             'board_id' => $board->id, 
             'status' => 'redirect',        
         ]);
+    }
+
+    public function deleteBoard(Request $request)
+    {
+        $board = Board::find($request->board_id);
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+        $board->delete();
+        return response()->json(['message' => 'Board deleted', 'status' => 'redirect']);
     }
 
     public function getColumnCards($columnId)
@@ -215,6 +228,7 @@ class BoardController extends Controller
 
         $title = $request->input('title');
         $done = $request->input('done');
+        $status = $request->input('status');
 
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
@@ -224,6 +238,7 @@ class BoardController extends Controller
             'title' => $title,
             'is_done_column' => $done,
             'board_id' => $board->id,
+            'status'=> $status
         ]);
 
         $column->save();

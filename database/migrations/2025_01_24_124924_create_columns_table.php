@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->boolean('is_done_column')->default(false);
             $table->foreignId('board_id')->constrained('boards')->cascadeOnDelete();
+            $table->string('status');
             $table->timestamps();
         });
     }

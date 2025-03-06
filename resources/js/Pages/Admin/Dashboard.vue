@@ -25,7 +25,7 @@ const toggleDeleteConfirmation = (boardId = null) => {
 };
 
 const handleDelete = () => {
-    axios.post(`/api/boards/deleteBoard`, { boardId: boardToDelete.value })
+    axios.post(`/api/boards/deleteBoard`, { board_id: boardToDelete.value })
         .then(response => {
             if (response.data.message) {
                 boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
