@@ -239,16 +239,18 @@ watch(columns, () => {
     <Head title="Board" />
 
     <AuthenticatedLayout>
-        <div class="container mx-auto p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
+        <div class="container mx-auto px-6 py-3">
+            <!-- Board header with title and description -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
+                    <p class="text-gray-600 mt-1">{{ board.description }}</p>
+                </div>
             </div>
 
-            <p class="mb-6">{{ board.description }}</p>
-
             <!-- Tab Navigation -->
-            <div class="border-b border-gray-200 mb-6">
-                <nav class="flex space-x-8" aria-label="Tabs">
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="flex space-x-6" aria-label="Tabs">
                     <button
                         v-for="tab in ['board', 'list', 'burndown', 'users']"
                         :key="tab"
@@ -257,15 +259,15 @@ watch(columns, () => {
                             activeTab === tab
                                 ? 'border-blue-500 text-blue-600'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                            'whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm'
                         ]"
                     >
-                        {{ tab.charAt(0).toUpperCase() + tab.slice(1) }} View
+                        {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
                     </button>
                 </nav>
             </div>
 
-            <!-- Existing tabs content -->
+            <!-- Tab content remains the same -->
             <div v-if="activeTab === 'burndown'" class="flex-1">
                 <div class="flex justify-center items-center h-full">
                     <div class="w-full h-[500px]">
