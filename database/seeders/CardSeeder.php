@@ -25,14 +25,17 @@ class CardSeeder extends Seeder
             $endDate = Carbon::parse($board->end_date);
             
             $user = $board->users()->inRandomOrder()->first();
-        
-            \App\Models\Card::factory()->count(5)->create([
-                'column_id' => $column->id,
-                'user_id' => $user->id, 
-                'status_updated_at' => Carbon::createFromTimestamp(
-                    rand($startDate->timestamp, $endDate->timestamp)
-                )
-            ]);
+            
+            // Create 5 individual cards with different timestamps
+            for ($i = 0; $i < 5; $i++) {
+                \App\Models\Card::factory()->create([
+                    'column_id' => $column->id,
+                    'user_id' => $user->id, 
+                    'status_updated_at' => Carbon::createFromTimestamp(
+                        rand($startDate->timestamp, $endDate->timestamp)
+                    )
+                ]);
+            }
         }
     }
 }
