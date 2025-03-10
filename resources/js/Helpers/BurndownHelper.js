@@ -126,7 +126,7 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate) =
                 label: 'Remaining Points',
                 data: actualBurndownData,
                 borderColor: '#3b82f6',
-                tension: 0.1,
+                tension: 0,
                 fill: false
             }, {
                 label: 'Ideal Burndown',
