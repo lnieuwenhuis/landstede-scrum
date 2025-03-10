@@ -83,7 +83,8 @@ class BoardController extends Controller
             'title' => 'Project Backlog',
             'is_done_column' => false,
             'board_id' => $board->id,
-            'status' => 'active'
+            'status' => 'active',
+            'user_created' => false
         ]);
         $column->save();
 
@@ -91,7 +92,8 @@ class BoardController extends Controller
             'title' => 'Sprint Backlog',
             'is_done_column' => false,
             'board_id' => $board->id,
-            'status'=> 'active'
+            'status'=> 'active',
+            'user_created' => false
         ]);
         $column->save();
 
@@ -99,7 +101,8 @@ class BoardController extends Controller
             'title' => 'Done',
             'is_done_column' => true,
             'board_id' => $board->id,
-            'status'=> 'active'
+            'status'=> 'active',
+            'user_created' => false
         ]);
         $column->save();
 

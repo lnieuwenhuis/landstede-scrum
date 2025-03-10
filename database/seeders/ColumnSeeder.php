@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Board;
+use App\Models\Column;
 use Illuminate\Database\Seeder;
 
 class ColumnSeeder extends Seeder
@@ -15,8 +16,32 @@ class ColumnSeeder extends Seeder
         $boards = Board::all();
 
         foreach ($boards as $board) {
-            \App\Models\Column::factory()->count(4)->create(['board_id' => $board->id]);
-            \App\Models\Column::factory()->create(['board_id' => $board->id, 'is_done_column' => true, 'title' => 'Done']);
+            $column = Column::factory()->create([
+                'title' => 'Project Backlog',
+                'is_done_column' => false,
+                'board_id' => $board->id,
+                'status' => 'active',
+                'user_created' => false
+            ]);
+            $column->save();
+    
+            $column = Column::factory()->create([
+                'title' => 'Sprint Backlog',
+                'is_done_column' => false,
+                'board_id' => $board->id,
+                'status'=> 'active',
+                'user_created' => false
+            ]);
+            $column->save();
+    
+            $column = Column::factory()->create([
+                'title' => 'Done',
+                'is_done_column' => true,
+                'board_id' => $board->id,
+                'status'=> 'active',
+                'user_created' => false
+            ]);
+            $column->save();
         }
     }
 }

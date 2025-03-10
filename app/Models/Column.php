@@ -12,7 +12,10 @@ class Column extends Model
     /** @use HasFactory<\Database\Factories\ColumnFactory> */
     use HasFactory;
 
-    protected $fillable = ['title'];
+    protected $fillable = [
+        'title',
+        'status'
+    ];
 
     protected $casts = [
         'board_id' => 'integer',
@@ -36,5 +39,23 @@ class Column extends Model
     public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
+    }
+
+    public function toggleLock()
+    {
+        switch ($this->status) {
+            case 'active':
+                $this->status = 'locked';
+                break;
+            case 'checked':
+                $this->status = 'checked';
+                break;
+            case 'locked':
+                $this->status = 'active';
+                break;
+            default:
+                $this->status = 'active';
+                break;
+        }
     }
 }
