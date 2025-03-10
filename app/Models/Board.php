@@ -66,7 +66,7 @@ class Board extends Model
                 $sprints[] = [
                     'start_date' => $sprintStart->format('Y-m-d'),
                     'end_date' => $sprintEnd->format('Y-m-d'),
-                    'name' => 'Sprint ' . ($i + 1)
+                    'name' => 'Sprint ' . ($i + 1),
                 ];
                 
                 $currentDate->addDays($sprintLength);

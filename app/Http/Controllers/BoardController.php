@@ -33,12 +33,24 @@ class BoardController extends Controller
 
         return Inertia::render('Boards/Show', [
             'board' => $board,
+            'sprints' => collect($board->sprints())->map(function ($sprint) {
+                dd($sprint);
+                return [
+                    'name' => $sprint->name,
+                    'start_date' => $sprint->start_date,
+                    'end_date' => $sprint->end_date,
+                    'status' => $sprint->status,
+                ];
+            }),
             'columns' => $board->columns->map(function ($column) {
                 return [
                     'id' => $column->id,
                     'title' => $column->title,
                     'cards' => $column->cards,
                     'is_done_column' => $column->is_done_column,
+                    'status' => $column->status,
+                    'user_created' => $column->user_created,
+                    'sprint_checked' => $column->sprint_checked,
                 ];
             }),
             'users' => $board->users,
