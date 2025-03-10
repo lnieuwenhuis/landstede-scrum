@@ -19,9 +19,64 @@ const board = props.board;
 const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
-const sprints = ref(props.sprints)
+const sprints = ref(props.sprints);
 
-console.log(sprints);
+// Burndown chart settings
+const selectedPeriod = ref('board');
+const selectedSprint = ref(null);
+const startDate = ref(board.start_date);
+const endDate = ref(board.end_date);
+
+// Initialize chart with board data
+const { chartData, chartOptions } = buildChart(
+    board, 
+    selectedSprint.value, 
+    columns, 
+    startDate.value, 
+    endDate.value
+);
+
+// Handle period selection change
+const handlePeriodChange = (periodValue) => {
+    selectedPeriod.value = periodValue;
+    
+    if (periodValue === 'board') {
+        // Use board dates
+        selectedSprint.value = null;
+        startDate.value = board.start_date;
+        endDate.value = board.end_date;
+    } else {
+        // Find the selected sprint
+        const sprint = sprints.value.find(s => s.id == periodValue);
+        if (sprint) {
+            selectedSprint.value = sprint;
+            startDate.value = sprint.start_date;
+            endDate.value = sprint.end_date;
+        }
+    }
+    
+    // Regenerate chart with new date range
+    const chartResult = buildChart(
+        board, 
+        selectedSprint.value, 
+        columns, 
+        startDate.value, 
+        endDate.value
+    );
+    
+    chartData.value = chartResult.chartData.value;
+    chartOptions.value = chartResult.chartOptions.value;
+};
+
+// Update chart when columns change
+watch(columns, () => {
+    chartData.value.datasets[0].data = generateBurndownData(
+        board, 
+        columns, 
+        startDate.value, 
+        endDate.value
+    );
+}, { deep: true });
 
 // Delete confirmation
 const showDeleteConfirmation = ref(false);
@@ -229,13 +284,6 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
 };
 
 const ownerId = users.value.length > 0 ? users.value[0].id : null;
-
-//Generating Burndown Chart with a custom helper function
-const { chartData, chartOptions } = buildChart(board, columns);
-
-watch(columns, () => {
-    chartData.value.datasets[0].data = generateBurndownData(board, columns);
-}, { deep: true });
 </script>
 
 <template>
@@ -259,10 +307,10 @@ watch(columns, () => {
                         :key="tab"
                         @click="activeTab = tab"
                         :class="[
+                            'py-2 px-1 border-b-2 font-medium text-sm',
                             activeTab === tab
                                 ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                            'whitespace-nowrap py-3 px-2 border-b-2 font-medium text-sm'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         ]"
                     >
                         {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
@@ -270,8 +318,41 @@ watch(columns, () => {
                 </nav>
             </div>
 
-            <!-- Tab content remains the same -->
+            <!-- Tab Content -->
+            <div v-if="activeTab === 'board'">
+                <Scrumboard
+                    :columns="columns"
+                    :users="users"
+                    :board="board"
+                    @update-card="handleUpdateCard"
+                    @delete-card="toggleDeleteCard"
+                    @add-card="handleAddCard"
+                    @add-column="handleAddColumn"
+                    @delete-column="handleDeleteColumn"
+                    @move-card="handleMoveCard"
+                />
+            </div>
+
             <div v-if="activeTab === 'burndown'" class="flex-1">
+                <!-- Sprint/Board Selection Dropdown -->
+                <div class="mb-6">
+                    <label for="period-selector" class="block text-sm font-medium text-gray-700 mb-2">
+                        Select Period:
+                    </label>
+                    <select 
+                        id="period-selector" 
+                        v-model="selectedPeriod" 
+                        @change="handlePeriodChange(selectedPeriod)"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    >
+                        <option value="board">Entire Board</option>
+                        <option v-for="sprint in sprints" :key="sprint.id" :value="sprint.id">
+                            {{ sprint.title }} ({{ new Date(sprint.start_date).toLocaleDateString() }} - {{ new Date(sprint.end_date).toLocaleDateString() }})
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Burndown Chart -->
                 <div class="flex justify-center items-center h-full">
                     <div class="w-full h-[500px]">
                         <Line :data="chartData" :options="chartOptions" />
@@ -279,72 +360,27 @@ watch(columns, () => {
                 </div>
             </div>
 
-            <div v-if="activeTab === 'board'" class="flex-1">
-                <Scrumboard 
-                    :columns="columns"
-                    :board="board"
-                    @updateCard="handleUpdateCard"
-                    @deleteCard="toggleDeleteCard"
-                    @addCard="handleAddCard"
-                    @deleteColumn="handleDeleteColumn"
-                    @addColumn="handleAddColumn"
-                    @moveCard="handleMoveCard"
-                />
-            </div>
-
-            <div v-else-if="activeTab === 'list'" class="space-y-8">
-                <div v-for="column in columns" :key="column.id" class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ column.title }}</h3>
-                    <div class="space-y-4">
-                        <div v-for="card in column.cards" :key="card.id" 
-                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                            <h4 class="font-medium text-gray-900">{{ card.title }}</h4>
-                            <p class="text-gray-500 mt-1">{{ card.description }}</p>
-                            <div class="mt-2 text-sm text-gray-500">Points: {{ card.points }}</div>
-                        </div>
+            <!-- Other tabs content would go here -->
+            
+            <!-- Delete Card Confirmation Modal -->
+            <div v-if="showDeleteConfirmation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Card</h3>
+                    <p class="text-gray-600 mb-6">Are you sure you want to delete this card? This action cannot be undone.</p>
+                    <div class="flex justify-end space-x-3">
+                        <button 
+                            @click="toggleDeleteCard()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            @click="handleDeleteCard(cardToDelete)" 
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                            Delete
+                        </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- New Users Tab -->
-            <div v-else-if="activeTab === 'users'" class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Board Members</h3>
-                <div class="space-y-4">
-                    <div v-if="users && users.length > 0">
-                        <div v-for="user in users" :key="user.id" 
-                            class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 flex items-center mt-2">
-                            <div class="flex-shrink-0 mr-4">
-                                <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                                    {{ user.name.charAt(0).toUpperCase() }}
-                                </div>
-                            </div>
-                            <div>
-                                <span class="font-medium text-gray-900">{{ user.name }}</span>
-                                <span v-if="user.id === ownerId" class="mr-2 pb-1 text-yellow-500" title="Scrum master">
-                                👑
-                                </span>
-                                <p class="text-gray-500 text-sm">{{ user.email }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="text-gray-500 text-center py-4">
-                        No users assigned to this board.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Delete Confirmation Modal -->
-        <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg">
-                <p class="text-gray-800 mb-4">Are you sure you want to delete this card?</p>
-                <div class="flex justify-between">
-                    <button @click="handleDeleteCard(cardToDelete)" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Delete
-                    </button>
-                    <button @click="toggleDeleteCard()" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                        Cancel
-                    </button>
                 </div>
             </div>
         </div>
