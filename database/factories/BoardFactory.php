@@ -17,7 +17,6 @@ class BoardFactory extends Factory
      */
     public function definition(): array
     {
-        // Create sprint objects instead of arrays
         $sprint1 = new stdClass();
         $sprint1->title = 'Sprint 1';
         $sprint1->start_date = $this->faker->date;

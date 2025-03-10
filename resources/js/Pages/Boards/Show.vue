@@ -19,6 +19,9 @@ const board = props.board;
 const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
+const sprints = ref(props.sprints)
+
+console.log(sprints);
 
 // Delete confirmation
 const showDeleteConfirmation = ref(false);

@@ -34,12 +34,12 @@ class BoardController extends Controller
         return Inertia::render('Boards/Show', [
             'board' => $board,
             'sprints' => collect($board->sprints())->map(function ($sprint) {
-                dd($sprint);
                 return [
-                    'name' => $sprint->name,
-                    'start_date' => $sprint->start_date,
-                    'end_date' => $sprint->end_date,
-                    'status' => $sprint->status,
+                    'id' => $sprint['id'],
+                    'title' => $sprint['title'],
+                    'start_date' => $sprint['start_date'],
+                    'end_date' => $sprint['end_date'],
+                    'status' => $sprint['status'],
                 ];
             }),
             'columns' => $board->columns->map(function ($column) {
