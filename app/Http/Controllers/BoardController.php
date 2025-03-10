@@ -281,4 +281,21 @@ class BoardController extends Controller
 
         return response()->json(['message' => 'Column deleted']);
     }
+
+    public function updateColumn(Request $request)
+    {
+        $request->validate([
+            'column_id' => 'required|exists:columns,id',
+            'title' => 'required|string|max:255',
+        ]);
+
+        $column = Column::findOrFail($request->column_id);
+        $column->title = $request->title;
+        $column->save();
+
+        return response()->json([
+            'message' => 'Column updated successfully',
+            'column' => $column
+        ]);
+    }
 }

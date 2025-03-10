@@ -283,6 +283,33 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     }
 };
 
+const handleUpdateColumn = async ({ id, title }) => {
+    const column = columns.value.find(col => col.id === id);
+    if (!column) return;
+    
+    const originalTitle = column.title;
+    
+    column.title = title;
+    
+    try {
+        const response = await axios.post(`/api/updateColumn`, {
+            column_id: id,
+            title
+        });
+        
+        if (response.data.message) {
+            toast.success('Column updated successfully');
+        } else {
+            throw new Error('Failed to update column');
+        }
+    } catch (error) {
+        if (column) {
+            column.title = originalTitle;
+        }
+        toast.error('Failed to update column');
+    }
+};
+
 const ownerId = users.value.length > 0 ? users.value[0].id : null;
 </script>
 
@@ -330,6 +357,7 @@ const ownerId = users.value.length > 0 ? users.value[0].id : null;
                     @add-column="handleAddColumn"
                     @delete-column="handleDeleteColumn"
                     @move-card="handleMoveCard"
+                    @update-column="handleUpdateColumn"
                 />
             </div>
 

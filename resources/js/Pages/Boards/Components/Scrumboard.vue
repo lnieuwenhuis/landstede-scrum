@@ -21,6 +21,8 @@ const emit = defineEmits([
     'deleteCard',
     'addCard',
     'deleteColumn',
+    'toggleEditColumn',
+    'updateColumn',
     'addColumn',
     'moveCard'
 ]);
@@ -35,6 +37,8 @@ const showNewColumn = ref(false);
 const newColumnTitle = ref('');
 const newColumnDone = ref(false);
 const currentDragColumnId = ref(null);
+const columnEditing = ref(null);
+const editColumnTitle = ref('');
 
 // Card handlers
 const toggleAddCard = (columnId) => {
@@ -59,6 +63,20 @@ const resetForm = () => {
 // Column handlers
 const toggleNewColumn = () => {
     showNewColumn.value = !showNewColumn.value;
+};
+
+const toggleEditColumn = (column) => {
+    if (columnEditing.value === column.id) {
+        columnEditing.value = null;
+    } else {
+        columnEditing.value = column.id;
+        editColumnTitle.value = column.title;
+    }
+};
+
+const saveColumnEdit = (columnId) => {
+    emit('updateColumn', { id: columnId, title: editColumnTitle.value });
+    columnEditing.value = null;
 };
 
 const resetNewColumnForm = () => {
@@ -107,7 +125,17 @@ const handleDrop = (event, targetColumnId) => {
                 class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200 flex flex-col max-h-[calc(100vh-200px)]"
             >
                 <!-- Column Header -->
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
+                <h2 v-if="columnEditing !== column.id" class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
+                <div v-else class="mb-4 flex">
+                    <input 
+                        v-model="editColumnTitle"
+                        type="text" 
+                        class="w-full px-2 py-1 text-xl font-semibold text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    />
+                    <button @click="saveColumnEdit(column.id)" class="ml-2 px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                        Save
+                    </button>
+                </div>
 
                 <!-- Cards Container with Scrolling -->
                 <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar overflow-x-visible">
@@ -176,7 +204,7 @@ const handleDrop = (event, targetColumnId) => {
                             + Add Card
                         </button>
                         <div v-if="!['Project Backlog', 'Sprint Backlog', 'Done'].includes(column.title)" class="flex gap-2">
-                            <button @click="emit('toggleEditColumn', column.id)" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button @click="toggleEditColumn(column)" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                 </svg>
