@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Column;
+use App\Models\Board;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
@@ -14,11 +15,16 @@ class CardSeeder extends Seeder
     public function run(): void
     {
         $columns = Column::all();
-        $startDate = Carbon::create(2023, 1, 1);
-        $endDate = Carbon::create(2023, 1, 31);
 
         foreach ($columns as $column) {
-            $user = $column->board->users()->inRandomOrder()->first();
+            // Get the board associated with this column
+            $board = $column->board;
+            
+            // Use the board's start and end dates for the card status updates
+            $startDate = Carbon::parse($board->start_date);
+            $endDate = Carbon::parse($board->end_date);
+            
+            $user = $board->users()->inRandomOrder()->first();
         
             \App\Models\Card::factory()->count(5)->create([
                 'column_id' => $column->id,
