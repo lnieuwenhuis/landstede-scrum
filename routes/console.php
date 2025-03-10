@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -11,5 +12,8 @@ Artisan::command('inspire', function () {
 
 // Check vacation logic and lock appropriate columns
 Schedule::call(function () {
-
+    $boards = Board::all();
+    foreach ($boards as $board) {
+        $board->checkSprintLogic();
+    }
 })->dailyAt('00:00');

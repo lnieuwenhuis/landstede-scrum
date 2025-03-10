@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BoardController;
+use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VacationController;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
     Route::post('/api/groups/removeUser', [GroupController::class, 'removeUser']);
+
+    //Column API Routes
+    Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);
 
     //Vacation API Routes
     Route::post('/api/vacations/getVacation', [VacationController::class,'getVacation']);

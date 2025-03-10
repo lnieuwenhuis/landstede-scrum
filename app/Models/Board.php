@@ -86,4 +86,9 @@ class Board extends Model
         // Return the sprints as an array
         return json_decode($this->sprints, true);
     }
+
+    public function checkSprintLogic()
+    {
+        
+    }
 }

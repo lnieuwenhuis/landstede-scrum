@@ -14,7 +14,10 @@ class Column extends Model
 
     protected $fillable = [
         'title',
-        'status'
+        'status',
+        'is_done_column',
+        'user_created',
+        'sprint_checked'
     ];
 
     protected $casts = [

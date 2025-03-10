@@ -22,8 +22,8 @@ class BoardFactory extends Factory
             'start_date' => $this->faker->date,
             'end_date' => $this->faker->date,
             'sprints' => json_encode([
-                ['name' => 'Sprint 1', 'start_date' => $this->faker->date, 'end_date' => $this->faker->date],
-                ['name' => 'Sprint 2', 'start_date' => $this->faker->date, 'end_date' => $this->faker->date],
+                ['name' => 'Sprint 1', 'start_date' => $this->faker->date, 'end_date' => $this->faker->date, 'status' => $this->faker->randomElement(['done', 'not_done', 'active'])],
+                ['name' => 'Sprint 2', 'start_date' => $this->faker->date, 'end_date' => $this->faker->date, 'status' => $this->faker->randomElement(['done', 'not_done', 'active'])],
             ]),
             'non_working_days' => json_encode($this->faker->randomElements(['2023-01-01', '2023-01-02', '2023-01-03'])),
             'status' => $this->faker->randomElement(['active', 'archived', 'completed'])
