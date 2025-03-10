@@ -110,13 +110,14 @@ const handleDrop = (event, targetColumnId) => {
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
 
                 <!-- Cards Container with Scrolling -->
-                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar">
+                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar overflow-x-visible">
                     <div 
                         v-for="card in column.cards" 
                         :key="card.id"
                         draggable="true"
                         @dragstart="handleDragStart($event, card.id, column.id)"
-                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-transform duration-200 hover:scale-[1.02]"
+                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-all duration-200 hover:scale-[1.02] relative"
+                        style="transform-origin: center center; will-change: transform;"
                     >
                         <!-- Card content remains the same -->
                         <div v-if="cardEditing !== card.id">
@@ -241,13 +242,14 @@ const handleDrop = (event, targetColumnId) => {
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ doneColumn.title }}</h2>
 
                 <!-- Cards with scrolling -->
-                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar">
+                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar overflow-x-visible">
                     <div 
                         v-for="card in doneColumn.cards" 
                         :key="card.id"
                         draggable="true"
                         @dragstart="handleDragStart($event, card.id, doneColumn.id)"
-                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-transform duration-200 hover:scale-[1.02]"
+                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-all duration-200 hover:scale-[1.02] relative"
+                        style="transform-origin: center center; will-change: transform;"
                     >
                         <!-- Card content remains the same -->
                         <div v-if="cardEditing !== card.id">
@@ -329,5 +331,10 @@ const handleDrop = (event, targetColumnId) => {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.3);
+}
+
+/* Add this new style */
+.overflow-x-visible {
+    overflow-x: visible !important;
 }
 </style>
