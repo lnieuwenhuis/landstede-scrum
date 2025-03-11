@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -45,7 +44,7 @@ class Board extends Model
 
     public function getCreator(): User
     {
-        return User::find($this->creator_id);
+        return User::find($this->creator_id)->first();
     }
 
     public function generateSprints()
@@ -109,12 +108,11 @@ class Board extends Model
             $startDate = Carbon::parse($sprint['start_date']);
             $endDate = Carbon::parse($sprint['end_date']);
             
-            if ($currentDate->between($startDate, $endDate) || $sprint->status == 'checked') {
+            if ($currentDate->between($startDate, $endDate) || $sprint['status'] == 'checked') {
                 return $sprint;
             } else {
-                $sprint->status = 'locked';
+                $sprint['status'] = 'locked';
             }
         }
-
     }
 }
