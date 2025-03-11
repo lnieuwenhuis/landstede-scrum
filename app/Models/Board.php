@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -99,8 +100,21 @@ class Board extends Model
         return $freeDates;
     }
 
-    public function checkSprintLogic()
+    public function checkSprints()
     {
-        
+        $currentDate = Carbon::now();
+        $sprints = $this->sprints();
+
+        foreach ($sprints as $sprint) {
+            $startDate = Carbon::parse($sprint['start_date']);
+            $endDate = Carbon::parse($sprint['end_date']);
+            
+            if ($currentDate->between($startDate, $endDate) || $sprint->status == 'checked') {
+                return $sprint;
+            } else {
+                $sprint->status = 'locked';
+            }
+        }
+
     }
 }

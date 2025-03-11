@@ -10,10 +10,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-// Check vacation logic and lock appropriate columns
-Schedule::call(function () {
+Artisan::command('CheckBoardSprints', function () {
     $boards = Board::all();
     foreach ($boards as $board) {
-        $board->checkSprintLogic();
+        $board->checkSprints();
     }
-})->dailyAt('00:00');
+})->purpose('Check and change board sprint statuses');
