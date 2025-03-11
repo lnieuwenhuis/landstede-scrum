@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import Chart from 'chart.js/auto';
 
 export const generateDateLabels = (startDate, endDate) => {
     const labels = [];
@@ -255,17 +256,9 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                         text: 'Days'
                     },
                     grid: {
-                        color: (context) => {
-                            // Check if this grid line corresponds to a free date
-                            return freeDateIndices.includes(context.index) ? 
-                                'rgba(200, 200, 200, 0.5)' : // Light gray for free dates
-                                'rgba(0, 0, 0, 0.1)';        // Default grid color
-                        },
+                        color: 'rgba(0, 0, 0, 0.1)',  // Use the same color for all grid lines
                         drawOnChartArea: true,
-                        lineWidth: (context) => {
-                            // Make free date grid lines thicker
-                            return freeDateIndices.includes(context.index) ? 3 : 1;
-                        }
+                        lineWidth: 1  // Use the same line width for all grid lines
                     }
                 }
             },
@@ -289,30 +282,10 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                         }
                     }
                 },
-                // Custom plugin for background highlighting of free dates
-                beforeDraw: (chart) => {
-                    const { ctx, chartArea, scales } = chart;
-                    const { top, bottom } = chartArea;
-                    
-                    // Set background color for free dates
-                    ctx.save();
-                    ctx.fillStyle = 'rgba(220, 220, 220, 0.5)'; // Slightly darker for better visibility
-                    
-                    freeDateIndices.forEach(index => {
-                        if (index > 0) { // Only highlight if there's a previous day
-                            // Get the previous date's position
-                            const prevIndex = index - 1;
-                            const startX = scales.x.getPixelForValue(prevIndex);
-                            
-                            // Get the width of a single column
-                            const columnWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
-                            
-                            // Draw a rectangle covering the entire column to the left of the free date
-                            ctx.fillRect(startX - columnWidth/2, top, columnWidth, bottom - top);
-                        }
-                    });
-                    
-                    ctx.restore();
+                // Configure our custom plugin
+                nonWorkingDaysHighlighter: {
+                    freeDateIndices: freeDateIndices,
+                    fillColor: 'rgba(200, 200, 200, 0.6)'
                 }
             }
         })
@@ -377,3 +350,51 @@ export const generateCustomIdealBurndown = (startPoints, endPoints, totalDays, f
     
     return idealData;
 }
+
+
+// Register a custom plugin for highlighting non-working days
+const nonWorkingDaysPlugin = {
+    id: 'nonWorkingDaysHighlighter',
+    beforeDraw: (chart, args, options) => {
+        const { ctx, chartArea, scales } = chart;
+        const { top, bottom, left, right } = chartArea;
+        
+        // First, ensure the entire chart area is white
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.fillRect(left, top, right - left, bottom - top);
+        
+        // Then draw the darker grey only for non-working days
+        if (!options.freeDateIndices || !options.freeDateIndices.length) {
+            ctx.restore();
+            return;
+        }
+        
+        ctx.fillStyle = options.fillColor || 'rgba(200, 200, 200, 0.6)';
+        
+        options.freeDateIndices.forEach(index => {
+            // Get the exact position of this data point
+            const x = scales.x.getPixelForValue(index);
+            
+            // Calculate the width of a single column
+            let columnWidth;
+            if (index > 0) {
+                const prevX = scales.x.getPixelForValue(index - 1);
+                columnWidth = x - prevX;
+            } else if (scales.x.ticks.length > 1) {
+                const nextX = scales.x.getPixelForValue(1);
+                columnWidth = nextX - x;
+            } else {
+                columnWidth = chartArea.width;
+            }
+            
+            // Draw the background rectangle with an offset to the left
+            ctx.fillRect(x - columnWidth, top, columnWidth, bottom - top);
+        });
+        
+        ctx.restore();
+    }
+};
+
+// Register the plugin
+Chart.register(nonWorkingDaysPlugin);
