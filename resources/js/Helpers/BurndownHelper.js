@@ -67,17 +67,83 @@ export const generateBurndownData = (board, columns, startDate, endDate) => {
     return data;
 };
 
-export const generateIdealBurndown = (totalPoints, totalDays) => {
+export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDate, endDate) => {
     if (totalDays <= 1) return [totalPoints, 0];
     
-    const pointsPerDay = totalPoints / (totalDays - 1);
-    return Array.from({ length: totalDays }, (_, i) => Math.max(0, totalPoints - (i * pointsPerDay)));
+    // Convert start and end dates to Date objects
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Parse freeDates string into an actual array
+    let freeDatesArray = [];
+    try {
+        freeDatesArray = typeof freeDates === 'string' ? JSON.parse(freeDates) : (Array.isArray(freeDates) ? freeDates : []);
+    } catch (e) {
+        console.error('Error parsing freeDates:', e);
+    }
+    
+    // Convert freeDates to Date objects for easier comparison
+    const freeDateObjects = freeDatesArray.map(date => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+    });
+    
+    // Count actual working days
+    let workingDays = 0;
+    const idealData = [];
+    
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        date.setHours(0, 0, 0, 0);
+        const isWorkingDay = !freeDateObjects.includes(date.getTime());
+        
+        // For the first day, always use the total points
+        if (date.getTime() === start.getTime()) {
+            idealData.push(totalPoints);
+        } else if (isWorkingDay) {
+            workingDays++;
+            // We'll calculate the actual values after counting working days
+            idealData.push(null);
+        } else {
+            // For non-working days, use the same value as the previous day
+            idealData.push(null);
+        }
+    }
+    
+    // Calculate points to burn per working day
+    const pointsPerWorkingDay = totalPoints / Math.max(1, workingDays);
+    
+    // Fill in the actual values
+    let remainingPoints = totalPoints;
+    for (let i = 1; i < idealData.length; i++) {
+        const currentDate = new Date(start);
+        currentDate.setDate(currentDate.getDate() + i);
+        currentDate.setHours(0, 0, 0, 0);
+        
+        const isWorkingDay = !freeDateObjects.includes(currentDate.getTime());
+        
+        if (isWorkingDay) {
+            remainingPoints -= pointsPerWorkingDay;
+        }
+        
+        idealData[i] = Math.max(0, remainingPoints);
+    }
+    
+    return idealData;
 };
 
-export const buildChart = (board, selectedSprint, columns, startDate, endDate) => {
+export const buildChart = (board, selectedSprint, columns, startDate, endDate, freeDates) => {
     // Ensure we have valid dates
     if (!startDate || startDate === 'Invalid Date') startDate = board.start_date;
     if (!endDate || endDate === 'Invalid Date') endDate = board.end_date;
+    
+    // Parse freeDates string into an actual array
+    let allFreeDates = [];
+    try {
+        allFreeDates = typeof freeDates === 'string' ? JSON.parse(freeDates) : (Array.isArray(freeDates) ? freeDates : []);
+    } catch (e) {
+        console.error('Error parsing freeDates:', e);
+    }
     
     const dateLabels = generateDateLabels(startDate, endDate);
     const totalPoints = calculateTotalPoints(columns);
@@ -106,17 +172,52 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate) =
         const expectedStartPoints = totalPoints * (1 - startProgressPercentage);
         const expectedEndPoints = totalPoints * (1 - endProgressPercentage);
         
-        // Generate ideal burndown for this sprint from start to end points
-        idealBurndownData = generateCustomIdealBurndown(expectedStartPoints, expectedEndPoints, dateLabels.length);
+        // Generate ideal burndown for this sprint from start to end points, accounting for free dates
+        idealBurndownData = generateCustomIdealBurndown(
+            expectedStartPoints, 
+            expectedEndPoints, 
+            dateLabels.length, 
+            allFreeDates, 
+            startDate, 
+            endDate
+        );
     } else {
-        // For the entire board, use the total points to zero
-        idealBurndownData = generateIdealBurndown(totalPoints, dateLabels.length);
+        // For the entire board, use the total points to zero, accounting for free dates
+        idealBurndownData = generateIdealBurndown(
+            totalPoints, 
+            dateLabels.length, 
+            allFreeDates, 
+            startDate, 
+            endDate
+        );
     }
     
     // Create chart title based on selected period
     let chartTitle = 'Burndown Chart: Entire Board';
     if (selectedSprint) {
         chartTitle = `Burndown Chart: ${selectedSprint.title}`;
+    }
+    
+    // Create an array to track which dates are free days
+    const freeDateIndices = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Convert all free dates to timestamp format for easier comparison
+    const freeDateTimestamps = allFreeDates.map(date => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+    });
+    
+    // Identify which indices in our date range correspond to free dates
+    let index = 0;
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        date.setHours(0, 0, 0, 0);
+        if (freeDateTimestamps.includes(date.getTime())) {
+            freeDateIndices.push(index);
+        }
+        index++;
     }
     
     return { 
@@ -152,6 +253,19 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate) =
                     title: {
                         display: true,
                         text: 'Days'
+                    },
+                    grid: {
+                        color: (context) => {
+                            // Check if this grid line corresponds to a free date
+                            return freeDateIndices.includes(context.index) ? 
+                                'rgba(200, 200, 200, 0.5)' : // Light gray for free dates
+                                'rgba(0, 0, 0, 0.1)';        // Default grid color
+                        },
+                        drawOnChartArea: true,
+                        lineWidth: (context) => {
+                            // Make free date grid lines thicker
+                            return freeDateIndices.includes(context.index) ? 3 : 1;
+                        }
                     }
                 }
             },
@@ -162,6 +276,43 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate) =
                     font: {
                         size: 16
                     }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: (tooltipItems) => {
+                            const index = tooltipItems[0].dataIndex;
+                            const label = dateLabels[index];
+                            // Add indicator for free dates in tooltip
+                            return freeDateIndices.includes(index) ? 
+                                `${label} (Non-working day)` : 
+                                label;
+                        }
+                    }
+                },
+                // Custom plugin for background highlighting of free dates
+                beforeDraw: (chart) => {
+                    const { ctx, chartArea, scales } = chart;
+                    const { top, bottom } = chartArea;
+                    
+                    // Set background color for free dates
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(220, 220, 220, 0.5)'; // Slightly darker for better visibility
+                    
+                    freeDateIndices.forEach(index => {
+                        if (index > 0) { // Only highlight if there's a previous day
+                            // Get the previous date's position
+                            const prevIndex = index - 1;
+                            const startX = scales.x.getPixelForValue(prevIndex);
+                            
+                            // Get the width of a single column
+                            const columnWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+                            
+                            // Draw a rectangle covering the entire column to the left of the free date
+                            ctx.fillRect(startX - columnWidth/2, top, columnWidth, bottom - top);
+                        }
+                    });
+                    
+                    ctx.restore();
                 }
             }
         })
@@ -169,9 +320,60 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate) =
 };
 
 // Helper function to generate ideal burndown with custom start and end points
-export const generateCustomIdealBurndown = (startPoints, endPoints, totalDays) => {
+export const generateCustomIdealBurndown = (startPoints, endPoints, totalDays, freeDates, startDate, endDate) => {
     if (totalDays <= 1) return [startPoints, endPoints];
     
-    const pointsPerDay = (startPoints - endPoints) / (totalDays - 1);
-    return Array.from({ length: totalDays }, (_, i) => Math.max(0, startPoints - (i * pointsPerDay)));
-};
+    // Convert start and end dates to Date objects
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Convert freeDates to Date objects for easier comparison
+    const freeDateObjects = (freeDates || []).map(date => {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+    });
+    
+    // Initialize the ideal data array with the start points
+    const idealData = [startPoints];
+    
+    // Count actual working days (excluding the first day which we've already handled)
+    let workingDays = 0;
+    
+    // Temporary array to track which days are working days
+    const workingDayFlags = [];
+    
+    // First, identify all working days
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        // Skip the first day as we've already added it
+        if (date.getTime() === start.getTime()) {
+            workingDayFlags.push(false); // Not counted as a working day for burndown
+            continue;
+        }
+        
+        date.setHours(0, 0, 0, 0);
+        const isWorkingDay = !freeDateObjects.includes(date.getTime());
+        workingDayFlags.push(isWorkingDay);
+        
+        if (isWorkingDay) {
+            workingDays++;
+        }
+    }
+    
+    // Calculate points to burn per working day
+    const pointsToBurn = startPoints - endPoints;
+    const pointsPerWorkingDay = pointsToBurn / Math.max(1, workingDays);
+    
+    // Fill in the actual values
+    let remainingPoints = startPoints;
+    
+    for (let i = 1; i < totalDays; i++) {
+        if (workingDayFlags[i]) {
+            remainingPoints -= pointsPerWorkingDay;
+        }
+        
+        idealData.push(Math.max(endPoints, remainingPoints));
+    }
+    
+    return idealData;
+}

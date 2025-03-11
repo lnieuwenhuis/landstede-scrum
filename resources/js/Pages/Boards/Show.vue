@@ -21,6 +21,7 @@ const users = ref(props.users);
 const activeTab = ref('board');
 const sprints = ref(props.sprints);
 const expandedColumns = ref({});
+const freeDates = props.freeDates;
 
 // Burndown chart settings
 const selectedPeriod = ref('board');
@@ -34,7 +35,8 @@ const { chartData, chartOptions } = buildChart(
     selectedSprint.value, 
     columns, 
     startDate.value, 
-    endDate.value
+    endDate.value,
+    freeDates
 );
 
 // Handle period selection change
@@ -62,7 +64,8 @@ const handlePeriodChange = (periodValue) => {
         selectedSprint.value, 
         columns, 
         startDate.value, 
-        endDate.value
+        endDate.value,
+        freeDates
     );
     
     chartData.value = chartResult.chartData.value;
@@ -75,7 +78,8 @@ watch(columns, () => {
         board, 
         columns, 
         startDate.value, 
-        endDate.value
+        endDate.value,
+        freeDates
     );
 }, { deep: true });
 

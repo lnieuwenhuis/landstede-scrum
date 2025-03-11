@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('schoolyear');
             $table->json('vacation_dates');
+            $table->string('status')->default('inactive');
             $table->timestamps();
         });
     }

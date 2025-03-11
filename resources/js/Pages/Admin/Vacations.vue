@@ -239,6 +239,7 @@ const getFirstDayOfMonth = (year, month) => {
                                 >
                                     <option v-for="vacation in vacations" :key="vacation.id" :value="vacation.id">
                                         {{ vacation.schoolyear }}
+                                        {{ (vacation.status === 'active') ? '(Active)' : '' }}
                                     </option>
                                 </select>
                             </div>

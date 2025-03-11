@@ -12,11 +12,17 @@ class Vacation extends Model
 
     protected $fillable = [
         'schoolyear',
-        'json'
+        'json',
+        'status'
     ];
 
     public function currentYear()
     {
         return $this->where('schoolyear', date('Y'))->first();
+    }
+
+    public static function activeVacation()
+    {
+        return self::where('status', 'active')->first();
     }
 }

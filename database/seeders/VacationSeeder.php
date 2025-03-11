@@ -13,6 +13,7 @@ class VacationSeeder extends Seeder
      */
     public function run(): void
     {
-        Vacation::factory(5)->create();
+        Vacation::factory(4)->create();
+        Vacation::factory()->create(['status' => 'active']);
     }
 }

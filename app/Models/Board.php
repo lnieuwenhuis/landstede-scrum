@@ -13,7 +13,8 @@ class Board extends Model
 
     protected $fillable = [
         'title', 
-        'description'
+        'description',
+        'non_working_days',
     ];
 
     public function users()
@@ -85,6 +86,17 @@ class Board extends Model
 
         // Return the sprints as an array
         return json_decode($this->sprints, true);
+    }
+
+    public function nonWorkingDays()
+    {
+        $vacation = Vacation::activeVacation();
+        $non_working_days = $this->non_working_days;
+        $vacationDates = $vacation->vacation_dates ?? [];
+
+        $freeDates = array_unique(array_merge(json_decode($non_working_days), json_decode($vacationDates)));
+        sort($freeDates);
+        return $freeDates;
     }
 
     public function checkSprintLogic()

@@ -44,11 +44,30 @@ class BoardSeeder extends Seeder
             $sprint2->id = 2;
 
             $user = User::factory()->create();
+            
+            // Generate non-working days within the board's date range
+            $nonWorkingDays = [];
+            $currentDate = strtotime($startDate);
+            $endTimestamp = strtotime($endDate);
+            
+            // Generate 3-5 random non-working days within the board's timeframe
+            $numNonWorkingDays = rand(3, 5);
+            while (count($nonWorkingDays) < $numNonWorkingDays && $currentDate < $endTimestamp) {
+                $randomDayOffset = rand(0, floor(($endTimestamp - $currentDate) / 86400));
+                $randomDay = date('Y-m-d', $currentDate + ($randomDayOffset * 86400));
+                
+                // Avoid duplicates
+                if (!in_array($randomDay, $nonWorkingDays)) {
+                    $nonWorkingDays[] = $randomDay;
+                }
+            }
+            
             $board = Board::factory()->create([
                 'creator_id' => $user['id'],
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'sprints' => json_encode([$sprint1, $sprint2]),
+                'non_working_days' => json_encode($nonWorkingDays),
             ]);
             $board->users()->attach($user['id']);
         }
