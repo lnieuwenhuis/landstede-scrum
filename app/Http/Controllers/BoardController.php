@@ -357,4 +357,108 @@ class BoardController extends Controller
         
         return response()->json(['error' => 'Sprint not found']);
     }
+
+    public function createSprint(Request $request)
+    {
+        $board = Board::find($request->board_id);
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+
+        $sprints = json_decode($board->sprints, true) ?? [];
+        $boardStart = strtotime($board->start_date);
+        $boardEnd = strtotime($board->end_date);
+        $totalDays = ($boardEnd - $boardStart) / (24 * 60 * 60);
+        
+        // Calculate new sprint duration based on total sprints after addition
+        $sprintCount = count($sprints) + 1;
+        $sprintDuration = floor($totalDays / $sprintCount);
+        
+        // Redistribute all sprints evenly
+        foreach ($sprints as $index => &$sprint) {
+            $sprintStartDate = date('Y-m-d', $boardStart + ($index * $sprintDuration * 24 * 60 * 60));
+            $sprintEndDate = date('Y-m-d', $boardStart + (($index + 1) * $sprintDuration * 24 * 60 * 60) - (24 * 60 * 60));
+            
+            $sprint['start_date'] = $sprintStartDate;
+            $sprint['end_date'] = $sprintEndDate;
+        }
+        
+        // Create new sprint
+        $newSprint = [
+            'id' => $sprintCount,
+            'title' => $request->title,
+            'start_date' => date('Y-m-d', $boardStart + (($sprintCount - 1) * $sprintDuration * 24 * 60 * 60)),
+            'end_date' => date('Y-m-d', $boardEnd),
+            'status' => 'inactive'
+        ];
+        
+        array_push($sprints, $newSprint);
+        
+        // Save updated sprints back to the board
+        $board->sprints = json_encode($sprints);
+        $board->save();
+        
+        return response()->json([
+            'message' => 'Sprint created successfully',
+            'sprints' => $sprints
+        ]);
+    }
+
+    public function deleteSprint(Request $request)
+    {
+        $board = Board::find($request->board_id);
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+    
+        $sprints = json_decode($board->sprints, true);
+        $sprintIndex = array_search($request->sprint_id, array_column($sprints, 'id'));
+        
+        if ($sprintIndex !== false) {
+            // Remove the sprint from the array
+            array_splice($sprints, $sprintIndex, 1);
+    
+            if (count($sprints) > 0) {
+                // Get board start and end dates
+                $boardStart = strtotime($board->start_date);
+                $boardEnd = strtotime($board->end_date);
+                $totalDays = ($boardEnd - $boardStart) / (24 * 60 * 60);
+                
+                // Calculate sprint duration
+                $sprintDuration = floor($totalDays / count($sprints));
+                
+                // Redistribute sprints evenly
+                foreach ($sprints as $index => &$sprint) {
+                    $sprintStartDate = date('Y-m-d', $boardStart + ($index * $sprintDuration * 24 * 60 * 60));
+                    $sprintEndDate = date('Y-m-d', $boardStart + (($index + 1) * $sprintDuration * 24 * 60 * 60) - (24 * 60 * 60));
+                    
+                    // For the last sprint, use the board end date
+                    if ($index === count($sprints) - 1) {
+                        $sprintEndDate = date('Y-m-d', $boardEnd);
+                    }
+                    
+                    $sprint['start_date'] = $sprintStartDate;
+                    $sprint['end_date'] = $sprintEndDate;
+                    
+                    // Update sprint status based on current date
+                    $currentDate = time();
+                    $sprint['status'] = ($currentDate >= strtotime($sprintStartDate) && 
+                    $currentDate <= strtotime($sprintEndDate)) 
+                        ? 'active' 
+                        : 'inactive';
+                }
+            }
+    
+            // Save updated sprints back to the board
+            $board->sprints = json_encode($sprints);
+            $board->save();
+    
+            return response()->json([
+                'message' => 'Sprint deleted successfully',
+                'sprints' => $sprints
+            ]);
+        }
+    
+        return response()->json(['error' => 'Sprint not found']);
+    }
 }

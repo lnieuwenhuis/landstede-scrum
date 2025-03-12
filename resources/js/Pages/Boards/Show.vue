@@ -87,7 +87,60 @@ watch(columns, () => {
 const showDeleteConfirmation = ref(false);
 const cardToDelete = ref(null);
 
-// Card handlers
+// Add these refs near the other ref declarations
+const showDeleteSprintConfirmation = ref(false);
+const sprintToDelete = ref(null);
+
+// Add these functions near the other sprint-related functions
+const toggleDeleteSprint = (sprintId = null) => {
+    document.body.style.overflow = showDeleteSprintConfirmation.value ? '' : 'hidden';
+    showDeleteSprintConfirmation.value = !showDeleteSprintConfirmation.value;
+    sprintToDelete.value = sprintId;
+};
+
+const handleDeleteSprint = async () => {
+    try {
+        const response = await axios.post('/api/deleteSprint', {
+            board_id: board.id,
+            sprint_id: sprintToDelete.value
+        });
+
+        if (response.data.message) {
+            sprints.value = sprints.value.filter(sprint => sprint.id !== sprintToDelete.value);
+            
+            // If deleted sprint was selected in burndown chart, switch to board view
+            if (selectedPeriod.value === sprintToDelete.value) {
+                handlePeriodChange('board');
+            }
+            
+            toast.success('Sprint deleted successfully');
+            toggleDeleteSprint();
+        } else {
+            throw new Error(response.data.error || 'Failed to delete sprint');
+        }
+    } catch (error) {
+        console.error('Error deleting sprint:', error);
+        toast.error(error.message || 'Failed to delete sprint');
+    }
+};
+
+const handleCreateSprint = async () => {
+    try {
+        const response = await axios.post('/api/createSprint', {
+            board_id: board.id,
+            title: 'New Sprint',
+        });
+        if (response.data.sprints) {
+            sprints.value = response.data.sprints;
+        } else {
+            throw new Error(response.data.error || 'Failed to create sprint');
+        }
+    } catch (error) {
+        console.error('Error creating sprint:', error);
+        toast.error(error.message || 'Failed to create sprint');
+    }
+};
+
 const handleUpdateCard = async ({ cardId, columnId, title, description, points }) => {
     // Update card optimistically
     columns.value.forEach(column => {
@@ -570,7 +623,18 @@ const handleSaveSprint = async () => {
             <div v-if="activeTab === 'sprints'">
                 <div class="bg-white shadow-md rounded-lg overflow-hidden">
                     <div class="p-6">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Sprints</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-gray-800">Sprints</h2>
+                            <button 
+                                @click="handleCreateSprint"
+                                class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                                New Sprint
+                            </button>
+                        </div>                        
                         <div class="space-y-4">
                             <div 
                                 v-for="sprint in sprints" 
@@ -613,6 +677,7 @@ const handleSaveSprint = async () => {
                                             </svg>
                                         </button>
                                         <button 
+                                            @click="toggleDeleteSprint(sprint.id)"
                                             class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -644,6 +709,27 @@ const handleSaveSprint = async () => {
                         </button>
                         <button 
                             @click="handleDeleteCard(cardToDelete)" 
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="showDeleteSprintConfirmation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Sprint</h3>
+                    <p class="text-gray-600 mb-6">Are you sure you want to delete this sprint? This action cannot be undone.</p>
+                    <div class="flex justify-end space-x-3">
+                        <button 
+                            @click="toggleDeleteSprint()" 
+                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            @click="handleDeleteSprint" 
                             class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                         >
                             Delete
@@ -730,4 +816,5 @@ const handleSaveSprint = async () => {
             </div>
         </div>
     </AuthenticatedLayout>
-</template>            
+</template>
+

@@ -63,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Other API Routes
     Route::post('/api/disableLoginMessage', [AuthenticatedSessionController::class,'disableLoginMessage']);
     Route::post('/api/updateSprint', [BoardController::class, 'updateSprint']);
+    Route::post('/api/deleteSprint', [BoardController::class, 'deleteSprint']);
+    Route::post('/api/createSprint', [BoardController::class, 'createSprint']);
 });
 
 require __DIR__.'/auth.php';
