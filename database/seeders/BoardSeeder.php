@@ -24,31 +24,32 @@ class BoardSeeder extends Seeder
             $startDate = date('Y-m-d', strtotime("$currentYear-$startMonth-01"));
             $endDate = date('Y-m-d', strtotime("$startDate +2 months -1 day"));
             
+            // Calculate sprint dates based on board duration
             $boardStartTimestamp = strtotime($startDate);
             $boardEndTimestamp = strtotime($endDate);
             $totalDuration = $boardEndTimestamp - $boardStartTimestamp;
             $sprintDuration = $totalDuration / 2;
             
-            $sprint1 = new stdClass();
-            $sprint1->title = 'Sprint 1';
-            $sprint1->start_date = $startDate;
-            $sprint1->end_date = date('Y-m-d', $boardStartTimestamp + $sprintDuration);
-            $sprint1->status = 'active';
-            $sprint1->id = 1;
-
-            $sprint2 = new stdClass();
-            $sprint2->title = 'Sprint 2';
-            $sprint2->start_date = date('Y-m-d', strtotime($sprint1->end_date . ' +1 day'));
-            $sprint2->end_date = $endDate;
-            $sprint2->status = 'inactive';
-            $sprint2->id = 2;
-
-            $sprint3 = new stdClass();
-            $sprint3->title = 'Sprint 3';
-            $sprint3->start_date = date('Y-m-d', strtotime($sprint1->end_date . ' +1 day'));
-            $sprint3->end_date = $endDate;
-            $sprint3->status = 'locked';
-            $sprint3->id = 3;
+            // Create sprints using a loop
+            $sprints = [];
+            $statuses = ['active', 'inactive', 'locked', 'checked'];
+            
+            for ($j = 1; $j <= 4; $j++) {
+                $sprint = new stdClass();
+                $sprint->title = 'Sprint ' . $j;
+                $sprint->id = $j;
+                $sprint->status = $statuses[$j - 1];
+                
+                if ($j === 1) {
+                    $sprint->start_date = $startDate;
+                    $sprint->end_date = date('Y-m-d', $boardStartTimestamp + $sprintDuration);
+                } else {
+                    $sprint->start_date = date('Y-m-d', strtotime($sprints[0]->end_date . ' +1 day'));
+                    $sprint->end_date = $endDate;
+                }
+                
+                $sprints[] = $sprint;
+            }
 
             $user = User::factory()->create();
             
@@ -73,7 +74,7 @@ class BoardSeeder extends Seeder
                 'creator_id' => $user['id'],
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'sprints' => json_encode([$sprint1, $sprint2, $sprint3]),
+                'sprints' => json_encode($sprints),
                 'non_working_days' => json_encode($nonWorkingDays),
             ]);
             $board->users()->attach($user['id']);

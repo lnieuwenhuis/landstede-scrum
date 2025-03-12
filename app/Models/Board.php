@@ -104,15 +104,20 @@ class Board extends Model
         $currentDate = Carbon::now();
         $sprints = $this->sprints();
 
+        $newSprints = [];
+        
         foreach ($sprints as $sprint) {
             $startDate = Carbon::parse($sprint['start_date']);
             $endDate = Carbon::parse($sprint['end_date']);
             
             if ($currentDate->between($startDate, $endDate) || $sprint['status'] == 'checked') {
-                return $sprint;
+                $newSprints[] = $sprint;
             } else {
                 $sprint['status'] = 'locked';
+                $newSprints[] = $sprint;
             }
         }
+
+        return $newSprints;
     }
 }

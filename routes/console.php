@@ -18,4 +18,4 @@ Artisan::command('CheckBoardSprints', function () {
     }
 
     return $this->comment(json_encode($tests));
-})->purpose('Check and change board sprint statuses');
+})->purpose('Check and change board sprint statuses every day');
