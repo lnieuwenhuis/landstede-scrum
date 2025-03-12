@@ -317,7 +317,6 @@ const handleUpdateColumn = async ({ id, title }) => {
 
 const ownerId = users.value.length > 0 ? users.value[0].id : null;
 
-// Add these variables after the ownerId declaration in the script section
 const showSprintEditModal = ref(false);
 const sprintToEdit = ref(null);
 const editedSprintData = ref({
@@ -347,34 +346,38 @@ const closeSprintEditModal = () => {
     sprintToEdit.value = null;
 };
 
-// Add this function to handle saving the edited sprint
 const handleSaveSprint = async () => {
-    // Here you would add the API call to update the sprint
-    // For now, we'll just update it locally
-    const sprintIndex = sprints.value.findIndex(s => s.id === sprintToEdit.value.id);
-    if (sprintIndex !== -1) {
-        sprints.value[sprintIndex] = {
-            ...sprints.value[sprintIndex],
-            ...editedSprintData.value
-        };
+    try {
+        const response = await axios.post(`/api/updateSprint`, {
+            board_id: board.id,
+            sprint_id: sprintToEdit.value.id,
+            title: editedSprintData.value.title,
+            start_date: editedSprintData.value.start_date,
+            end_date: editedSprintData.value.end_date,
+            status: editedSprintData.value.status
+        });
         
-        toast.success('Sprint updated successfully');
-        closeSprintEditModal();
-        
-        // Uncomment and adapt this when you have the API endpoint
-        /*
-        try {
-            const response = await axios.post(`/api/updateSprint/${sprintToEdit.value.id}`, editedSprintData.value);
-            if (response.data.message) {
-                toast.success('Sprint updated successfully');
-                closeSprintEditModal();
-            } else {
-                throw new Error('Failed to update sprint');
+        if (response.data.message) {
+            const sprintIndex = sprints.value.findIndex(s => s.id === sprintToEdit.value.id);
+            if (sprintIndex !== -1) {
+                sprints.value[sprintIndex] = {
+                    ...sprints.value[sprintIndex],
+                    ...editedSprintData.value
+                };
             }
-        } catch (error) {
-            toast.error('Failed to update sprint');
+            
+            if (selectedPeriod.value == sprintToEdit.value.id) {
+                handlePeriodChange(selectedPeriod.value);
+            }
+            
+            toast.success('Sprint updated successfully');
+            closeSprintEditModal();
+        } else {
+            throw new Error(response.data.error || 'Failed to update sprint');
         }
-        */
+    } catch (error) {
+        console.error('Error updating sprint:', error);
+        toast.error(error.message || 'Failed to update sprint');
     }
 };
 </script>

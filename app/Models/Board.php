@@ -112,7 +112,7 @@ class Board extends Model
         sort($freeDates);
         return $freeDates;
     }
-
+    
     public function checkSprints()
     {
         $currentDate = Carbon::now();

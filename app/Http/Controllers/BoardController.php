@@ -327,4 +327,34 @@ class BoardController extends Controller
             'column' => $column
         ]);
     }
+
+    public function updateSprint(Request $request)
+    {
+        $board = Board::find($request->board_id);
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+        
+        $sprints = json_decode($board->sprints, true);
+        $sprintIndex = array_search($request->sprint_id, array_column($sprints, 'id'));
+        
+        if ($sprintIndex !== false) {
+            // Update the sprint with new data
+            $sprints[$sprintIndex]['title'] = $request->title;
+            $sprints[$sprintIndex]['start_date'] = $request->start_date;
+            $sprints[$sprintIndex]['end_date'] = $request->end_date;
+            $sprints[$sprintIndex]['status'] = $request->status;
+            
+            // Save updated sprints back to the board
+            $board->sprints = json_encode($sprints);
+            $board->save();
+            
+            return response()->json([
+                'message' => 'Sprint updated successfully',
+                'sprint' => $sprints[$sprintIndex]
+            ]);
+        }
+        
+        return response()->json(['error' => 'Sprint not found']);
+    }
 }
