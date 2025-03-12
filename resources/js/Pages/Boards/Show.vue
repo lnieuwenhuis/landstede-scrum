@@ -368,7 +368,7 @@ const ownerId = users.value.length > 0 ? users.value[0].id : null;
 
             <div v-if="activeTab === 'burndown'" class="flex-1">
                 <!-- Sprint/Board Selection Dropdown -->
-                <div class="mb-6">
+                <div class="mb-6 px-4">
                     <label for="period-selector" class="block text-sm font-medium text-gray-700 mb-2">
                         Select Period:
                     </label>
@@ -385,10 +385,12 @@ const ownerId = users.value.length > 0 ? users.value[0].id : null;
                     </select>
                 </div>
                 
-                <!-- Burndown Chart -->
-                <div class="flex justify-center items-center h-full">
-                    <div class="w-full h-[500px]">
-                        <Line :data="chartData" :options="chartOptions" />
+                <!-- Burndown Chart with horizontal scroll on mobile -->
+                <div class="overflow-x-auto">
+                    <div class="flex justify-center items-center h-full min-w-[800px]">
+                        <div class="w-full h-[500px]">
+                            <Line :data="chartData" :options="chartOptions"/>
+                        </div>
                     </div>
                 </div>
             </div>
