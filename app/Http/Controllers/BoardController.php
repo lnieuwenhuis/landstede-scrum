@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use stdClass;
 use App\Models\Board;
 use App\Models\Column;
 use App\Models\Card;
@@ -77,13 +78,41 @@ class BoardController extends Controller
             'status' =>'required|string',
         ]);
 
+        $sprintsInput = json_decode($validatedData['sprints']);
+        $sprints = [];
+        foreach ($sprintsInput as $sprint) {
+            // Remove the debug return statement
+            $currentDate = time();
+            $sprintStartDate = strtotime($sprint->start_date);
+            $sprintEndDate = strtotime($sprint->end_date);
+            
+            // Check if current date is between start and end date
+            $status = ($currentDate >= $sprintStartDate && $currentDate <= $sprintEndDate) 
+                ? 'active' 
+                : 'inactive';
+                
+            $sprints[] = [
+                'id' => count($sprints) + 1,
+                'title' => $sprint->name,
+                'start_date' => $sprint->start_date,
+                'end_date' => $sprint->end_date,
+                'status' => $status,
+            ];
+        }
+
+        $nonWorkingDaysInput = json_decode($validatedData['non_working_days']);
+        $nonWorkingDays = [];
+        foreach ($nonWorkingDaysInput as $nonWorkingDay) {
+            $nonWorkingDays[] = $nonWorkingDay;
+        }
+
         $board = Board::factory()->create([
             'title' => $validatedData['title'],
             'description' => $validatedData['description'],
             'start_date' => date("Y-m-d H:i:s", strtotime($validatedData['startDate'])),
             'end_date' => date("Y-m-d H:i:s", strtotime($validatedData['endDate'])),
-            'sprints' => json_encode($validatedData['sprints']) ?? null,
-            'non_working_days' => json_encode($validatedData['non_working_days']),
+            'sprints' => json_encode($sprints) ?? null,
+            'non_working_days' => json_encode($nonWorkingDays),
             'status' => $validatedData['status'],
             'creator_id' => $user->id,
         ]);

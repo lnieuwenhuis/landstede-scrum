@@ -91,10 +91,24 @@ class Board extends Model
     public function nonWorkingDays()
     {
         $vacation = Vacation::activeVacation();
+        
+        // Handle non_working_days - could be JSON string or already an array
         $non_working_days = $this->non_working_days;
+        if (is_string($non_working_days)) {
+            $non_working_days = json_decode($non_working_days);
+        }
+        
+        // Handle vacation dates - could be JSON string or already an array
         $vacationDates = $vacation->vacation_dates ?? [];
+        if (is_string($vacationDates)) {
+            $vacationDates = json_decode($vacationDates);
+        }
+        
+        // Ensure both are arrays before merging
+        $non_working_days = is_array($non_working_days) ? $non_working_days : [];
+        $vacationDates = is_array($vacationDates) ? $vacationDates : [];
 
-        $freeDates = array_unique(array_merge(json_decode($non_working_days), json_decode($vacationDates)));
+        $freeDates = array_unique(array_merge($non_working_days, $vacationDates));
         sort($freeDates);
         return $freeDates;
     }
