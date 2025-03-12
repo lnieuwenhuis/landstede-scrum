@@ -10,8 +10,12 @@ Artisan::command('inspire', function () {
 
 Artisan::command('CheckBoardSprints', function () {
     $boards = Board::all();
+
+    $tests = [];
     foreach ($boards as $board) {
         $test = $board->checkSprints();
-        return $this->comment($test);
+        $tests[] = $test;
     }
+
+    return $this->comment(json_encode($tests));
 })->purpose('Check and change board sprint statuses');

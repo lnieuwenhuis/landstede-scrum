@@ -33,15 +33,22 @@ class BoardSeeder extends Seeder
             $sprint1->title = 'Sprint 1';
             $sprint1->start_date = $startDate;
             $sprint1->end_date = date('Y-m-d', $boardStartTimestamp + $sprintDuration);
-            $sprint1->status = $faker->randomElement(['done', 'not_done', 'active']);
+            $sprint1->status = 'active';
             $sprint1->id = 1;
 
             $sprint2 = new stdClass();
             $sprint2->title = 'Sprint 2';
             $sprint2->start_date = date('Y-m-d', strtotime($sprint1->end_date . ' +1 day'));
             $sprint2->end_date = $endDate;
-            $sprint2->status = $faker->randomElement(['done', 'not_done', 'active']);
+            $sprint2->status = 'inactive';
             $sprint2->id = 2;
+
+            $sprint3 = new stdClass();
+            $sprint3->title = 'Sprint 3';
+            $sprint3->start_date = date('Y-m-d', strtotime($sprint1->end_date . ' +1 day'));
+            $sprint3->end_date = $endDate;
+            $sprint3->status = 'locked';
+            $sprint3->id = 3;
 
             $user = User::factory()->create();
             
@@ -66,7 +73,7 @@ class BoardSeeder extends Seeder
                 'creator_id' => $user['id'],
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'sprints' => json_encode([$sprint1, $sprint2]),
+                'sprints' => json_encode([$sprint1, $sprint2, $sprint3]),
                 'non_working_days' => json_encode($nonWorkingDays),
             ]);
             $board->users()->attach($user['id']);
