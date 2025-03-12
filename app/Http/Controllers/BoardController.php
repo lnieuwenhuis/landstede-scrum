@@ -81,7 +81,6 @@ class BoardController extends Controller
         $sprintsInput = json_decode($validatedData['sprints']);
         $sprints = [];
         foreach ($sprintsInput as $sprint) {
-            // Remove the debug return statement
             $currentDate = time();
             $sprintStartDate = strtotime($sprint->start_date);
             $sprintEndDate = strtotime($sprint->end_date);
