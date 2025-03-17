@@ -12,43 +12,48 @@ const props = defineProps({
     chartOptions: Object
 });
 
-const selectedPeriod = ref('board');
-
 const emit = defineEmits(['period-change']);
 
-const handlePeriodChange = (value) => {
-    emit('period-change', value);
+const selectedPeriod = ref('board');
+
+const handlePeriodChange = (event) => {
+    selectedPeriod.value = event.target.value;
+    emit('period-change', selectedPeriod.value);
 };
 
+// Add a watch to detect changes in columns data
+watch(() => props.columns, () => {
+    // This will trigger when columns change, but the parent component
+    // will handle the actual chart update through the burndown-update event
+}, { deep: true });
 </script>
 
 <template>
-    <div class="flex-1">
-        <!-- Sprint/Board Selection Dropdown -->
-        <div class="mb-6 px-4">
-            <label for="period-selector" class="block text-sm font-medium text-gray-700 mb-2">
-                Select Period:
-            </label>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="mb-6">
+            <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1">Select Period</label>
             <select 
-                id="period-selector" 
-                v-model="selectedPeriod" 
-                @change="handlePeriodChange(selectedPeriod)"
-                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                id="period-select" 
+                v-model="selectedPeriod"
+                @change="handlePeriodChange"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-                <option value="board">Entire Board</option>
-                <option v-for="sprint in sprints" :key="sprint.id" :value="sprint.id">
-                    {{ sprint.title }} ({{ new Date(sprint.start_date).toLocaleDateString() }} - {{ new Date(sprint.end_date).toLocaleDateString() }})
+                <option value="board">Entire Board ({{ board.start_date }} to {{ board.end_date }})</option>
+                <option 
+                    v-for="sprint in sprints" 
+                    :key="sprint.id" 
+                    :value="sprint.id"
+                >
+                    {{ sprint.title }} ({{ sprint.start_date }} to {{ sprint.end_date }})
                 </option>
             </select>
         </div>
         
-        <!-- Burndown Chart with horizontal scroll on mobile -->
-        <div class="overflow-x-auto">
-            <div class="flex justify-center items-center h-full min-w-[800px]">
-                <div class="w-full h-[500px]">
-                    <Line :data="chartData" :options="chartOptions"/>
-                </div>
-            </div>
+        <div class="h-96">
+            <Line 
+                :data="chartData" 
+                :options="chartOptions" 
+            />
         </div>
     </div>
 </template>

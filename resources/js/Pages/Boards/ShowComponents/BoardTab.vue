@@ -1,11 +1,18 @@
 <script setup>
 import CardForm from './CardForm.vue';
 import { ref, computed } from 'vue';
+import axios from 'axios';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 const props = defineProps({
     columns: Array,
-    board: Object
+    board: Object,
+    users: Array
 });
+
+console.log(props);
 
 // Add computed properties to separate regular columns from the Done column
 const regularColumns = computed(() => {
@@ -17,33 +24,56 @@ const doneColumn = computed(() => {
 });
 
 const emit = defineEmits([
-    'updateCard',
-    'deleteCard',
-    'addCard',
-    'deleteColumn',
-    'toggleEditColumn',
-    'updateColumn',
-    'addColumn',
-    'moveCard'
+    'columns-updated',
+    'burndown-update'  // Add this new emit event
 ]);
 
 // Local state management
 const cardOpen = ref({});
-const cardEditing = ref(null);
 const cardTitle = ref('');
 const cardDesc = ref('');
 const cardPoints = ref(0);
-const showNewColumn = ref(false);
+const cardEditing = ref(null);
+const columnEditing = ref(null);
 const newColumnTitle = ref('');
 const newColumnDone = ref(false);
+const showNewColumn = ref(false);
+const currentDragCardId = ref(null);
 const currentDragColumnId = ref(null);
-const columnEditing = ref(null);
-const editColumnTitle = ref('');
+const currentDragSourceColumnId = ref(null);
 
-// Card handlers
+// Card drag and drop handlers
+const handleDragStart = (event, cardId, columnId) => {
+    currentDragCardId.value = cardId;
+    currentDragSourceColumnId.value = columnId;
+    event.dataTransfer.effectAllowed = 'move';
+};
+
+const handleDragOver = (event, columnId) => {
+    currentDragColumnId.value = columnId;
+};
+
+const handleDragLeave = () => {
+    currentDragColumnId.value = null;
+};
+
+const handleDrop = async (event, targetColumnId) => {
+    if (currentDragCardId.value && currentDragSourceColumnId.value) {
+        await handleMoveCard({
+            cardId: currentDragCardId.value,
+            sourceColumnId: currentDragSourceColumnId.value,
+            targetColumnId
+        });
+    }
+    currentDragCardId.value = null;
+    currentDragSourceColumnId.value = null;
+    currentDragColumnId.value = null;
+};
+
+// Card form handlers
 const toggleAddCard = (columnId) => {
-    cardOpen.value[columnId] = !cardOpen.value[columnId];
-    cardEditing.value = null;
+    cardOpen.value = { ...cardOpen.value, [columnId]: !cardOpen.value[columnId] };
+    resetForm();
 };
 
 const toggleEditCard = (card) => {
@@ -54,315 +84,501 @@ const toggleEditCard = (card) => {
 };
 
 const resetForm = () => {
-    cardEditing.value = null;
     cardTitle.value = '';
     cardDesc.value = '';
     cardPoints.value = 0;
+    cardEditing.value = null;
 };
 
-// Column handlers
+// Column form handlers
 const toggleNewColumn = () => {
     showNewColumn.value = !showNewColumn.value;
+    resetNewColumnForm();
 };
 
 const toggleEditColumn = (column) => {
-    if (columnEditing.value === column.id) {
-        columnEditing.value = null;
-    } else {
-        columnEditing.value = column.id;
-        editColumnTitle.value = column.title;
-    }
-};
-
-const saveColumnEdit = (columnId) => {
-    emit('updateColumn', { id: columnId, title: editColumnTitle.value });
-    columnEditing.value = null;
+    columnEditing.value = column.id;
+    newColumnTitle.value = column.title;
 };
 
 const resetNewColumnForm = () => {
     newColumnTitle.value = '';
     newColumnDone.value = false;
+    columnEditing.value = null;
 };
 
-// Drag and drop handlers
-const handleDragStart = (event, cardId, columnId) => {
-    event.dataTransfer.setData('text/plain', JSON.stringify({ cardId, columnId }));
-    event.dataTransfer.effectAllowed = 'move';
+// API handlers
+const handleUpdateCard = async ({ cardId, columnId, title, description, points }) => {
+    // Update card optimistically
+    props.columns.forEach(column => {
+        const cardIndex = column.cards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+            column.cards[cardIndex] = {
+                ...column.cards[cardIndex],
+                title,
+                description,
+                points
+            };
+        }
+    });
+
+    // Send to backend
+    try {
+        const response = await axios.post(`/api/updateCard/${cardId}`, {
+            title,
+            description,
+            points
+        });
+
+        if (!response.data.message) {
+            throw new Error('Failed to update card');
+        }
+        
+        toast.success('Card updated successfully');
+        emit('columns-updated');
+    } catch (error) {
+        // Revert changes if failed
+        toast.error('Failed to update card');
+        emit('columns-updated');
+    }
 };
 
-const handleDragOver = (event, columnId) => {
-    event.preventDefault();
-    currentDragColumnId.value = columnId;
-    event.dataTransfer.dropEffect = 'move';
+const handleDeleteCard = async (cardId) => {
+    // Store card data for potential rollback
+    let deletedCard;
+    let deletedFromColumn;
+
+    // Remove card optimistically
+    props.columns.forEach(column => {
+        const cardIndex = column.cards.findIndex(c => c.id === cardId);
+        if (cardIndex !== -1) {
+            deletedCard = column.cards[cardIndex];
+            deletedFromColumn = column;
+            column.cards = column.cards.filter(card => card.id !== cardId);
+        }
+    });
+
+    try {
+        // Send to backend
+        const response = await axios.post(`/api/deleteCard/${cardId}`);
+        if (!response.data.message) {
+            throw new Error('Failed to delete card');
+        }
+        
+        toast.success(response.data.message);
+        emit('columns-updated');
+    } catch (error) {
+        // Revert changes if failed
+        if (deletedCard && deletedFromColumn) {
+            deletedFromColumn.cards.push(deletedCard);
+        }
+        toast.error('Failed to delete card');
+        emit('columns-updated');
+    }
 };
 
-const handleDragLeave = () => {
-    currentDragColumnId.value = null;
+const generateTempId = () => `temp-${Date.now()}`;
+
+const handleAddCard = async ({ columnId, title, description, points }) => {
+    // Add card optimistically
+    const tempId = generateTempId();
+    const column = props.columns.find(col => col.id === columnId);
+    if (column) {
+        const tempCard = {
+            id: tempId,
+            title,
+            description,
+            points
+        };
+        column.cards.push(tempCard);
+    }
+
+    try {
+        // Send to backend
+        const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
+            title,
+            description,
+            points
+        });
+
+        if (!response.data.card) {
+            throw new Error('Failed to add card');
+        }
+
+        // Replace temp card with real one
+        const column = props.columns.find(col => col.id === columnId);
+        if (column) {
+            const index = column.cards.findIndex(c => c.id === tempId);
+            if (index !== -1) {
+                column.cards[index] = response.data.card;
+            }
+        }
+        
+        toast.success('Card added successfully');
+        emit('columns-updated');
+        emit('burndown-update'); // Add this to trigger burndown chart update
+    } catch (error) {
+        toast.error('Failed to add card');
+        emit('columns-updated');
+    }
 };
 
-const handleDrop = (event, targetColumnId) => {
-    event.preventDefault();
-    currentDragColumnId.value = null;
+const handleAddColumn = async ({ title, done, board_id, status }) => {
+    if (!status) status = "active";
+    const tempId = generateTempId();
     
-    const { cardId, columnId: sourceColumnId } = JSON.parse(event.dataTransfer.getData('text/plain'));
-    if (sourceColumnId === targetColumnId) return;
+    // Add column optimistically
+    const tempColumn = {
+        id: tempId,
+        title,
+        done,
+        board_id,
+        status,
+        cards: []
+    };
+    props.columns.push(tempColumn);
+
+    try {
+        // Send to backend
+        const response = await axios.post('/api/addColumn', {
+            title,
+            done,
+            board_id,
+            status
+        });
+
+        if (!response.data || !response.data.column) {
+            throw new Error('No column data received');
+        }
+        
+        // Replace temp column with real one
+        const index = props.columns.findIndex(col => col.id === tempId);
+        if (index !== -1) {
+            props.columns[index] = response.data.column;
+        }
+        
+        toast.success('Column added successfully!');
+        emit('columns-updated');
+    } catch (error) {
+        // Remove temp column if request failed
+        const filteredColumns = props.columns.filter(col => col.id !== tempId);
+        props.columns.length = 0;
+        filteredColumns.forEach(col => props.columns.push(col));
+        
+        toast.error('Failed to add column');
+    }
+};
+
+const handleDeleteColumn = async (columnId) => {
+    // Store column data for potential rollback
+    const deletedColumn = props.columns.find(col => col.id === columnId);
+    const columnIndex = props.columns.findIndex(col => col.id === columnId);
     
-    emit('moveCard', { cardId, sourceColumnId, targetColumnId });
+    // Remove column optimistically
+    const filteredColumns = props.columns.filter(column => column.id !== columnId);
+    props.columns.length = 0;
+    filteredColumns.forEach(col => props.columns.push(col));
+
+    try {
+        // Send to backend
+        const response = await axios.post(`/api/deleteColumn`, {
+            column_id: columnId
+        });
+
+        if (!response.data.message) {
+            throw new Error('Failed to delete column');
+        }
+        
+        toast.success(response.data.message);
+        emit('columns-updated');
+    } catch (error) {
+        // Revert changes if failed
+        if (deletedColumn && columnIndex !== -1) {
+            props.columns.splice(columnIndex, 0, deletedColumn);
+        }
+        toast.error('Failed to delete column');
+        emit('columns-updated');
+    }
+};
+
+// Card movement handler
+const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
+    const sourceColumn = props.columns.find(col => col.id == sourceColumnId);
+    const targetColumn = props.columns.find(col => col.id == targetColumnId);
+    const cardIndex = sourceColumn.cards.findIndex(c => c.id == cardId);
+    if (cardIndex === -1) return;
+
+    const [movedCard] = sourceColumn.cards.splice(cardIndex, 1);
+    targetColumn.cards.push(movedCard);
+
+    try {
+        await axios.post(`/api/cards/${cardId}/move`, {
+            column_id: targetColumnId
+        });
+        toast.success('Card moved successfully');
+        emit('columns-updated');
+        emit('burndown-update'); // Add this line
+    } catch (error) {
+        // Revert changes if API call fails
+        sourceColumn.cards.splice(cardIndex, 0, movedCard);
+        targetColumn.cards.pop();
+        toast.error('Failed to move card');
+        emit('columns-updated');
+    }
+};
+
+const handleUpdateColumn = async ({ id, title }) => {
+    const column = props.columns.find(col => col.id === id);
+    if (!column) return;
+    
+    const originalTitle = column.title;
+    
+    column.title = title;
+    
+    try {
+        const response = await axios.post(`/api/updateColumn`, {
+            column_id: id,
+            title
+        });
+        
+        if (!response.data.message) {
+            throw new Error('Failed to update column');
+        }
+        
+        toast.success('Column updated successfully');
+        emit('columns-updated');
+    } catch (error) {
+        if (column) {
+            column.title = originalTitle;
+        }
+        toast.error('Failed to update column');
+        emit('columns-updated');
+    }
 };
 </script>
 
 <template>
-    <div class="overflow-x-auto pb-4" style="min-height: calc(100vh - 250px)">
-        <div class="flex gap-6 flex-nowrap min-w-full">
-            <!-- Regular Columns (excluding Done) -->
+    <div class="flex flex-col bg-white p-4 rounded-lg shadow">
+        <!-- Board columns container -->
+        <div class="flex space-x-4 overflow-x-auto pb-4">
+            <!-- Regular columns -->
             <div 
                 v-for="column in regularColumns" 
                 :key="column.id"
+                class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow"
+                :class="{ 'border-2 border-blue-400': currentDragColumnId === column.id }"
                 @dragover.prevent="handleDragOver($event, column.id)"
                 @dragleave="handleDragLeave"
                 @drop.prevent="handleDrop($event, column.id)"
-                :class="{ 'bg-blue-100': currentDragColumnId === column.id }"
-                class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200 flex flex-col max-h-[calc(100vh-200px)]"
             >
-                <!-- Column Header -->
-                <h2 v-if="columnEditing !== column.id" class="text-xl font-semibold text-gray-800 mb-4">{{ column.title }}</h2>
-                <div v-else class="mb-4 flex">
-                    <input 
-                        v-model="editColumnTitle"
-                        type="text" 
-                        class="w-full px-2 py-1 text-xl font-semibold text-gray-800 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                    />
-                    <button @click="saveColumnEdit(column.id)" class="ml-2 px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600">
-                        Save
-                    </button>
+                <!-- Column header -->
+                <div class="p-3 bg-gray-200 rounded-t-lg flex justify-between items-center">
+                    <div v-if="columnEditing === column.id" class="flex-1">
+                        <input 
+                            v-model="newColumnTitle" 
+                            @keyup.enter="handleUpdateColumn({ id: column.id, title: newColumnTitle }); resetNewColumnForm()"
+                            @blur="resetNewColumnForm()"
+                            class="w-full px-2 py-1 border border-gray-300 rounded"
+                            placeholder="Column title"
+                        />
+                    </div>
+                    <h3 v-else class="font-medium text-gray-700">{{ column.title }}</h3>
+                    <div class="flex space-x-1" v-if="column.user_created !== 0">
+                        <button 
+                            @click="toggleEditColumn(column)"
+                            class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                        <button 
+                            @click="handleDeleteColumn(column.id)"
+                            class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-
-                <!-- Cards Container with Scrolling -->
-                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar overflow-x-visible">
+                
+                <!-- Cards container -->
+                <div class="p-2 max-h-[calc(100vh-12rem)] overflow-y-auto">
+                    <!-- Cards -->
                     <div 
                         v-for="card in column.cards" 
                         :key="card.id"
+                        class="bg-white p-3 rounded shadow-sm mb-2 cursor-pointer"
                         draggable="true"
                         @dragstart="handleDragStart($event, card.id, column.id)"
-                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-all duration-200 hover:scale-[1.02] relative"
-                        style="transform-origin: center center; will-change: transform;"
                     >
-                        <!-- Card content remains the same -->
-                        <div v-if="cardEditing !== card.id">
-                            <p class="text-gray-700">{{ card.title }}</p>
-                            <p class="text-gray-500">{{ card.description }}</p>
-                            <span class="text-gray-500">Points: {{ card.points }}</span>
-                            <div class="flex gap-2 mt-2">
-                                <button @click="toggleEditCard(card)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600">
-                                    Edit
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
+                            <div class="flex space-x-1">
+                                <button 
+                                    @click="toggleEditCard(card)"
+                                    class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
                                 </button>
-                                <button @click="emit('deleteCard', card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
-                                    Delete
+                                <button 
+                                    @click="handleDeleteCard(card.id)"
+                                    class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
-
-                        <!-- Card Edit Form -->
-                        <CardForm
-                            v-else-if="cardEditing === card.id"
-                            :initial-values="{
-                                title: card.title,
-                                description: card.description,
-                                points: card.points
-                            }"
-                            :is-editing="true"
-                            :column-id="column.id"
-                            :card-id="card.id"
-                            @save="emit('updateCard', $event); resetForm()"
-                            @cancel="resetForm"
-                        />
-                    </div>
-                </div>
-
-                <!-- Card Form and Column Actions (fixed at bottom) -->
-                <div class="mt-4">
-                    <CardForm
-                        v-if="cardOpen[column.id]"
-                        :initial-values="{
-                            title: cardTitle,
-                            description: cardDesc,
-                            points: cardPoints
-                        }"
-                        :is-editing="false"
-                        :column-id="column.id"
-                        @save="emit('addCard', $event); resetForm(); toggleAddCard(column.id)"
-                        @cancel="toggleAddCard(column.id)"
-                    />
-
-                    <!-- Column Actions -->
-                    <div class="flex justify-between mt-2">
-                        <button 
-                            v-if="!cardOpen[column.id]" 
-                            @click="toggleAddCard(column.id)"
-                            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            + Add Card
-                        </button>
-                        <div v-if="!['Project Backlog', 'Sprint Backlog', 'Done'].includes(column.title)" class="flex gap-2">
-                            <button @click="toggleEditColumn(column)" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                </svg>
-                            </button>
-                            <button @click="emit('deleteColumn', column.id)" class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
+                        <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- New Column Form -->
-            <div v-if="showNewColumn" class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4 max-h-[calc(100vh-200px)] flex flex-col">
-                <!-- New column form content remains the same -->
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">New Column</h2>
-                <div class="space-y-4">
-                    <input 
-                        v-model="newColumnTitle"
-                        type="text" 
-                        class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="Enter column title" 
-                    />
-                    <label class="flex items-center mt-2">
-                        <input 
-                            v-model="newColumnDone"
-                            type="checkbox" 
-                            class="form-checkbox h-5 w-5 text-blue-600" 
+                    
+                    <!-- Add card form -->
+                    <div v-if="cardOpen[column.id]">
+                        <CardForm 
+                            :column-id="column.id"
+                            @save="handleAddCard"
+                            @cancel="toggleAddCard(column.id)"
                         />
-                        <span class="ml-2 text-gray-700">Done</span>
-                    </label>
-                </div>
-                <div class="flex justify-between mt-4">
-                    <button @click="emit('addColumn', { title: newColumnTitle, done: newColumnDone, board_id: board.id }); resetNewColumnForm(); toggleNewColumn()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add</button>
-                    <button @click="toggleNewColumn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Cancel</button>
+                    </div>
+                    
+                    <!-- Add card button -->
+                    <button 
+                        v-else
+                        @click="toggleAddCard(column.id)"
+                        class="w-full py-2 px-3 text-sm text-gray-600 hover:bg-gray-200 rounded flex items-center justify-center mt-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Card
+                    </button>
                 </div>
             </div>
-                        
-            <!-- Add Column Button -->
-            <button 
-                v-if="!showNewColumn" 
-                @click="toggleNewColumn"
-                class="w-20 h-20 flex-none bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 flex items-center justify-center"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </button>
-
-            <!-- Done Column (placed after the add column button) -->
+            
+            <!-- Done column -->
             <div 
                 v-if="doneColumn"
                 :key="doneColumn.id"
+                class="flex-shrink-0 w-80 bg-green-50 rounded-lg shadow"
+                :class="{ 'border-2 border-blue-400': currentDragColumnId === doneColumn.id }"
                 @dragover.prevent="handleDragOver($event, doneColumn.id)"
                 @dragleave="handleDragLeave"
                 @drop.prevent="handleDrop($event, doneColumn.id)"
-                :class="{ 'bg-blue-100': currentDragColumnId === doneColumn.id }"
-                class="w-[300px] flex-none bg-black/5 shadow-md rounded-lg p-4 transition-colors duration-200 flex flex-col max-h-[calc(100vh-200px)]"
             >
-                <!-- Done column content with same structure as regular columns -->
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ doneColumn.title }}</h2>
-
-                <!-- Cards with scrolling -->
-                <div class="space-y-4 overflow-y-auto flex-grow pr-1 custom-scrollbar overflow-x-visible">
-                    <div 
-                        v-for="card in doneColumn.cards" 
-                        :key="card.id"
-                        draggable="true"
-                        @dragstart="handleDragStart($event, card.id, doneColumn.id)"
-                        class="bg-white p-3 rounded-lg shadow-sm cursor-move transition-all duration-200 hover:scale-[1.02] relative"
-                        style="transform-origin: center center; will-change: transform;"
-                    >
-                        <!-- Card content remains the same -->
-                        <div v-if="cardEditing !== card.id">
-                            <p class="text-gray-700">{{ card.title }}</p>
-                            <p class="text-gray-500">{{ card.description }}</p>
-                            <span class="text-gray-500">Points: {{ card.points }}</span>
-                            <div class="flex gap-2 mt-2">
-                                <button @click="toggleEditCard(card)" class="bg-blue-500 text-white py-1 px-2 rounded-lg hover:bg-blue-600">
-                                    Edit
-                                </button>
-                                <button @click="emit('deleteCard', card.id)" class="bg-red-500 text-white py-1 px-2 rounded-lg hover:bg-red-600">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Card Edit Form -->
-                        <CardForm
-                            v-else-if="cardEditing === card.id"
-                            :initial-values="{
-                                title: card.title,
-                                description: card.description,
-                                points: card.points
-                            }"
-                            :is-editing="true"
-                            :column-id="doneColumn.id"
-                            :card-id="card.id"
-                            @save="emit('updateCard', $event); resetForm()"
-                            @cancel="resetForm"
-                        />
-                    </div>
-                </div>
-
-                <!-- Card Form and Column Actions (fixed at bottom) -->
-                <div class="mt-4">
-                    <CardForm
-                        v-if="cardOpen[doneColumn.id]"
-                        :initial-values="{
-                            title: cardTitle,
-                            description: cardDesc,
-                            points: cardPoints
-                        }"
-                        :is-editing="false"
-                        :column-id="doneColumn.id"
-                        @save="emit('addCard', $event); resetForm(); toggleAddCard(doneColumn.id)"
-                        @cancel="toggleAddCard(doneColumn.id)"
-                    />
-
-                    <!-- Column Actions -->
-                    <div class="flex justify-between mt-2">
+                <!-- Column header -->
+                <div class="p-3 bg-green-100 rounded-t-lg flex justify-between items-center">
+                    <h3 class="font-medium text-green-800">{{ doneColumn.title }}</h3>
+                    <div class="flex space-x-1" v-if="doneColumn.user_created !== 0">
                         <button 
-                            v-if="!cardOpen[doneColumn.id]" 
-                            @click="toggleAddCard(doneColumn.id)"
-                            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            @click="toggleEditColumn(doneColumn)"
+                            class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
                         >
-                            + Add Card
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
                         </button>
                     </div>
                 </div>
+                
+                <!-- Cards container -->
+                <div class="p-2 max-h-[calc(100vh-12rem)] overflow-y-auto">
+                    <!-- Cards -->
+                    <div 
+                        v-for="card in doneColumn.cards" 
+                        :key="card.id"
+                        class="bg-white p-3 rounded shadow-sm mb-2 cursor-pointer"
+                        draggable="true"
+                        @dragstart="handleDragStart($event, card.id, doneColumn.id)"
+                    >
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
+                            <div class="flex space-x-1">
+                                <button 
+                                    @click="toggleEditCard(card)"
+                                    class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                </button>
+                                <button 
+                                    @click="handleDeleteCard(card.id)"
+                                    class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
+                        </div>
+                    </div>
+                </div>
             </div>
+            
+            <!-- Add column form -->
+            <div v-if="showNewColumn" class="flex-shrink-0 w-80 bg-white p-3 rounded-lg shadow">
+                <h3 class="font-medium text-gray-700 mb-2">Add New Column</h3>
+                <input 
+                    v-model="newColumnTitle" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded mb-2"
+                    placeholder="Column title"
+                />
+                <div class="flex items-center mb-3">
+                    <input 
+                        id="done-column" 
+                        type="checkbox" 
+                        v-model="newColumnDone" 
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label for="done-column" class="ml-2 block text-sm text-gray-900">
+                        This is a "Done" column
+                    </label>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button 
+                        @click="toggleNewColumn" 
+                        class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        @click="handleAddColumn({
+                            title: newColumnTitle,
+                            done: newColumnDone,
+                            board_id: board.id
+                        }); toggleNewColumn()"
+                        class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+                    >
+                        Add Column
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Add column button -->
+            <button 
+                v-else
+                @click="toggleNewColumn"
+                class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow-sm border-2 border-dashed border-gray-300 flex items-center justify-center p-6 hover:bg-gray-200"
+            >
+                <div class="text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="mt-2 block text-sm font-medium text-gray-600">Add Column</span>
+                </div>
+            </button>
         </div>
     </div>
 </template>
-
-<style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
-}
-
-/* Add this new style */
-.overflow-x-visible {
-    overflow-x: visible !important;
-}
-</style>

@@ -147,6 +147,7 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
     }
     
     const dateLabels = generateDateLabels(startDate, endDate);
+    // Recalculate total points every time to ensure it's up to date
     const totalPoints = calculateTotalPoints(columns);
     const actualBurndownData = generateBurndownData(board, columns, startDate, endDate);
     
