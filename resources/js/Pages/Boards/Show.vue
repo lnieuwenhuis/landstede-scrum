@@ -109,6 +109,8 @@ const updateBurndownChart = () => {
     chartData.value = chartResult.chartData.value;
     chartOptions.value = chartResult.chartOptions.value;
 };
+
+const showDescription = ref(false);
 </script>
 
 <template>
@@ -116,15 +118,7 @@ const updateBurndownChart = () => {
 
     <AuthenticatedLayout>
         <div class="container mx-auto px-6 py-3">
-            <!-- Board header with title and description -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <div class="flex-1">
-                    <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
-                    <p class="text-gray-600 mt-1">{{ board.description }}</p>
-                </div>
-            </div>
-
-            <!-- Tab Navigation -->
+            <!-- Tab Navigation - moved up to hug the navbar -->
             <div class="border-b border-gray-200 mb-4">
                 <nav class="flex space-x-6" aria-label="Tabs">
                     <button
@@ -149,8 +143,10 @@ const updateBurndownChart = () => {
                     :columns="columns"
                     :users="users"
                     :board="board"
+                    :show-description="showDescription"
                     @columns-updated="() => {}"
                     @burndown-update="updateBurndownChart"
+                    @toggle-description="showDescription = !showDescription"
                 />
             </div>
 
@@ -162,7 +158,9 @@ const updateBurndownChart = () => {
                     :freeDates="freeDates"
                     :chartData="chartData"
                     :chartOptions="chartOptions"
+                    :show-description="showDescription"
                     @period-change="handlePeriodChange"
+                    @toggle-description="showDescription = !showDescription"
                 />
             </div>
             
@@ -170,6 +168,9 @@ const updateBurndownChart = () => {
             <div v-if="activeTab === 'list'">
                 <ListTab 
                     :columns="columns"
+                    :board="board"
+                    :show-description="showDescription"
+                    @toggle-description="showDescription = !showDescription"
                 />
             </div>
             
@@ -178,6 +179,8 @@ const updateBurndownChart = () => {
                 <UsersTab 
                     :users="users"
                     :board="board"
+                    :show-description="showDescription"
+                    @toggle-description="showDescription = !showDescription"
                 />
             </div>
 
@@ -185,6 +188,8 @@ const updateBurndownChart = () => {
                 <SprintsTab 
                     :sprints="sprints"
                     :board="board"
+                    :show-description="showDescription"
+                    @toggle-description="showDescription = !showDescription"
                     @sprint-deleted="handlePeriodChange('board')"
                     @sprint-updated="id => id === selectedPeriod && handlePeriodChange(id)"
                 />

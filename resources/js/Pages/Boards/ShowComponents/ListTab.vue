@@ -5,9 +5,21 @@ import { useToast } from 'vue-toastification';
 
 const toast = useToast();
 
-defineProps({
-    columns: Array
+const props = defineProps({
+    columns: Array,
+    board: Object,
+    showDescription: {
+        type: Boolean,
+        default: false
+    }
 });
+
+const emit = defineEmits(['toggle-description']);
+
+// Toggle description visibility
+const toggleDescription = () => {
+    emit('toggle-description');
+};
 
 const expandedColumns = ref({});
 

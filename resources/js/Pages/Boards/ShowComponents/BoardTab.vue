@@ -9,10 +9,23 @@ const toast = useToast();
 const props = defineProps({
     columns: Array,
     board: Object,
-    users: Array
+    users: Array,
+    showDescription: {
+        type: Boolean,
+        default: false
+    }
 });
 
-console.log(props);
+const emit = defineEmits([
+    'columns-updated',
+    'burndown-update',
+    'toggle-description'
+]);
+
+// Toggle description visibility
+const toggleDescription = () => {
+    emit('toggle-description');
+};
 
 // Add computed properties to separate regular columns from the Done column
 const regularColumns = computed(() => {
@@ -22,11 +35,6 @@ const regularColumns = computed(() => {
 const doneColumn = computed(() => {
     return props.columns.find(column => column.title === 'Done');
 });
-
-const emit = defineEmits([
-    'columns-updated',
-    'burndown-update'  // Add this new emit event
-]);
 
 // Local state management
 const cardOpen = ref({});
@@ -359,6 +367,23 @@ const handleUpdateColumn = async ({ id, title }) => {
 
 <template>
     <div class="flex flex-col bg-white p-4 rounded-lg shadow">
+        <!-- Board header with title and foldable description -->
+        <div class="mb-4">
+            <div class="flex items-center">
+                <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
+                <button 
+                    @click="toggleDescription" 
+                    class="ml-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <p v-if="showDescription" class="text-gray-600 mt-1 transition-all duration-300">{{ board.description }}</p>
+        </div>
+
         <!-- Board columns container -->
         <div class="flex space-x-4 overflow-x-auto pb-4">
             <!-- Regular columns -->
