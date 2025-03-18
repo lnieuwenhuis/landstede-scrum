@@ -223,6 +223,8 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
         }
         
         toast.success('Card added successfully');
+        // Reset form fields but keep the form open
+        resetForm();
         emit('columns-updated');
         emit('burndown-update'); // Add this to trigger burndown chart update
     } catch (error) {
@@ -438,30 +440,54 @@ const handleUpdateColumn = async ({ id, title }) => {
                         draggable="true"
                         @dragstart="handleDragStart($event, card.id, column.id)"
                     >
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
-                            <div class="flex space-x-1">
-                                <button 
-                                    @click="toggleEditCard(card)"
-                                    class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                    </svg>
-                                </button>
-                                <button 
-                                    @click="handleDeleteCard(card.id)"
-                                    class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
+                        <!-- Show card editing form when this card is being edited -->
+                        <div v-if="cardEditing === card.id">
+                            <CardForm 
+                                :column-id="column.id"
+                                :initial-title="cardTitle"
+                                :initial-description="cardDesc"
+                                :initial-points="cardPoints"
+                                :is-editing="true"
+                                @save="(data) => { 
+                                    handleUpdateCard({
+                                        cardId: card.id,
+                                        columnId: column.id,
+                                        title: data.title,
+                                        description: data.description,
+                                        points: data.points
+                                    });
+                                    resetForm();
+                                }"
+                                @cancel="resetForm"
+                            />
                         </div>
-                        <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
+                        <!-- Show normal card when not editing -->
+                        <div v-else>
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
+                                <div class="flex space-x-1">
+                                    <button 
+                                        @click="toggleEditCard(card)"
+                                        class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        @click="handleDeleteCard(card.id)"
+                                        class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -469,6 +495,7 @@ const handleUpdateColumn = async ({ id, title }) => {
                     <div v-if="cardOpen[column.id]">
                         <CardForm 
                             :column-id="column.id"
+                            :key="`form-${column.id}-${Date.now()}`"
                             @save="handleAddCard"
                             @cancel="toggleAddCard(column.id)"
                         />

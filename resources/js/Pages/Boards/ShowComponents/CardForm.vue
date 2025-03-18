@@ -9,16 +9,35 @@ const props = defineProps({
     card: {
         type: Object,
         default: null
+    },
+    // Add these new props
+    initialTitle: {
+        type: String,
+        default: ''
+    },
+    initialDescription: {
+        type: String,
+        default: ''
+    },
+    initialPoints: {
+        type: Number,
+        default: 0
+    },
+    isEditing: {
+        type: Boolean,
+        default: false
     }
 });
 
 const emit = defineEmits(['save', 'cancel']);
 
-const title = ref(props.card ? props.card.title : '');
-const description = ref(props.card ? props.card.description : '');
-const points = ref(props.card ? props.card.points : 0);
+// Use either card props or initial props
+const title = ref(props.card ? props.card.title : props.initialTitle);
+const description = ref(props.card ? props.card.description : props.initialDescription);
+const points = ref(props.card ? props.card.points : props.initialPoints);
 
-const isEditing = ref(!!props.card);
+// Use either card or isEditing prop
+const isEditingCard = ref(!!props.card || props.isEditing);
 
 const handleSubmit = () => {
     if (!title.value.trim()) {
@@ -32,7 +51,7 @@ const handleSubmit = () => {
         points: points.value
     };
     
-    if (isEditing.value && props.card) {
+    if (isEditingCard.value && props.card) {
         cardData.cardId = props.card.id;
     }
     
@@ -46,7 +65,8 @@ const handleCancel = () => {
 
 <template>
     <div class="bg-white p-3 rounded shadow-sm mb-2">
-        <h4 class="font-medium text-gray-800 mb-2">{{ isEditing ? 'Edit Card' : 'Add Card' }}</h4>
+        <!-- Remove the heading when editing -->
+        <h4 v-if="!isEditingCard" class="font-medium text-gray-800 mb-2">Add Card</h4>
         
         <form @submit.prevent="handleSubmit">
             <div class="mb-3">
@@ -96,7 +116,7 @@ const handleCancel = () => {
                     type="submit"
                     class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
                 >
-                    {{ isEditing ? 'Update' : 'Add' }}
+                    {{ isEditingCard ? 'Update' : 'Add' }}
                 </button>
             </div>
         </form>

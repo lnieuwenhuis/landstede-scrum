@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('description')->nullable();
             $table->string('status')->nullable();
-            $table->integer('points')->nullable();
+            $table->integer('points');
             $table->foreignId('column_id')->constrained('columns')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamp('status_updated_at')->nullable();
