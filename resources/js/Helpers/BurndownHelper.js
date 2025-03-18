@@ -379,18 +379,26 @@ const nonWorkingDaysPlugin = {
             
             // Calculate the width of a single column
             let columnWidth;
-            if (index > 0) {
+            if (index < scales.x.ticks.length - 1) {
+                const nextX = scales.x.getPixelForValue(index + 1);
+                columnWidth = nextX - x;
+            } else if (index > 0) {
                 const prevX = scales.x.getPixelForValue(index - 1);
                 columnWidth = x - prevX;
-            } else if (scales.x.ticks.length > 1) {
-                const nextX = scales.x.getPixelForValue(1);
-                columnWidth = nextX - x;
             } else {
-                columnWidth = chartArea.width;
+                columnWidth = chartArea.width / scales.x.ticks.length;
             }
             
-            // Draw the background rectangle with an offset to the left
-            ctx.fillRect(x - columnWidth, top, columnWidth, bottom - top);
+            let startX;
+            if (index === 0) {
+                startX = left;
+            } else {
+                startX = Math.max(left, x - columnWidth);
+            }
+            
+            const rectWidth = Math.min(columnWidth, right - startX);
+            
+            ctx.fillRect(startX, top, rectWidth, bottom - top);
         });
         
         ctx.restore();

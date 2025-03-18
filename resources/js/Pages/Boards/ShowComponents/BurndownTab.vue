@@ -21,6 +21,12 @@ const handlePeriodChange = (event) => {
     emit('period-change', selectedPeriod.value);
 };
 
+// Format date to show only the date part (YYYY-MM-DD)
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return dateString.split(' ')[0];
+};
+
 // Add a watch to detect changes in columns data
 watch(() => props.columns, () => {
     // This will trigger when columns change, but the parent component
@@ -38,13 +44,13 @@ watch(() => props.columns, () => {
                 @change="handlePeriodChange"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-                <option value="board">Entire Board ({{ board.start_date }} to {{ board.end_date }})</option>
+                <option value="board">Entire Board ({{ formatDate(board.start_date) }} to {{ formatDate(board.end_date) }})</option>
                 <option 
                     v-for="sprint in sprints" 
                     :key="sprint.id" 
                     :value="sprint.id"
                 >
-                    {{ sprint.title }} ({{ sprint.start_date }} to {{ sprint.end_date }})
+                    {{ sprint.title }} ({{ formatDate(sprint.start_date) }} to {{ formatDate(sprint.end_date) }})
                 </option>
             </select>
         </div>
