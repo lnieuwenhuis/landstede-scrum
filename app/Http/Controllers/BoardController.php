@@ -20,11 +20,13 @@ class BoardController extends Controller
             return Inertia::render('Admin/Dashboard', [
                 'boards' => Board::all()
             ]);
-        } else {
+        } else if ($user) {
             return Inertia::render('Dashboard', [
                 'boards' => $user->boards
             ]);
         }
+
+        return redirect('/');
     }
 
     public function show($id)
@@ -32,41 +34,53 @@ class BoardController extends Controller
         $user = Auth::user();
         $board = Board::findOrFail($id);
 
-        return Inertia::render('Boards/Show', [
-            'board' => $board,
-            'sprints' => collect($board->sprints())->map(function ($sprint) {
-                return [
-                    'id' => $sprint['id'],
-                    'title' => $sprint['title'],
-                    'start_date' => $sprint['start_date'],
-                    'end_date' => $sprint['end_date'],
-                    'status' => $sprint['status'],
-                ];
-            }),
-            'columns' => $board->columns->map(function ($column) {
-                return [
-                    'id' => $column->id,
-                    'title' => $column->title,
-                    'cards' => $column->cards,
-                    'is_done_column' => $column->is_done_column,
-                    'status' => $column->status,
-                    'user_created' => $column->user_created,
-                    'sprint_checked' => $column->sprint_checked,
-                ];
-            }),
-            'users' => $board->users,
-            'freeDates' => json_encode($board->nonWorkingDays())
-        ]);
+        if ($user) {
+            return Inertia::render('Boards/Show', [
+                'board' => $board,
+                'sprints' => collect($board->sprints())->map(function ($sprint) {
+                    return [
+                        'id' => $sprint['id'],
+                        'title' => $sprint['title'],
+                        'start_date' => $sprint['start_date'],
+                        'end_date' => $sprint['end_date'],
+                        'status' => $sprint['status'],
+                    ];
+                }),
+                'columns' => $board->columns->map(function ($column) {
+                    return [
+                        'id' => $column->id,
+                        'title' => $column->title,
+                        'cards' => $column->cards,
+                        'is_done_column' => $column->is_done_column,
+                        'status' => $column->status,
+                        'user_created' => $column->user_created,
+                        'sprint_checked' => $column->sprint_checked,
+                    ];
+                }),
+                'users' => $board->users,
+                'freeDates' => json_encode($board->nonWorkingDays())
+            ]);
+        };
+
+        return redirect('/');
     }
 
     public function create()
     {
-        return Inertia::render('Boards/Create');
+        $user = Auth::user();
+
+        if ($user) {
+            return Inertia::render('Boards/Create');
+        };
+
+        return redirect('/');
     }
 
     public function storeBoard(Request $request)
     {
         $user = Auth::user();
+
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
 
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
@@ -156,20 +170,33 @@ class BoardController extends Controller
 
     public function deleteBoard(Request $request)
     {
+        $user = Auth::user();
+
         $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
         }
+
+        if ($board->creator_id !== $user->id || ! $user) {
+            return response()->json(['error' => 'Unauthorized']);
+        }
+
         $board->delete();
         return response()->json(['message' => 'Board deleted', 'status' => 'redirect']);
     }
 
     public function getColumnCards($columnId)
     {
+        $user = Auth::user();
+
         $column = Column::find($columnId);
 
         if (!$column) {
             return response()->json(['error' => 'Column not found']);
+        }
+
+        if (! $user) {
+            return response()->json(['error' => 'Not Logged In!']);
         }
 
         $cards = $column->cards;
@@ -180,6 +207,8 @@ class BoardController extends Controller
     public function addCardToColumn(Request $request, $columnId)
     {
         $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $column = Column::find($columnId);
 
         $title = $request->input('title');
@@ -205,6 +234,8 @@ class BoardController extends Controller
 
     public function updateCardInColumn($cardId, $title, $description, $points)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -221,6 +252,9 @@ class BoardController extends Controller
 
     public function moveCardToColumn(Request $request, $cardId)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -237,6 +271,9 @@ class BoardController extends Controller
 
     public function updateCard(Request $request, $cardId)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -250,6 +287,9 @@ class BoardController extends Controller
 
     public function deleteCard($cardId)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -313,6 +353,9 @@ class BoardController extends Controller
 
     public function updateColumn(Request $request)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $request->validate([
             'column_id' => 'required|exists:columns,id',
             'title' => 'required|string|max:255',
@@ -330,6 +373,9 @@ class BoardController extends Controller
 
     public function updateSprint(Request $request)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
@@ -360,6 +406,9 @@ class BoardController extends Controller
 
     public function createSprint(Request $request)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+
         $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
@@ -406,6 +455,9 @@ class BoardController extends Controller
 
     public function deleteSprint(Request $request)
     {
+        $user = Auth::user();
+        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        
         $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
