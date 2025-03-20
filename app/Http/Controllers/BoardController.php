@@ -79,7 +79,7 @@ class BoardController extends Controller
 
     public function storeBoard(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
@@ -186,7 +186,7 @@ class BoardController extends Controller
 
     public function getColumnCards($columnId)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $column = Column::find($columnId);
 
@@ -201,7 +201,7 @@ class BoardController extends Controller
     
     public function addCardToColumn(Request $request, $columnId)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $column = Column::find($columnId);
 
@@ -228,7 +228,7 @@ class BoardController extends Controller
 
     public function updateCardInColumn($cardId, $title, $description, $points)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -246,7 +246,7 @@ class BoardController extends Controller
 
     public function moveCardToColumn(Request $request, $cardId)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -264,7 +264,7 @@ class BoardController extends Controller
 
     public function updateCard(Request $request, $cardId)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -279,7 +279,7 @@ class BoardController extends Controller
 
     public function deleteCard($cardId)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -295,7 +295,7 @@ class BoardController extends Controller
 
     public function addColumn(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $board = Board::find($request->board_id);
 
@@ -324,7 +324,7 @@ class BoardController extends Controller
 
     public function deleteColumn(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $column = Column::find($request->column_id);
 
@@ -340,7 +340,7 @@ class BoardController extends Controller
 
     public function updateColumn(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $request->validate([
             'column_id' => 'required|exists:columns,id',
@@ -359,7 +359,7 @@ class BoardController extends Controller
 
     public function updateSprint(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $board = Board::find($request->board_id);
         if (!$board) {
@@ -391,7 +391,7 @@ class BoardController extends Controller
 
     public function createSprint(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $board = Board::find($request->board_id);
         if (!$board) {
@@ -439,7 +439,7 @@ class BoardController extends Controller
 
     public function deleteSprint(Request $request)
     {
-        $user = checkUserLogin();
+        $user = $this->checkUserLogin();
 
         $board = Board::find($request->board_id);
         if (!$board) {
@@ -495,14 +495,5 @@ class BoardController extends Controller
         }
     
         return response()->json(['error' => 'Sprint not found']);
-    }
-
-    private function checkUserLogin(): User | JsonResponse {
-        $user = Auth::user();
-        if (! $user) {
-            return response()->json(['error' => 'Not Logged In!']);
-        }
-
-        return $user;
     }
 }
