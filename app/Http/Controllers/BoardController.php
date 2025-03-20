@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use stdClass;
+use App\Models\User;
 use App\Models\Board;
 use App\Models\Column;
 use App\Models\Card;
@@ -78,9 +79,7 @@ class BoardController extends Controller
 
     public function storeBoard(Request $request)
     {
-        $user = Auth::user();
-
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $validatedData = $request->validate([
             'title' => 'required|string|max:255',
@@ -187,16 +186,12 @@ class BoardController extends Controller
 
     public function getColumnCards($columnId)
     {
-        $user = Auth::user();
+        $user = checkUserLogin();
 
         $column = Column::find($columnId);
 
         if (!$column) {
             return response()->json(['error' => 'Column not found']);
-        }
-
-        if (! $user) {
-            return response()->json(['error' => 'Not Logged In!']);
         }
 
         $cards = $column->cards;
@@ -206,8 +201,7 @@ class BoardController extends Controller
     
     public function addCardToColumn(Request $request, $columnId)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $column = Column::find($columnId);
 
@@ -234,8 +228,8 @@ class BoardController extends Controller
 
     public function updateCardInColumn($cardId, $title, $description, $points)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
+
         $card = Card::find($cardId);
 
         if (!$card) {
@@ -252,8 +246,7 @@ class BoardController extends Controller
 
     public function moveCardToColumn(Request $request, $cardId)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -271,8 +264,7 @@ class BoardController extends Controller
 
     public function updateCard(Request $request, $cardId)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -287,8 +279,7 @@ class BoardController extends Controller
 
     public function deleteCard($cardId)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $card = Card::find($cardId);
 
@@ -304,10 +295,8 @@ class BoardController extends Controller
 
     public function addColumn(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) {
-            return response()->json(['error' => 'Not Logged In!']);
-        }
+        $user = checkUserLogin();
+
         $board = Board::find($request->board_id);
 
         $title = $request->input('title');
@@ -335,10 +324,8 @@ class BoardController extends Controller
 
     public function deleteColumn(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) {
-            return response()->json(['error' => 'Not Logged In!']);
-        }
+        $user = checkUserLogin();
+
         $column = Column::find($request->column_id);
 
         if (!$column) {
@@ -353,8 +340,7 @@ class BoardController extends Controller
 
     public function updateColumn(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $request->validate([
             'column_id' => 'required|exists:columns,id',
@@ -373,8 +359,7 @@ class BoardController extends Controller
 
     public function updateSprint(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $board = Board::find($request->board_id);
         if (!$board) {
@@ -406,8 +391,7 @@ class BoardController extends Controller
 
     public function createSprint(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
+        $user = checkUserLogin();
 
         $board = Board::find($request->board_id);
         if (!$board) {
@@ -455,9 +439,8 @@ class BoardController extends Controller
 
     public function deleteSprint(Request $request)
     {
-        $user = Auth::user();
-        if (! $user) return response()->json(['error' => 'Not Logged In!']);
-        
+        $user = checkUserLogin();
+
         $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
@@ -512,5 +495,14 @@ class BoardController extends Controller
         }
     
         return response()->json(['error' => 'Sprint not found']);
+    }
+
+    private function checkUserLogin(): User | JsonResponse {
+        $user = Auth::user();
+        if (! $user) {
+            return response()->json(['error' => 'Not Logged In!']);
+        }
+
+        return $user;
     }
 }
