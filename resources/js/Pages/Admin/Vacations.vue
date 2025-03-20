@@ -230,7 +230,7 @@ const getFirstDayOfMonth = (year, month) => {
                 <div class="bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <h3 class="text-lg font-semibold text-gray-900">School Vacations</h3>
                                 <select 
                                     v-if="vacations"
@@ -243,7 +243,7 @@ const getFirstDayOfMonth = (year, month) => {
                                     </option>
                                 </select>
                             </div>
-                            <div class="flex space-x-2">
+                            <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                                 <button
                                     v-if="selectedVacation"
                                     @click="toggleDeleteConfirmation(selectedVacation.id)"
