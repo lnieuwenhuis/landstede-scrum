@@ -22,6 +22,59 @@ const toggleDescription = () => {
 };
 
 const expandedColumns = ref({});
+// Add state for edit modal
+const editModalOpen = ref(false);
+const editingCard = ref(null);
+const editForm = ref({
+    title: '',
+    description: '',
+    points: 0
+});
+
+// Function to open edit modal
+const openEditModal = (card) => {
+    editingCard.value = card;
+    editForm.value = {
+        title: card.title,
+        description: card.description,
+        points: card.points
+    };
+    editModalOpen.value = true;
+};
+
+// Function to save edited card
+const saveEditedCard = async () => {
+    if (!editingCard.value) return;
+    
+    try {
+        const response = await axios.post(`/api/updateCard/${editingCard.value.id}`, editForm.value);
+        
+        if (response.data.message) {
+            // Update the card in the UI
+            props.columns.forEach(column => {
+                const cardIndex = column.cards.findIndex(c => c.id === editingCard.value.id);
+                if (cardIndex !== -1) {
+                    column.cards[cardIndex].title = editForm.value.title;
+                    column.cards[cardIndex].description = editForm.value.description;
+                    column.cards[cardIndex].points = editForm.value.points;
+                }
+            });
+            
+            toast.success('Card updated successfully');
+            closeEditModal();
+        } else {
+            throw new Error(response.data.error || 'Failed to update card');
+        }
+    } catch (error) {
+        toast.error(error.error || 'Failed to update card');
+    }
+};
+
+// Function to close edit modal
+const closeEditModal = () => {
+    editModalOpen.value = false;
+    editingCard.value = null;
+};
 
 const handleDeleteCard = async (cardId) => {
     if (!confirm('Are you sure you want to delete this card?')) {
@@ -110,6 +163,7 @@ const handleDeleteCard = async (cardId) => {
                                     </button>
                                     <!-- Edit button for cards -->
                                     <button 
+                                        @click="openEditModal(card)"
                                         class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -123,6 +177,61 @@ const handleDeleteCard = async (cardId) => {
                             No cards in this column
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Card Modal -->
+        <div v-if="editModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Card</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                        <input 
+                            type="text" 
+                            id="title" 
+                            v-model="editForm.title" 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea 
+                            id="description" 
+                            v-model="editForm.description" 
+                            rows="3" 
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        ></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="points" class="block text-sm font-medium text-gray-700">Points</label>
+                        <input 
+                            type="number" 
+                            id="points" 
+                            v-model="editForm.points" 
+                            min="0"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        >
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button 
+                        @click="closeEditModal" 
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        @click="saveEditedCard" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        Save Changes
+                    </button>
                 </div>
             </div>
         </div>
