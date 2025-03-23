@@ -116,22 +116,51 @@ class Board extends Model
     public function checkSprints()
     {
         $currentDate = Carbon::now();
-        $sprints = $this->sprints();
-
-        $newSprints = [];
+        $sprints = json_decode($this->sprints, true);
+        $changedSprints = [];
         
-        foreach ($sprints as $sprint) {
+        // First pass: identify which sprints need status changes
+        foreach ($sprints as $index => &$sprint) {
             $startDate = Carbon::parse($sprint['start_date']);
             $endDate = Carbon::parse($sprint['end_date']);
+            $originalStatus = $sprint['status'] ?? 'inactive';
             
-            if ($currentDate->between($startDate, $endDate) || $sprint['status'] == 'checked') {
-                $newSprints[] = $sprint;
-            } else {
+            // Determine the new status based on dates and current status
+            if ($currentDate->between($startDate, $endDate) && $originalStatus == 'inactive') {
+                // Sprint should be active if current date is within range and was inactive
+                $sprint['status'] = 'active';
+                $changedSprints[] = [
+                    'id' => $sprint['id'] ?? $index + 1,
+                    'title' => $sprint['title'] ?? $sprint['name'] ?? ('Sprint ' . ($index + 1)),
+                    'old_status' => $originalStatus,
+                    'new_status' => 'active',
+                    'start_date' => $sprint['start_date'],
+                    'end_date' => $sprint['end_date']
+                ];
+            } 
+            else if ($currentDate->greaterThan($endDate) && $originalStatus == 'active') {
+                // Sprint should be locked if it's over and was active
                 $sprint['status'] = 'locked';
-                $newSprints[] = $sprint;
+                $changedSprints[] = [
+                    'id' => $sprint['id'] ?? $index + 1,
+                    'title' => $sprint['title'] ?? $sprint['name'] ?? ('Sprint ' . ($index + 1)),
+                    'old_status' => $originalStatus,
+                    'new_status' => 'locked',
+                    'start_date' => $sprint['start_date'],
+                    'end_date' => $sprint['end_date']
+                ];
             }
+            // If a sprint is 'checked', it stays checked
+            // If a sprint is 'locked', it stays locked until manually checked
+            // If a sprint is 'inactive', it stays inactive until its start date
         }
-
-        return $newSprints;
+        
+        // Save the updated sprints back to the board
+        if (!empty($changedSprints)) {
+            $this->sprints = json_encode($sprints);
+            $this->save();
+        }
+        
+        return $changedSprints;
     }
 }
