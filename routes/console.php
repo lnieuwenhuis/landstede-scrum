@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Board;
+use App\Models\Log;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
@@ -11,11 +12,26 @@ Artisan::command('inspire', function () {
 Artisan::command('CheckBoardSprints', function () {
     $boards = Board::all();
 
-    $tests = [];
+    $boardResults = [];
     foreach ($boards as $board) {
-        $test = $board->checkSprints();
-        $tests[] = $test;
+        $sprintChanges = $board->checkSprints();
+        if (!empty($sprintChanges)) {
+            $boardResults[] = [
+                'board_id' => $board->id,
+                'board_title' => $board->title,
+                'changes' => $sprintChanges
+            ];
+        }
     }
 
-    return $this->comment(json_encode($tests));
+    if (!empty($boardResults)) {
+        Log::create([
+            'name' => 'SprintCheck',
+            'description' => 'Automatic check and update of sprint statuses across all boards',
+            'type' => 'Routine',
+            'data' => json_encode($boardResults)
+        ]);
+    }
+
+    return $this->comment(json_encode($boardResults));
 })->purpose('Check and change board sprint statuses every day');
