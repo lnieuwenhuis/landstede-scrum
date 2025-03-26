@@ -36,7 +36,7 @@ watch(() => props.columns, () => {
 
 <template>
     <div class="bg-white p-6 rounded-lg shadow-md">
-        <div class="mb-6">
+        <div class="mb-6 px-4">
             <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1">Select Period</label>
             <select 
                 id="period-select" 
@@ -55,11 +55,12 @@ watch(() => props.columns, () => {
             </select>
         </div>
         
-        <div class="h-96">
-            <Line 
-                :data="chartData" 
-                :options="chartOptions" 
-            />
+        <div class="overflow-x-auto">
+            <div class="flex justify-center items-center h-full min-w-[800px]">
+                <div class="w-full h-[450px]">
+                    <Line :data="chartData" :options="chartOptions"/>
+                </div>
+            </div>
         </div>
     </div>
 </template>
