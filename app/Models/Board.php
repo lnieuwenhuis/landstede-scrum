@@ -125,20 +125,7 @@ class Board extends Model
             $endDate = Carbon::parse($sprint['end_date']);
             $originalStatus = $sprint['status'] ?? 'inactive';
             
-            // Determine the new status based on dates and current status
-            if ($currentDate->between($startDate, $endDate) && $originalStatus == 'inactive') {
-                // Sprint should be active if current date is within range and was inactive
-                $sprint['status'] = 'active';
-                $changedSprints[] = [
-                    'id' => $sprint['id'] ?? $index + 1,
-                    'title' => $sprint['title'] ?? $sprint['name'] ?? ('Sprint ' . ($index + 1)),
-                    'old_status' => $originalStatus,
-                    'new_status' => 'active',
-                    'start_date' => $sprint['start_date'],
-                    'end_date' => $sprint['end_date']
-                ];
-            } 
-            else if ($currentDate->greaterThan($endDate) && $originalStatus == 'active') {
+            if ($currentDate->greaterThan($endDate) && $originalStatus == 'active') {
                 // Sprint should be locked if it's over and was active
                 $sprint['status'] = 'locked';
                 $changedSprints[] = [

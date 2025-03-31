@@ -14,6 +14,6 @@ abstract class Controller
             return response()->json(['error' => 'Not Logged In!']);
         }
 
-        return User::find($user->id)->first();
+        return User::query()->where('id', $user->id)->first();
     }
 }

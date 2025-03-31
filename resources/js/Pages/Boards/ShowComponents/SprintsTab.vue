@@ -97,12 +97,18 @@ const handleSaveSprint = async () => {
         });
         
         if (response.data.message) {
-            const sprintIndex = sprints.value.findIndex(s => s.id === sprintToEdit.value.id);
-            if (sprintIndex !== -1) {
-                sprints.value[sprintIndex] = {
-                    ...sprints.value[sprintIndex],
-                    ...editedSprintData.value
-                };
+            // Update the entire sprints array with the one returned from the server
+            if (response.data.sprints) {
+                sprints.value = response.data.sprints;
+            } else {
+                // Fallback to the old behavior if sprints array is not in the response
+                const sprintIndex = sprints.value.findIndex(s => s.id === sprintToEdit.value.id);
+                if (sprintIndex !== -1) {
+                    sprints.value[sprintIndex] = {
+                        ...sprints.value[sprintIndex],
+                        ...editedSprintData.value
+                    };
+                }
             }
             
             emit('sprint-updated', sprintToEdit.value.id);
@@ -267,12 +273,14 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                     >
                         <option value="active">Active (Current Sprint)</option>
                         <option value="inactive">Inactive (Future Sprint)</option>
+                        <option value="planning">Planning (Not Started)</option>
                         <option value="locked">Locked (Completed, Not Checked)</option>
                         <option value="checked">Checked (Completed & Verified)</option>
                     </select>
                     <p class="mt-1 text-sm text-gray-500">
                         <span v-if="editedSprintData.status === 'active'">This is the currently active sprint.</span>
                         <span v-else-if="editedSprintData.status === 'inactive'">This sprint is scheduled for the future.</span>
+                        <span v-else-if="editedSprintData.status === 'planning'">This sprint is not yet started.</span>
                         <span v-else-if="editedSprintData.status === 'locked'">This sprint is completed but not yet checked.</span>
                         <span v-else-if="editedSprintData.status === 'checked'">This sprint is completed and has been verified.</span>
                     </p>

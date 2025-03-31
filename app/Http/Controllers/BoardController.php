@@ -369,13 +369,37 @@ class BoardController extends Controller
         $sprintIndex = array_search($request->sprint_id, array_column($sprints, 'id'));
         
         if ($sprintIndex !== false) {
-            // Update the sprint with new data
+            // Update the basic sprint data for all users
             $sprints[$sprintIndex]['title'] = $request->title;
             $sprints[$sprintIndex]['start_date'] = $request->start_date;
             $sprints[$sprintIndex]['end_date'] = $request->end_date;
             
-            if($user->role == 'admin'){
-                $sprints[$sprintIndex]['status'] = $request->status;
+            // Only admins can update status
+            if($user->role == 'admin') {
+                $originalStatus = $sprints[$sprintIndex]['status'];
+                $sprints[$sprintIndex]['status'] = $request->status; // Set the status explicitly
+
+                if ($originalStatus == 'locked' && $request->status == 'checked') {
+                    // Find the next chronological sprint based on start_date
+                    $currentSprintEndDate = strtotime($sprints[$sprintIndex]['end_date']);
+                    $nextChronologicalSprint = null;
+                    $nextSprintIndex = null;
+                    
+                    foreach ($sprints as $idx => $sprint) {
+                        $sprintStartDate = strtotime($sprint['start_date']);
+                        // Find the sprint that starts after the current sprint ends
+                        if ($sprintStartDate > $currentSprintEndDate && 
+                            ($nextChronologicalSprint === null || $sprintStartDate < strtotime($nextChronologicalSprint['start_date']))) {
+                            $nextChronologicalSprint = $sprint;
+                            $nextSprintIndex = $idx;
+                        }
+                    }
+                    
+                    // Update the next chronological sprint's status if found
+                    if ($nextSprintIndex !== null) {
+                        $sprints[$nextSprintIndex]['status'] = 'planning';
+                    }
+                }
             }
             
             // Save updated sprints back to the board
@@ -384,7 +408,7 @@ class BoardController extends Controller
             
             return response()->json([
                 'message' => 'Sprint updated successfully',
-                'sprint' => $sprints[$sprintIndex]
+                'sprints' => $sprints
             ]);
         }
         
