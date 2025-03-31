@@ -13,7 +13,32 @@ const props = defineProps({
     showDescription: {
         type: Boolean,
         default: false
-    }
+    },
+    currentSprint: Object,
+});
+
+// Add isColumnLocked function
+const isColumnLocked = computed(() => {
+    return (columnTitle) => {
+        if (!props.currentSprint || !props.currentSprint.status) {
+            return false; // If no current sprint, nothing is locked
+        }
+        
+        const status = props.currentSprint.status;
+        
+        if (status === 'active') {
+            // When sprint is active, only Project Backlog is locked
+            return columnTitle === 'Project Backlog';
+        } else if (status === 'planning') {
+            // When sprint is planning, all columns except Project Backlog and Sprint Backlog are locked
+            return columnTitle !== 'Project Backlog' && columnTitle !== 'Sprint Backlog';
+        } else if (status === 'locked' || status === 'checked') {
+            // When sprint is locked or checked, all columns are locked
+            return true;
+        }
+        
+        return false; // Default case
+    };
 });
 
 const emit = defineEmits([
@@ -392,13 +417,17 @@ const handleUpdateColumn = async ({ id, title }) => {
             <div 
                 v-for="column in regularColumns" 
                 :key="column.id"
-                class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow"
-                :class="{ 'border-2 border-blue-400': currentDragColumnId === column.id }"
+                class="flex-shrink-0 w-80 rounded-lg shadow"
+                :class="{ 
+                    'bg-gray-100': !isColumnLocked(column.title),
+                    'bg-gray-200': isColumnLocked(column.title),
+                    'border-2 border-blue-400': currentDragColumnId === column.id 
+                }"
                 @dragover.prevent="handleDragOver($event, column.id)"
                 @dragleave="handleDragLeave"
                 @drop.prevent="handleDrop($event, column.id)"
             >
-                <!-- Column header -->
+                <!-- Regular column header -->
                 <div class="p-3 bg-gray-200 rounded-t-lg flex justify-between items-center">
                     <div v-if="columnEditing === column.id" class="flex-1">
                         <input 
@@ -409,8 +438,16 @@ const handleUpdateColumn = async ({ id, title }) => {
                             placeholder="Column title"
                         />
                     </div>
-                    <h3 v-else class="font-medium text-gray-700">{{ column.title }}</h3>
-                    <div class="flex space-x-1" v-if="column.user_created !== 0">
+                    <div v-else class="flex items-center space-x-2">
+                        <h3 class="font-medium text-gray-700">{{ column.title }}</h3>
+                        <span v-if="isColumnLocked(column.title)" class="flex items-center text-sm text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Locked</span>
+                        </span>
+                    </div>
+                    <div v-if="column.user_created !== 0 && !isColumnLocked(column.title)" class="flex space-x-1">
                         <button 
                             @click="toggleEditColumn(column)"
                             class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -436,8 +473,9 @@ const handleUpdateColumn = async ({ id, title }) => {
                     <div 
                         v-for="card in column.cards" 
                         :key="card.id"
-                        class="bg-white p-3 rounded shadow-sm mb-2 cursor-pointer"
-                        draggable="true"
+                        class="bg-white p-3 rounded shadow-sm mb-2"
+                        :class="{ 'cursor-pointer': !isColumnLocked(column.title) }"
+                        :draggable="!isColumnLocked(column.title)"
                         @dragstart="handleDragStart($event, card.id, column.id)"
                     >
                         <!-- Show card editing form when this card is being edited -->
@@ -503,9 +541,10 @@ const handleUpdateColumn = async ({ id, title }) => {
                     
                     <!-- Add card button -->
                     <button 
-                        v-else
                         @click="toggleAddCard(column.id)"
                         class="w-full py-2 px-3 text-sm text-gray-600 hover:bg-gray-200 rounded flex items-center justify-center mt-2"
+                        :disabled="isColumnLocked(column.title)"
+                        :class="{ 'opacity-50 cursor-not-allowed': isColumnLocked(column.title) }"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -519,16 +558,28 @@ const handleUpdateColumn = async ({ id, title }) => {
             <div 
                 v-if="doneColumn"
                 :key="doneColumn.id"
-                class="flex-shrink-0 w-80 bg-green-50 rounded-lg shadow"
-                :class="{ 'border-2 border-blue-400': currentDragColumnId === doneColumn.id }"
+                class="flex-shrink-0 w-80 rounded-lg shadow"
+                :class="{ 
+                    'bg-green-50': !isColumnLocked(doneColumn.title), 
+                    'bg-green-100': isColumnLocked(doneColumn.title),
+                    'border-2 border-blue-400': currentDragColumnId === doneColumn.id 
+                }"
                 @dragover.prevent="handleDragOver($event, doneColumn.id)"
                 @dragleave="handleDragLeave"
                 @drop.prevent="handleDrop($event, doneColumn.id)"
             >
-                <!-- Column header -->
+                <!-- Done column header -->
                 <div class="p-3 bg-green-100 rounded-t-lg flex justify-between items-center">
-                    <h3 class="font-medium text-green-800">{{ doneColumn.title }}</h3>
-                    <div class="flex space-x-1" v-if="doneColumn.user_created !== 0">
+                    <div class="flex items-center space-x-2">
+                        <h3 class="font-medium text-green-800">{{ doneColumn.title }}</h3>
+                        <span v-if="isColumnLocked(doneColumn.title)" class="flex items-center text-sm text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Locked</span>
+                        </span>
+                    </div>
+                    <div v-if="doneColumn.user_created !== 0 && !isColumnLocked(doneColumn.title)" class="flex space-x-1">
                         <button 
                             @click="toggleEditColumn(doneColumn)"
                             class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -546,13 +597,14 @@ const handleUpdateColumn = async ({ id, title }) => {
                     <div 
                         v-for="card in doneColumn.cards" 
                         :key="card.id"
-                        class="bg-white p-3 rounded shadow-sm mb-2 cursor-pointer"
-                        draggable="true"
+                        class="bg-white p-3 rounded shadow-sm mb-2"
+                        :class="{ 'cursor-pointer': !isColumnLocked(doneColumn.title) }"
+                        :draggable="!isColumnLocked(doneColumn.title)"
                         @dragstart="handleDragStart($event, card.id, doneColumn.id)"
                     >
                         <div class="flex justify-between items-start">
                             <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
-                            <div class="flex space-x-1">
+                            <div v-if="!isColumnLocked(doneColumn.title)" class="flex space-x-1">
                                 <button 
                                     @click="toggleEditCard(card)"
                                     class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -576,6 +628,19 @@ const handleUpdateColumn = async ({ id, title }) => {
                             <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
                         </div>
                     </div>
+                    
+                    <!-- Add card button for Done column -->
+                    <button 
+                        @click="toggleAddCard(doneColumn.id)"
+                        class="w-full py-2 px-3 text-sm text-gray-600 hover:bg-gray-200 rounded flex items-center justify-center mt-2"
+                        :disabled="isColumnLocked(doneColumn.title)"
+                        :class="{ 'opacity-50 cursor-not-allowed': isColumnLocked(doneColumn.title) }"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Card
+                    </button>
                 </div>
             </div>
             

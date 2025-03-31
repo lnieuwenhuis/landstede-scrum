@@ -59,6 +59,7 @@ class BoardController extends Controller
                 'users' => $board->users,
                 'freeDates' => json_encode($board->nonWorkingDays()),
                 'currentUser' => $user,
+                'currentSprint' => $board->currentSprint(),
             ]);
         };
 

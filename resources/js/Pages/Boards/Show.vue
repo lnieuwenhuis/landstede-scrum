@@ -23,6 +23,7 @@ const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
 const isAdmin = props.currentUser.role === 'admin';
+const currentSprint = ref(props.currentSprint);
 
 // Parse sprints from board if it's a string
 const sprints = ref(typeof props.board.sprints === 'string' 
@@ -144,6 +145,7 @@ const showDescription = ref(false);
                     :users="users"
                     :board="board"
                     :show-description="showDescription"
+                    :currentSprint="currentSprint"
                     @columns-updated="() => {}"
                     @burndown-update="updateBurndownChart"
                     @toggle-description="showDescription = !showDescription"

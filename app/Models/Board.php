@@ -47,6 +47,36 @@ class Board extends Model
         return User::find($this->creator_id)->first();
     }
 
+    public function currentSprint()
+    {
+        $sprints = json_decode($this->sprints, true);
+        $currentDate = Carbon::now();
+        
+        // Priority order: active, locked, planning
+        $priorityStatuses = ['active', 'locked', 'planning'];
+        
+        // First check for sprints with priority statuses
+        foreach ($priorityStatuses as $status) {
+            foreach ($sprints as $sprint) {
+                if (isset($sprint['status']) && $sprint['status'] === $status) {
+                    return $sprint;
+                }
+            }
+        }
+        
+        // If no sprint with priority status found, fall back to date-based check
+        foreach ($sprints as $sprint) {
+            $startDate = Carbon::parse($sprint['start_date']);
+            $endDate = Carbon::parse($sprint['end_date']);
+            if ($currentDate->between($startDate, $endDate)) {
+                return $sprint;
+            }
+        }
+        
+        // Return null if no current sprint found
+        return null;
+    }
+
     public function generateSprints()
     {
         $totalDays = Carbon::parse($this->end_date)->diffInDays($this->start_date);
