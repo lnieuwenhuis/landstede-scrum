@@ -10,6 +10,8 @@ const props = defineProps({
     columns: Array,
     board: Object,
     users: Array,
+    showDescription: Boolean,
+    currentSprint: Object,
     showDescription: {
         type: Boolean,
         default: false
@@ -393,8 +395,16 @@ const handleUpdateColumn = async ({ id, title }) => {
     <div class="flex flex-col bg-white p-4 rounded-lg shadow">
         <!-- Board header with title and foldable description -->
         <div class="mb-4">
-            <div class="flex items-center">
-                <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-800">{{ board.title }}</h1>
+                    <span v-if="currentSprint" class="ml-3 text-gray-600">
+                        <span class="ml-12">{{ currentSprint.title }}</span>
+                    </span>
+                    <span v-else class="ml-3 text-sm text-gray-600">
+                        <span class="font-medium">No active sprint</span>
+                    </span>
+                </div>
                 <button 
                     @click="toggleDescription" 
                     class="ml-2 text-gray-500 hover:text-gray-700 focus:outline-none"

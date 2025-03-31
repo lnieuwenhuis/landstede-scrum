@@ -152,10 +152,16 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                     v-for="sprint in sprints" 
                     :key="sprint.id"
                     class="bg-black/5 p-4 rounded-lg shadow-sm transition-all duration-200 hover:bg-black/10"
+                    :class="{'border-l-4 border-green-500': sprint.status === 'active'}"
                 >
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-800">{{ sprint.title }}</h3>
+                            <h3 class="text-lg font-medium text-gray-800 flex items-center">
+                                {{ sprint.title }}
+                                <svg v-if="sprint.status === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </h3>
                             <div class="mt-2 space-y-1">
                                 <p class="text-sm text-gray-600">
                                     <span class="font-medium">Start Date:</span> 
