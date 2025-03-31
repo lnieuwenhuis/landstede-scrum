@@ -26,10 +26,7 @@ const isColumnLocked = computed(() => {
         
         const status = props.currentSprint.status;
         
-        if (status === 'active') {
-            // When sprint is active, only Project Backlog is locked
-            return columnTitle === 'Project Backlog';
-        } else if (status === 'planning') {
+        if (status === 'planning') {
             // When sprint is planning, all columns except Project Backlog and Sprint Backlog are locked
             return columnTitle !== 'Project Backlog' && columnTitle !== 'Sprint Backlog';
         } else if (status === 'locked' || status === 'checked') {

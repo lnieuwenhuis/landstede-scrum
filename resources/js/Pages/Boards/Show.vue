@@ -112,6 +112,54 @@ const updateBurndownChart = () => {
 };
 
 const showDescription = ref(false);
+
+// Add this function to handle sprint updates
+const handleSprintUpdated = (updatedSprint) => {
+    // Check if the updated sprint is the current sprint
+    if (currentSprint.value && currentSprint.value.id === updatedSprint.id) {
+        // Update the current sprint with the new data
+        currentSprint.value = {
+            ...currentSprint.value,
+            ...updatedSprint
+        };
+    }
+    
+    // Also update the sprint in the sprints array
+    const sprintIndex = sprints.value.findIndex(s => s.id === updatedSprint.id);
+    if (sprintIndex !== -1) {
+        sprints.value[sprintIndex] = {
+            ...sprints.value[sprintIndex],
+            ...updatedSprint
+        };
+    }
+    
+    // Update the burndown chart if needed
+    if (selectedSprint.value && selectedSprint.value.id === updatedSprint.id) {
+        selectedSprint.value = {
+            ...selectedSprint.value,
+            ...updatedSprint
+        };
+        updateBurndownChart();
+    }
+};
+
+// Add this function to handle sprint deletion
+const handleSprintDeleted = (sprintId) => {
+    // If the deleted sprint is the current sprint, set currentSprint to null
+    if (currentSprint.value && currentSprint.value.id === sprintId) {
+        currentSprint.value = null;
+    }
+    
+    // Remove the sprint from the sprints array
+    sprints.value = sprints.value.filter(s => s.id !== sprintId);
+    
+    // Update the burndown chart if needed
+    if (selectedSprint.value && selectedSprint.value.id === sprintId) {
+        selectedSprint.value = null;
+        selectedPeriod.value = 'board';
+        updateBurndownChart();
+    }
+};
 </script>
 
 <template>
@@ -140,13 +188,15 @@ const showDescription = ref(false);
 
             <!-- Tab Content -->
             <div v-if="activeTab === 'board'">
+                <!-- Update the BoardTab component to include the currentSprint -->
                 <BoardTab
+                    v-if="activeTab === 'board'"
                     :columns="columns"
-                    :users="users"
                     :board="board"
+                    :users="users"
                     :show-description="showDescription"
-                    :currentSprint="currentSprint"
-                    @columns-updated="() => {}"
+                    :current-sprint="currentSprint"
+                    @columns-updated="columns = $event"
                     @burndown-update="updateBurndownChart"
                     @toggle-description="showDescription = !showDescription"
                 />
@@ -186,17 +236,15 @@ const showDescription = ref(false);
                 />
             </div>
 
-            <div v-if="activeTab === 'sprints'">
-                <SprintsTab 
-                    :isAdmin="isAdmin"
-                    :sprints="sprints"
-                    :board="board"
-                    :show-description="showDescription"
-                    @toggle-description="showDescription = !showDescription"
-                    @sprint-deleted="handlePeriodChange('board')"
-                    @sprint-updated="id => id === selectedPeriod && handlePeriodChange(id)"
-                />
-            </div>
+            <!-- Update the SprintsTab component to include the new handlers -->
+            <SprintsTab
+                v-if="activeTab === 'sprints'"
+                :sprints="sprints"
+                :board="board"
+                :is-admin="isAdmin"
+                @sprint-updated="handleSprintUpdated"
+                @sprint-deleted="handleSprintDeleted"
+            />
         </div>
     </AuthenticatedLayout>
 </template>

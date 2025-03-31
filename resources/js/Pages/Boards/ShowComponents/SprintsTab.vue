@@ -111,7 +111,12 @@ const handleSaveSprint = async () => {
                 }
             }
             
-            emit('sprint-updated', sprintToEdit.value.id);
+            // Emit the updated sprint with full data for column locking updates
+            emit('sprint-updated', {
+                id: sprintToEdit.value.id,
+                ...editedSprintData.value
+            });
+            
             toast.success('Sprint updated successfully');
             closeSprintEditModal();
         } else {
@@ -123,6 +128,7 @@ const handleSaveSprint = async () => {
     }
 };
 
+// Update the emit definition to include the full sprint object
 const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
 </script>
 
