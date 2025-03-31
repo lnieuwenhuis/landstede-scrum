@@ -4,7 +4,6 @@ import { Head, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { Line } from 'vue-chartjs';
 import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
 
 // Importing all tabs
@@ -16,7 +15,6 @@ import SprintsTab from './ShowComponents/SprintsTab.vue';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const toast = useToast();
 const { props } = usePage();
 
 // Board data
@@ -24,6 +22,8 @@ const board = props.board;
 const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
+const isAdmin = props.currentUser.role === 'admin';
+
 // Parse sprints from board if it's a string
 const sprints = ref(typeof props.board.sprints === 'string' 
     ? JSON.parse(props.board.sprints) 
@@ -186,6 +186,7 @@ const showDescription = ref(false);
 
             <div v-if="activeTab === 'sprints'">
                 <SprintsTab 
+                    :isAdmin="isAdmin"
                     :sprints="sprints"
                     :board="board"
                     :show-description="showDescription"

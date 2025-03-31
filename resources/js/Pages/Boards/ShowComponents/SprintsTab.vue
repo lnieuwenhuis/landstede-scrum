@@ -6,6 +6,7 @@ import { useToast } from 'vue-toastification';
 const toast = useToast();
 
 const props = defineProps({
+    isAdmin: Boolean,
     sprints: Array,
     board: Object
 });
@@ -258,9 +259,11 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                 <div>
                     <label for="sprint-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select 
+                        :disabled="!isAdmin"
                         id="sprint-status" 
                         v-model="editedSprintData.status" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        :class="{ 'bg-gray-100 text-gray-500 cursor-not-allowed': !isAdmin }"
                     >
                         <option value="active">Active (Current Sprint)</option>
                         <option value="inactive">Inactive (Future Sprint)</option>

@@ -57,7 +57,8 @@ class BoardController extends Controller
                     ];
                 }),
                 'users' => $board->users,
-                'freeDates' => json_encode($board->nonWorkingDays())
+                'freeDates' => json_encode($board->nonWorkingDays()),
+                'currentUser' => $user,
             ]);
         };
 
@@ -372,7 +373,10 @@ class BoardController extends Controller
             $sprints[$sprintIndex]['title'] = $request->title;
             $sprints[$sprintIndex]['start_date'] = $request->start_date;
             $sprints[$sprintIndex]['end_date'] = $request->end_date;
-            $sprints[$sprintIndex]['status'] = $request->status;
+            
+            if($user->role == 'admin'){
+                $sprints[$sprintIndex]['status'] = $request->status;
+            }
             
             // Save updated sprints back to the board
             $board->sprints = json_encode($sprints);
