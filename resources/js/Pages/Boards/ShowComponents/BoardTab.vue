@@ -570,7 +570,7 @@ const handleUpdateColumn = async ({ id, title }) => {
             >
                 <!-- Done column header -->
                 <div class="p-3 bg-green-100 rounded-t-lg flex justify-between items-center">
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center justify-between w-full">
                         <h3 class="font-medium text-green-800">{{ doneColumn.title }}</h3>
                         <span v-if="isColumnLocked(doneColumn.title)" class="flex items-center text-sm text-red-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
