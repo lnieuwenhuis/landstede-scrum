@@ -151,16 +151,31 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                 <div 
                     v-for="sprint in sprints" 
                     :key="sprint.id"
-                    class="bg-black/5 p-4 rounded-lg shadow-sm transition-all duration-200 hover:bg-black/10"
-                    :class="{'border-l-4 border-green-500': sprint.status === 'active'}"
+                    class="p-4 rounded-lg shadow-sm transition-all duration-200 hover:bg-black/5"
+                    :class="{
+                        'border-l-4 border-green-500 bg-green-50': sprint.status === 'active',
+                        'border-l-4 border-blue-500 bg-blue-50': sprint.status === 'planning',
+                        'border-l-4 border-gray-500 bg-gray-50': sprint.status === 'inactive',
+                        'border-l-4 border-yellow-500 bg-yellow-50': sprint.status === 'locked',
+                        'border-l-4 border-purple-500 bg-purple-50': sprint.status === 'checked'
+                    }"
                 >
                     <div class="flex justify-between items-start">
                         <div>
                             <h3 class="text-lg font-medium text-gray-800 flex items-center">
                                 {{ sprint.title }}
-                                <svg v-if="sprint.status === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
+                                <span 
+                                    class="ml-2 px-2 py-1 text-xs font-semibold rounded-full"
+                                    :class="{
+                                        'bg-green-100 text-green-800': sprint.status === 'active',
+                                        'bg-blue-100 text-blue-800': sprint.status === 'planning',
+                                        'bg-gray-100 text-gray-800': sprint.status === 'inactive',
+                                        'bg-yellow-100 text-yellow-800': sprint.status === 'locked',
+                                        'bg-purple-100 text-purple-800': sprint.status === 'checked'
+                                    }"
+                                >
+                                    {{ sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1) }}
+                                </span>
                             </h3>
                             <div class="mt-2 space-y-1">
                                 <p class="text-sm text-gray-600">
@@ -171,18 +186,47 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                                     <span class="font-medium">End Date:</span> 
                                     {{ new Date(sprint.end_date).toLocaleDateString() }}
                                 </p>
-                                <p class="text-sm text-gray-600">
-                                    <span class="font-medium">Status: </span>
-                                    <span 
-                                        :class="{
-                                            'text-green-600': new Date() >= new Date(sprint.start_date) && new Date() <= new Date(sprint.end_date),
-                                            'text-red-600': new Date() > new Date(sprint.end_date),
-                                            'text-blue-600': new Date() < new Date(sprint.start_date)
-                                        }"
-                                    >
-                                        {{ sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1) }}
+                                <p class="text-sm text-gray-600 mt-2 flex items-center">
+                                    <span class="font-medium mr-2">Status: </span>
+                                    <span class="flex items-center">
+                                        <!-- Status icons -->
+                                        <svg v-if="sprint.status === 'active'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <svg v-if="sprint.status === 'planning'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                                        </svg>
+                                        <svg v-if="sprint.status === 'inactive'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                        </svg>
+                                        <svg v-if="sprint.status === 'locked'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-yellow-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                        </svg>
+                                        <svg v-if="sprint.status === 'checked'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span 
+                                            :class="{
+                                                'text-green-600': sprint.status === 'active',
+                                                'text-blue-600': sprint.status === 'planning',
+                                                'text-gray-600': sprint.status === 'inactive',
+                                                'text-yellow-600': sprint.status === 'locked',
+                                                'text-purple-600': sprint.status === 'checked'
+                                            }"
+                                        >
+                                            {{ sprint.status.charAt(0).toUpperCase() + sprint.status.slice(1) }}
+                                        </span>
                                     </span>
                                 </p>
+                                <div class="mt-2">
+                                    <div class="text-xs text-gray-500">
+                                        <span v-if="sprint.status === 'active'">Currently active sprint</span>
+                                        <span v-else-if="sprint.status === 'planning'">Sprint in planning phase</span>
+                                        <span v-else-if="sprint.status === 'inactive'">Future sprint</span>
+                                        <span v-else-if="sprint.status === 'locked'">Completed, awaiting verification</span>
+                                        <span v-else-if="sprint.status === 'checked'">Completed and verified</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="flex gap-2">

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
@@ -12,6 +12,14 @@ const props = defineProps({
         type: Boolean,
         default: false
     }
+});
+
+// Add computed properties to separate regular columns from the Done column
+const sortedColumns = computed(() => {
+    const regularColumns = props.columns.filter(column => column.title !== 'Done');
+    const doneColumn = props.columns.find(column => column.title === 'Done');
+    
+    return [...regularColumns, ...(doneColumn ? [doneColumn] : [])];
 });
 
 const emit = defineEmits(['toggle-description']);
@@ -115,7 +123,7 @@ const handleDeleteCard = async (cardId) => {
     <div class="flex-1">
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
             <div class="divide-y divide-gray-200">
-                <div v-for="column in columns" :key="column.id" class="p-4">
+                <div v-for="column in sortedColumns" :key="column.id" class="p-4">
                     <!-- Column Header -->
                     <div 
                         @click="expandedColumns[column.id] = !expandedColumns[column.id]"
