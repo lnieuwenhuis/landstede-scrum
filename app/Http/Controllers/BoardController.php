@@ -93,15 +93,8 @@ class BoardController extends Controller
 
         $sprintsInput = json_decode($validatedData['sprints']);
         $sprints = [];
-        foreach ($sprintsInput as $sprint) {
-            $currentDate = time();
-            $sprintStartDate = strtotime($sprint->start_date);
-            $sprintEndDate = strtotime($sprint->end_date);
-            
-            // Check if current date is between start and end date
-            $status = ($currentDate >= $sprintStartDate && $currentDate <= $sprintEndDate) 
-                ? 'active' 
-                : 'inactive';
+        foreach ($sprintsInput as $index => $sprint) {
+            $status = ($index === 0) ? 'planning' : 'inactive';
                 
             $sprints[] = [
                 'id' => count($sprints) + 1,
