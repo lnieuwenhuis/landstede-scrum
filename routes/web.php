@@ -6,6 +6,7 @@ use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VacationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -49,10 +50,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/users/{groupId}/remove', [GroupController::class, 'removeUser']);
     Route::post('/api/groups/createGroup', [GroupController::class,'store']);
     Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
-    Route::post('/api/groups/removeUser', [GroupController::class, 'removeUser']);
 
     //Column API Routes
     Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);
+
+    //User API Routes
+    Route::post('/api/users/searchUsers', [UserController::class,'searchUsers']);
+    Route::post('/api/users/addUsersToBoard', [UserController::class,'addUsersToBoard']);
+    Route::post('/api/users/removeUserFromBoard', [UserController::class, 'removeUser']);
 
     //Vacation API Routes
     Route::post('/api/vacations/getVacation', [VacationController::class,'getVacation']);
