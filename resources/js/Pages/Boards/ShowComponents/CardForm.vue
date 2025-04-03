@@ -10,7 +10,11 @@ const props = defineProps({
         type: Object,
         default: null
     },
-    // Add these new props
+    // Add loading prop
+    loading: {
+        type: Boolean,
+        default: false
+    },
     initialTitle: {
         type: String,
         default: ''
@@ -115,8 +119,10 @@ const handleCancel = () => {
                 <button 
                     type="submit"
                     class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+                    :disabled="loading"
                 >
-                    {{ isEditingCard ? 'Update' : 'Add' }}
+                    <span v-if="loading" class="animate-spin">⏳</span>
+                    {{ loading ? 'Saving...' : (isEditingCard ? 'Update' : 'Add') }}
                 </button>
             </div>
         </form>

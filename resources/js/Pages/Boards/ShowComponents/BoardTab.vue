@@ -141,20 +141,7 @@ const resetNewColumnForm = () => {
 
 // API handlers
 const handleUpdateCard = async ({ cardId, columnId, title, description, points }) => {
-    // Update card optimistically
-    props.columns.forEach(column => {
-        const cardIndex = column.cards.findIndex(c => c.id === cardId);
-        if (cardIndex !== -1) {
-            column.cards[cardIndex] = {
-                ...column.cards[cardIndex],
-                title,
-                description,
-                points
-            };
-        }
-    });
-
-    // Send to backend
+    loading.value = true;
     try {
         const response = await axios.post(`/api/updateCard/${cardId}`, {
             title,
@@ -162,150 +149,92 @@ const handleUpdateCard = async ({ cardId, columnId, title, description, points }
             points
         });
 
-        if (!response.data.message) {
+        if (!response.data.card) {
             throw new Error('Failed to update card');
         }
         
+        // Update from server response
+        const updatedColumns = [...props.columns];
+        updatedColumns.forEach(column => {
+            const cardIndex = column.cards.findIndex(c => c.id === cardId);
+            if (cardIndex !== -1) {
+                column.cards[cardIndex] = response.data.card;
+            }
+        });
+        emit('columns-updated', updatedColumns);
+
         toast.success('Card updated successfully');
-        emit('columns-updated');
     } catch (error) {
-        // Revert changes if failed
         toast.error('Failed to update card');
-        emit('columns-updated');
+    } finally {
+        loading.value = false;
+        cardEditing.value = null;  // Explicitly clear editing state
+        resetForm();
+    }
+};
+
+// In all API handlers, remove optimistic updates and add loading states
+const loading = ref(false);
+
+const handleAddCard = async ({ columnId, title, description, points }) => {
+    loading.value = true;
+    try {
+        const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
+            title, description, points
+        });
+
+        if (response.data.card) {
+            const columnIndex = props.columns.findIndex(col => col.id === columnId);
+            if (columnIndex > -1) {
+                const updatedColumns = [...props.columns];
+                updatedColumns[columnIndex].cards.push(response.data.card);
+                emit('columns-updated', updatedColumns);
+            }
+            cardOpen.value[columnId] = false;  // Add this line to close the form
+            toast.success('Card added successfully');
+        }
+    } catch (error) {
+        toast.error('Failed to add card');
+    } finally {
+        loading.value = false;
+        resetForm();
     }
 };
 
 const handleDeleteCard = async (cardId) => {
-    // Store card data for potential rollback
-    let deletedCard;
-    let deletedFromColumn;
-
-    // Remove card optimistically
-    props.columns.forEach(column => {
-        const cardIndex = column.cards.findIndex(c => c.id === cardId);
-        if (cardIndex !== -1) {
-            deletedCard = column.cards[cardIndex];
-            deletedFromColumn = column;
-            column.cards = column.cards.filter(card => card.id !== cardId);
-        }
-    });
-
+    loading.value = true;
     try {
-        // Send to backend
         const response = await axios.post(`/api/deleteCard/${cardId}`);
-        if (!response.data.message) {
-            throw new Error('Failed to delete card');
+        if (response.data.message) {
+            props.columns.forEach(column => {
+                column.cards = column.cards.filter(card => card.id !== cardId);
+            });
+            toast.success(response.data.message);
         }
-        
-        toast.success(response.data.message);
-        emit('columns-updated');
     } catch (error) {
-        // Revert changes if failed
-        if (deletedCard && deletedFromColumn) {
-            deletedFromColumn.cards.push(deletedCard);
-        }
         toast.error('Failed to delete card');
-        emit('columns-updated');
-    }
-};
-
-import { v4 as uuidv4 } from 'uuid';
-
-const generateTempId = () => `temp-${uuidv4()}`;
-
-const handleAddCard = async ({ columnId, title, description, points }) => {
-    // Add card optimistically
-    const tempId = generateTempId();
-    const column = props.columns.find(col => col.id === columnId);
-    if (column) {
-        const tempCard = {
-            id: tempId,
-            title: title || '', 
-            description: description || '',
-            points: points || 0,
-            // Add temporary flag to prevent undefined references
-            __isTemp: true
-        };
-        
-        // Use Vue.set for array manipulation to ensure reactivity
-        column.cards = [...column.cards, tempCard];
-    }
-
-    try {
-        // Send to backend
-        const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
-            title,
-            description,
-            points
-        });
-
-        if (!response.data.card) {
-            throw new Error('Failed to add card');
-        }
-
-        // Replace temp card with real one
-        const column = props.columns.find(col => col.id === columnId);
-        if (column) {
-            const index = column.cards.findIndex(c => c.id === tempId);
-            if (index !== -1) {
-                column.cards[index] = response.data.card;
-            }
-        }
-        
-        toast.success('Card added successfully');
-        // Reset form fields but keep the form open
-        resetForm();
-        emit('columns-updated');
-        emit('burndown-update'); // Add this to trigger burndown chart update
-    } catch (error) {
-        toast.error('Failed to add card');
+    } finally {
+        loading.value = false;
         emit('columns-updated');
     }
 };
 
 const handleAddColumn = async ({ title, done, board_id, status }) => {
-    if (!status) status = "active";
-    const tempId = generateTempId();
-    
-    // Add column optimistically
-    const tempColumn = {
-        id: tempId,
-        title,
-        done,
-        board_id,
-        status,
-        cards: []
-    };
-    props.columns.push(tempColumn);
-
+    loading.value = true;
     try {
-        // Send to backend
         const response = await axios.post('/api/addColumn', {
-            title,
-            done,
-            board_id,
-            status
+            title, done, board_id, status
         });
 
-        if (!response.data || !response.data.column) {
-            throw new Error('No column data received');
+        if (response.data.column) {
+            props.columns.push(response.data.column);
+            toast.success('Column added successfully!');
         }
-        
-        // Replace temp column with real one
-        const index = props.columns.findIndex(col => col.id === tempId);
-        if (index !== -1) {
-            props.columns[index] = response.data.column;
-        }
-        
-        toast.success('Column added successfully!');
-        emit('columns-updated');
     } catch (error) {
-        // Remove temp column if request failed
-        const filteredColumns = props.columns.filter(col => col.id !== tempId);
-        props.columns.length = 0;
-        filteredColumns.forEach(col => props.columns.push(col));
-        
         toast.error('Failed to add column');
+    } finally {
+        loading.value = false;
+        emit('columns-updated');
     }
 };
 
@@ -328,6 +257,11 @@ const handleDeleteColumn = async (columnId) => {
         if (!response.data.message) {
             throw new Error('Failed to delete column');
         }
+        
+        // Remove column after successful API response
+        const filteredColumns = props.columns.filter(column => column.id !== columnId);
+        props.columns.length = 0;
+        filteredColumns.forEach(col => props.columns.push(col));
         
         toast.success(response.data.message);
         emit('columns-updated');
@@ -493,22 +427,21 @@ const handleUpdateColumn = async ({ id, title }) => {
                     >
                         <!-- Show card editing form when this card is being edited -->
                         <div v-if="cardEditing === card.id">
+                            <!-- In both CardForm instances (add card and edit card) -->
                             <CardForm 
+                                :loading="loading"
                                 :column-id="column.id"
                                 :initial-title="cardTitle"
                                 :initial-description="cardDesc"
                                 :initial-points="cardPoints"
                                 :is-editing="true"
-                                @save="(data) => { 
-                                    handleUpdateCard({
-                                        cardId: card.id,
-                                        columnId: column.id,
-                                        title: data.title,
-                                        description: data.description,
-                                        points: data.points
-                                    });
-                                    resetForm();
-                                }"
+                                @save="(data) => handleUpdateCard({  // Remove resetForm from here
+                                    cardId: card.id,
+                                    columnId: column.id,
+                                    title: data.title,
+                                    description: data.description,
+                                    points: data.points
+                                })"
                                 @cancel="resetForm"
                             />
                         </div>
@@ -545,6 +478,7 @@ const handleUpdateColumn = async ({ id, title }) => {
                     <!-- Add card form -->
                     <div v-if="cardOpen[column.id]">
                         <CardForm 
+                            :loading="loading"
                             :column-id="column.id"
                             :key="`form-${column.id}-${Date.now()}`"
                             @save="handleAddCard"

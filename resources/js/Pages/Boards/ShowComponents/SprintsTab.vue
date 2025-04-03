@@ -72,26 +72,20 @@ const editedSprintData = ref({
 });
 
 const handleCreateSprint = async () => {
+    loading.value = true;
     try {
         const response = await axios.post('/api/createSprint', {
             board_id: props.board.id,
             title: 'New Sprint',
         });
+        
         if (response.data.sprints) {
             sprints.value = response.data.sprints;
-        } else {
-            throw new Error(response.data.error || 'Failed to create sprint');
+            toast.success('Sprint created successfully');
         }
-    } catch (error) {
-        console.error('Error creating sprint:', error);
-        toast.error(error.message || 'Failed to create sprint');
+    } finally {
+        loading.value = false;
     }
-};
-
-const toggleDeleteSprint = (sprintId = null) => {
-    document.body.style.overflow = showDeleteSprintConfirmation.value ? '' : 'hidden';
-    showDeleteSprintConfirmation.value = !showDeleteSprintConfirmation.value;
-    sprintToDelete.value = sprintId;
 };
 
 const handleDeleteSprint = async () => {
@@ -113,6 +107,12 @@ const handleDeleteSprint = async () => {
         console.error('Error deleting sprint:', error);
         toast.error(error.message || 'Failed to delete sprint');
     }
+};
+
+const toggleDeleteSprint = (sprintId = null) => {
+    document.body.style.overflow = showDeleteSprintConfirmation.value ? '' : 'hidden';
+    showDeleteSprintConfirmation.value = !showDeleteSprintConfirmation.value;
+    sprintToDelete.value = sprintId;
 };
 
 const openSprintEditModal = (sprint) => {
