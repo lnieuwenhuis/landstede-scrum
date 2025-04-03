@@ -178,26 +178,29 @@ const handleDeleteUser = async (userId) => {
 </script>
 
 <template>
-    <div class="flex-1">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="p-6">
+    <div class="flex justify-center">
+        <div class="bg-white p-4 rounded-lg shadow" style="min-width: 1604px">
+            <div class="flex flex-row justify-between">
+                <h2 class="text-2xl font-semibold text-gray-800 m-2">Team Members</h2>
+            <button 
+                @click="toggleAddUserModal"
+                class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 mr-2"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                </svg>
+                Add User
+            </button>
+            </div>
+            <div class="p-2 pt-0">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-800">Team Members</h2>
-                    <button 
-                        @click="toggleAddUserModal"
-                        class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                        </svg>
-                        Add User
-                    </button>
+                    
                 </div>
                 <div class="space-y-4">
                     <div 
                         v-for="user in users" 
                         :key="user.id" 
-                        class="bg-black/5 p-4 rounded-lg shadow-sm transition-all duration-200 hover:bg-black/10 flex items-center"
+                        class="bg-gray-50 p-4 rounded-lg shadow-sm transition-colors duration-200 hover:bg-gray-100 flex items-center space-x-4"
                     >
                         <div class="flex-shrink-0">
                             <div class="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
@@ -343,4 +346,5 @@ const handleDeleteUser = async (userId) => {
             </div>
         </div>
     </div>
+
 </template>
