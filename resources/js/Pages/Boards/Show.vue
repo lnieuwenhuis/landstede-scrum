@@ -43,10 +43,10 @@ const endDate = ref(board.end_date);
 
 // Initialize chart with board data
 const { chartData, chartOptions } = buildChart(
-    board, 
-    selectedSprint.value, 
-    columns, 
-    startDate.value, 
+    board,
+    currentSprint.value || null, // Handle undefined currentSprint
+    columns,
+    startDate.value,
     endDate.value,
     freeDates
 );

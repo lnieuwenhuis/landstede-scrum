@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('description');
-            $table->timestamp('start_date');
-            $table->timestamp('end_date');
+            $table->timestamp('start_date')->default(now());
+            $table->timestamp('end_date')->default(now());
             $table->json('sprints')->nullable();
             $table->json('non_working_days');
             $table->string('status');
