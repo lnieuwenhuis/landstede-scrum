@@ -312,7 +312,7 @@ class BoardController extends Controller
             'title' => $title,
             'is_done_column' => $done,
             'board_id' => $board->id,
-            'status'=> $status
+            'status'=> 'active',
         ]);
 
         $column->save();

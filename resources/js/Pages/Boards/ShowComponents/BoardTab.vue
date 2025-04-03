@@ -206,16 +206,20 @@ const handleDeleteCard = async (cardId) => {
     try {
         const response = await axios.post(`/api/deleteCard/${cardId}`);
         if (response.data.message) {
-            props.columns.forEach(column => {
-                column.cards = column.cards.filter(card => card.id !== cardId);
-            });
+            // Create a deep copy of columns with the card removed
+            const updatedColumns = props.columns.map(column => ({
+                ...column,
+                cards: column.cards.filter(card => card.id !== cardId)
+            }));
+            
+            // Emit the updated columns array
+            emit('columns-updated', updatedColumns);
             toast.success(response.data.message);
         }
     } catch (error) {
         toast.error('Failed to delete card');
     } finally {
         loading.value = false;
-        emit('columns-updated');
     }
 };
 
@@ -227,29 +231,47 @@ const handleAddColumn = async ({ title, done, board_id, status }) => {
         });
 
         if (response.data.column) {
-            props.columns.push(response.data.column);
+            const updatedColumns = [...props.columns, response.data.column];
+            emit('columns-updated', updatedColumns);
             toast.success('Column added successfully!');
+            resetNewColumnForm();
         }
     } catch (error) {
         toast.error('Failed to add column');
     } finally {
         loading.value = false;
-        emit('columns-updated');
+        showNewColumn.value = false; 
+    }
+};
+
+const handleUpdateColumn = async ({ id, title }) => {
+    loading.value = true;
+    try {
+        const response = await axios.post(`/api/updateColumn`, {
+            column_id: id,
+            title
+        });
+        
+        if (response.data.column) {
+            const updatedColumns = props.columns.map(col => 
+                col.id === id ? { ...col, title: response.data.column.title } : col
+            );
+            emit('columns-updated', updatedColumns);
+            toast.success('Column updated successfully');
+            resetNewColumnForm();  // Add this line
+        }
+    } catch (error) {
+        toast.error('Failed to update column');
+    } finally {
+        loading.value = false;
+        // Remove this redundant emit
+        // emit('columns-updated');
     }
 };
 
 const handleDeleteColumn = async (columnId) => {
-    // Store column data for potential rollback
-    const deletedColumn = props.columns.find(col => col.id === columnId);
-    const columnIndex = props.columns.findIndex(col => col.id === columnId);
-    
-    // Remove column optimistically
-    const filteredColumns = props.columns.filter(column => column.id !== columnId);
-    props.columns.length = 0;
-    filteredColumns.forEach(col => props.columns.push(col));
-
+    loading.value = true;
     try {
-        // Send to backend
         const response = await axios.post(`/api/deleteColumn`, {
             column_id: columnId
         });
@@ -260,18 +282,13 @@ const handleDeleteColumn = async (columnId) => {
         
         // Remove column after successful API response
         const filteredColumns = props.columns.filter(column => column.id !== columnId);
-        props.columns.length = 0;
-        filteredColumns.forEach(col => props.columns.push(col));
+        emit('columns-updated', filteredColumns);
         
         toast.success(response.data.message);
-        emit('columns-updated');
     } catch (error) {
-        // Revert changes if failed
-        if (deletedColumn && columnIndex !== -1) {
-            props.columns.splice(columnIndex, 0, deletedColumn);
-        }
         toast.error('Failed to delete column');
-        emit('columns-updated');
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -297,35 +314,6 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
         sourceColumn.cards.splice(cardIndex, 0, movedCard);
         targetColumn.cards.pop();
         toast.error('Failed to move card');
-        emit('columns-updated');
-    }
-};
-
-const handleUpdateColumn = async ({ id, title }) => {
-    const column = props.columns.find(col => col.id === id);
-    if (!column) return;
-    
-    const originalTitle = column.title;
-    
-    column.title = title;
-    
-    try {
-        const response = await axios.post(`/api/updateColumn`, {
-            column_id: id,
-            title
-        });
-        
-        if (!response.data.message) {
-            throw new Error('Failed to update column');
-        }
-        
-        toast.success('Column updated successfully');
-        emit('columns-updated');
-    } catch (error) {
-        if (column) {
-            column.title = originalTitle;
-        }
-        toast.error('Failed to update column');
         emit('columns-updated');
     }
 };
@@ -376,14 +364,15 @@ const handleUpdateColumn = async ({ id, title }) => {
             >
                 <!-- Regular column header -->
                 <div class="p-3 bg-gray-200 rounded-t-lg flex justify-between items-center">
-                    <div v-if="columnEditing === column.id" class="flex-1">
+                    <div v-if="columnEditing === column.id" class="flex-1 relative">
                         <input 
                             v-model="newColumnTitle" 
-                            @keyup.enter="handleUpdateColumn({ id: column.id, title: newColumnTitle }); resetNewColumnForm()"
-                            @blur="resetNewColumnForm()"
-                            class="w-full px-2 py-1 border border-gray-300 rounded"
+                            @keyup.enter="handleUpdateColumn({ id: column.id, title: newColumnTitle })"
+                            :disabled="loading"
+                            class="w-full px-2 py-1 border border-gray-300 rounded pr-8"
                             placeholder="Column title"
                         />
+                        <span v-if="loading" class="absolute right-3 top-1/2 -translate-y-1/2">⏳</span>
                     </div>
                     <div v-else class="flex items-center justify-between w-full">
                         <h3 class="font-medium text-gray-700">{{ column.title }}</h3>
@@ -398,6 +387,7 @@ const handleUpdateColumn = async ({ id, title }) => {
                         <button 
                             @click="toggleEditColumn(column)"
                             class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            :disabled="loading"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -406,6 +396,7 @@ const handleUpdateColumn = async ({ id, title }) => {
                         <button 
                             @click="handleDeleteColumn(column.id)"
                             class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
+                            :disabled="loading"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -594,17 +585,22 @@ const handleUpdateColumn = async ({ id, title }) => {
             <!-- Add column form -->
             <div v-if="showNewColumn" class="flex-shrink-0 w-80 bg-white p-3 rounded-lg shadow">
                 <h3 class="font-medium text-gray-700 mb-2">Add New Column</h3>
-                <input 
-                    v-model="newColumnTitle" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded mb-2"
-                    placeholder="Column title"
-                />
+                <div class="relative">
+                    <input 
+                        v-model="newColumnTitle" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded mb-2 pr-8"
+                        placeholder="Column title"
+                        :disabled="loading"
+                    />
+                    <span v-if="loading" class="absolute right-3 top-3">⏳</span>
+                </div>
                 <div class="flex items-center mb-3">
                     <input 
                         id="done-column" 
                         type="checkbox" 
                         v-model="newColumnDone" 
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        :disabled="loading"
                     />
                     <label for="done-column" class="ml-2 block text-sm text-gray-900">
                         This is a "Done" column
@@ -614,6 +610,7 @@ const handleUpdateColumn = async ({ id, title }) => {
                     <button 
                         @click="toggleNewColumn" 
                         class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                        :disabled="loading"
                     >
                         Cancel
                     </button>
@@ -622,10 +619,12 @@ const handleUpdateColumn = async ({ id, title }) => {
                             title: newColumnTitle,
                             done: newColumnDone,
                             board_id: board.id
-                        }); toggleNewColumn()"
-                        class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+                        })"
+                        class="px-3 py-1 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded relative"
+                        :disabled="loading"
                     >
-                        Add Column
+                        <span v-if="loading">⏳</span>
+                        {{ loading ? 'Adding...' : 'Add Column' }}
                     </button>
                 </div>
             </div>
