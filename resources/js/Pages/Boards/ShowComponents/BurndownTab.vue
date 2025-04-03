@@ -1,7 +1,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { Line } from 'vue-chartjs';
-import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
 
 const props = defineProps({
     board: Object,
@@ -9,8 +8,7 @@ const props = defineProps({
     sprints: Array,
     freeDates: Array,
     chartData: Object,
-    chartOptions: Object,
-    currentSprint: Object // Add this prop
+    chartOptions: Object
 });
 
 const emit = defineEmits(['period-change']);
@@ -33,38 +31,6 @@ watch(() => props.columns, () => {
     // This will trigger when columns change, but the parent component
     // will handle the actual chart update through the burndown-update event
 }, { deep: true });
-
-// Modified chartData computed property
-const chartData = computed(() => {
-    if (!props.currentSprint?.days?.length) {
-        return {
-            labels: [],
-            datasets: [{
-                label: 'Remaining Points',
-                data: [],
-                borderColor: '#3B82F6',
-                fill: true
-            }]
-        };
-    }
-    
-    return {
-        labels: props.currentSprint.days.map(day => day.date),
-        datasets: [{
-            label: 'Remaining Points',
-            data: props.currentSprint.days.map(day => day.remaining_points),
-            borderColor: '#3B82F6',
-            fill: true
-        }]
-    };
-});
-
-// Add fallback for undefined sprint
-const sprintProgress = computed(() => {
-    if (!props.currentSprint?.total_points) return 0;
-    const completed = props.currentSprint.completed_points || 0;
-    return ((completed / props.currentSprint.total_points) * 100).toFixed(1);
-});
 </script>
 
 <template>
@@ -91,14 +57,7 @@ const sprintProgress = computed(() => {
         <div class="overflow-x-auto">
             <div class="flex justify-center items-center h-full min-w-[800px]">
                 <div class="w-full h-[450px]">
-                    <Line 
-                        v-if="chartData.labels.length > 0" 
-                        :data="chartData" 
-                        :options="chartOptions"
-                    />
-                    <div v-else class="h-full flex items-center justify-center text-gray-500">
-                        No sprint data available
-                    </div>
+                    <Line :data="chartData" :options="chartOptions"/>
                 </div>
             </div>
         </div>
