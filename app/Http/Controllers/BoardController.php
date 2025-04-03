@@ -265,9 +265,17 @@ class BoardController extends Controller
             return response()->json(['error' => 'Card not found']);
         }
 
-        $card->update($request->all());
+        // Explicitly update fields instead of using $request->all()
+        $card->title = $request->input('title');
+        $card->description = $request->input('description');
+        $card->points = $request->input('points');
+        $card->save();
 
-        return response()->json(['message' => 'Card updated', 'card' => $card]);
+        // Return fresh instance from database
+        return response()->json([
+            'message' => 'Card updated',
+            'card' => Card::find($cardId)
+        ]);
     }
 
     public function deleteCard($cardId)
@@ -294,7 +302,6 @@ class BoardController extends Controller
 
         $title = $request->input('title');
         $done = $request->input('done');
-        $status = $request->input('status');
 
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
@@ -304,7 +311,7 @@ class BoardController extends Controller
             'title' => $title,
             'is_done_column' => $done,
             'board_id' => $board->id,
-            'status'=> $status
+            'status'=> "active"
         ]);
 
         $column->save();
