@@ -209,7 +209,9 @@ const handleDeleteCard = async (cardId) => {
     }
 };
 
-const generateTempId = () => `temp-${Date.now()}`;
+import { v4 as uuidv4 } from 'uuid';
+
+const generateTempId = () => `temp-${uuidv4()}`;
 
 const handleAddCard = async ({ columnId, title, description, points }) => {
     // Add card optimistically
@@ -218,11 +220,15 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
     if (column) {
         const tempCard = {
             id: tempId,
-            title,
-            description,
-            points
+            title: title || '', 
+            description: description || '',
+            points: points || 0,
+            // Add temporary flag to prevent undefined references
+            __isTemp: true
         };
-        column.cards.push(tempCard);
+        
+        // Use Vue.set for array manipulation to ensure reactivity
+        column.cards = [...column.cards, tempCard];
     }
 
     try {
