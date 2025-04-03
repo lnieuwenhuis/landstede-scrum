@@ -76,7 +76,12 @@ const currentDragSourceColumnId = ref(null);
 
 // Card drag and drop handlers
 const handleDragStart = (event, cardId, columnId) => {
-    if (!cardId || !columnId) return;
+    const sourceColumn = props.columns.find(col => col.id === columnId);
+    // Prevent dragging from locked columns
+    if (!sourceColumn || isColumnLocked.value(sourceColumn.title)) {
+        event.preventDefault();
+        return;
+    }
     
     currentDragCardId.value = cardId;
     currentDragSourceColumnId.value = columnId;
@@ -95,6 +100,13 @@ const handleDragLeave = () => {
 const handleDrop = async (event, targetColumnId) => {
     event.preventDefault();
     
+    const targetColumn = props.columns.find(col => col.id === targetColumnId);
+    if (!targetColumn || isColumnLocked.value(targetColumn.title)) {
+        toast.error('Cannot move cards to locked columns');
+        currentDragColumnId.value = null; // Add this line to reset border state
+        return;
+    }
+    
     if (currentDragCardId.value && currentDragSourceColumnId.value && targetColumnId) {
         await handleMoveCard({
             cardId: currentDragCardId.value,
@@ -103,7 +115,7 @@ const handleDrop = async (event, targetColumnId) => {
         });
     }
     
-    // Reset drag state regardless of success
+    // Reset drag state
     currentDragCardId.value = null;
     currentDragSourceColumnId.value = null;
     currentDragColumnId.value = null;
