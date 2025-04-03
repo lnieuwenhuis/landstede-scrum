@@ -76,12 +76,15 @@ const currentDragSourceColumnId = ref(null);
 
 // Card drag and drop handlers
 const handleDragStart = (event, cardId, columnId) => {
+    if (!cardId || !columnId) return;
+    
     currentDragCardId.value = cardId;
     currentDragSourceColumnId.value = columnId;
     event.dataTransfer.effectAllowed = 'move';
 };
 
 const handleDragOver = (event, columnId) => {
+    event.preventDefault();
     currentDragColumnId.value = columnId;
 };
 
@@ -90,13 +93,17 @@ const handleDragLeave = () => {
 };
 
 const handleDrop = async (event, targetColumnId) => {
-    if (currentDragCardId.value && currentDragSourceColumnId.value) {
+    event.preventDefault();
+    
+    if (currentDragCardId.value && currentDragSourceColumnId.value && targetColumnId) {
         await handleMoveCard({
             cardId: currentDragCardId.value,
             sourceColumnId: currentDragSourceColumnId.value,
             targetColumnId
         });
     }
+    
+    // Reset drag state regardless of success
     currentDragCardId.value = null;
     currentDragSourceColumnId.value = null;
     currentDragColumnId.value = null;
@@ -294,27 +301,65 @@ const handleDeleteColumn = async (columnId) => {
 
 // Card movement handler
 const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
-    const sourceColumn = props.columns.find(col => col.id == sourceColumnId);
-    const targetColumn = props.columns.find(col => col.id == targetColumnId);
-    const cardIndex = sourceColumn.cards.findIndex(c => c.id == cardId);
-    if (cardIndex === -1) return;
+    // Check if columns array exists
+    if (!props.columns || !Array.isArray(props.columns)) {
+        toast.error('Columns data is not available');
+        return;
+    }
+    
+    // Find source and target columns with null checks
+    const sourceColumn = props.columns.find(col => col && col.id == sourceColumnId);
+    const targetColumn = props.columns.find(col => col && col.id == targetColumnId);
+    
+    // Validate columns exist
+    if (!sourceColumn || !targetColumn) {
+        toast.error('Source or target column not found');
+        return;
+    }
+    
+    // Ensure cards arrays exist
+    if (!Array.isArray(sourceColumn.cards) || !Array.isArray(targetColumn.cards)) {
+        toast.error('Cards data is not available');
+        return;
+    }
+    
+    // Find card in source column
+    const cardIndex = sourceColumn.cards.findIndex(c => c && c.id == cardId);
+    if (cardIndex === -1) {
+        toast.error('Card not found in source column');
+        return;
+    }
 
-    const [movedCard] = sourceColumn.cards.splice(cardIndex, 1);
-    targetColumn.cards.push(movedCard);
-
+    // Create a copy of the card to move
+    const movedCard = { ...sourceColumn.cards[cardIndex] };
+    
     try {
+        // Remove from source
+        sourceColumn.cards.splice(cardIndex, 1);
+        
+        // Add to target
+        targetColumn.cards.push(movedCard);
+        
+        // Make API call after optimistic update
         await axios.post(`/api/cards/${cardId}/move`, {
             column_id: targetColumnId
         });
+        
         toast.success('Card moved successfully');
-        emit('columns-updated');
-        emit('burndown-update'); // Add this line
+        emit('columns-updated', props.columns);
+        emit('burndown-update');
     } catch (error) {
         // Revert changes if API call fails
-        sourceColumn.cards.splice(cardIndex, 0, movedCard);
-        targetColumn.cards.pop();
+        if (Array.isArray(sourceColumn.cards) && Array.isArray(targetColumn.cards)) {
+            sourceColumn.cards.splice(cardIndex, 0, movedCard);
+            const targetCardIndex = targetColumn.cards.findIndex(c => c && c.id == cardId);
+            if (targetCardIndex !== -1) {
+                targetColumn.cards.splice(targetCardIndex, 1);
+            }
+        }
+        
         toast.error('Failed to move card');
-        emit('columns-updated');
+        emit('columns-updated', props.columns);
     }
 };
 </script>
