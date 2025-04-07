@@ -120,8 +120,8 @@ const handleDeleteCard = async (cardId) => {
 </script>
 
 <template>
-    <div class="flex justify-center">
-        <div class="bg-white p-4 rounded-lg shadow" style="min-width: 1604px">
+    <div class="flex-1">
+        <div class="bg-white p-4 shadow-md rounded-lg overflow-hidden">
             <h2 class="text-2xl font-semibold text-gray-800 m-2">Task List</h2>
 
             <div class="divide-y divide-gray-200">

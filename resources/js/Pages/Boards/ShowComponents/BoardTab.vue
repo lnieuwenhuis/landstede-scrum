@@ -378,7 +378,7 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
 
 <template>
     <div class="flex justify-center">
-        <div class="bg-white p-6 rounded-lg shadow w-full" style="min-width: 1604px">
+        <div class="bg-white p-6 rounded-lg shadow w-full">
             <!-- Board header -->
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center space-x-4">
@@ -403,7 +403,7 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
 
             <!-- Columns container -->
             <div class="flex justify-center">
-                <div class="flex space-x-4 overflow-x-auto pb-4" style="min-width: 1504px">
+                <div class="flex space-x-4 overflow-x-auto pb-4 w-full">
                     <!-- Regular columns -->
                     <div 
                         v-for="column in regularColumns" 

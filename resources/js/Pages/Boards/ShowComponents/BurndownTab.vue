@@ -35,7 +35,7 @@ watch(() => props.columns, () => {
 
 <template>
     <div class="flex justify-center">
-        <div class="bg-white p-6 rounded-lg shadow w-full" style="min-width: 1604px">
+        <div class="bg-white p-6 rounded-lg shadow w-full">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800">Burndown Chart</h2>
                 <div class="flex items-center space-x-4">
