@@ -11,6 +11,8 @@ const props = defineProps({
     board: Object
 });
 
+let loading = ref(false);
+
 // Enhanced status styling function with icons
 const getStatusStyles = (status) => {
     const styles = {
