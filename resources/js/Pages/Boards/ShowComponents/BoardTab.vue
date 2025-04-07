@@ -19,6 +19,8 @@ const props = defineProps({
     currentSprint: Object,
 });
 
+console.log(props.users)
+
 const isColumnLocked = computed(() => {
     return (columnTitle) => {
         if (!props.currentSprint || !props.currentSprint.status) {
@@ -520,6 +522,10 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                                     <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
                                     <div class="flex justify-between items-center mt-2">
                                         <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
+                                        <!-- Add user avatar -->
+                                        <div v-if="card.user_id && props.users" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                            {{ props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -612,9 +618,12 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                                         />
                                     </div>
                                 </div>
-                                <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
-                                <div class="flex justify-between items-center mt-2">
+                                <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>                                <div class="flex justify-between items-center mt-2">
                                     <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
+                                    <!-- Add user avatar -->
+                                    <div v-if="card.user_id && props.users" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                        {{ props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() }}
+                                    </div>
                                 </div>
                             </div>
                             
