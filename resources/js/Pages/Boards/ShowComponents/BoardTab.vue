@@ -19,8 +19,6 @@ const props = defineProps({
     currentSprint: Object,
 });
 
-console.log(props.users)
-
 const isColumnLocked = computed(() => {
     return (columnTitle) => {
         if (!props.currentSprint || !props.currentSprint.status) {
