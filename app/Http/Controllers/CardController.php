@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Board;
+use App\Models\Card;
+use App\Models\Column;
+use App\Models\User;
+use Illuminate\Http\Request;
+
+class CardController extends Controller
+{
+    public function addCardToColumn(Request $request, $columnId)
+    {
+        $user = parent::checkUserLogin();
+
+        $column = Column::find($columnId);
+
+        $title = $request->input('title');
+        $description = $request->input('description');
+        $points = $request->input('points');
+
+        if (!$column) {
+            return response()->json(['error' => 'Column not found']);
+        }
+
+        $card = Card::factory()->create([
+            'title' => $title,
+            'description' => $description,
+            'points' => $points,
+            'user_id' => $user->id,
+            'column_id' => $column->id,
+        ]);
+
+        $card->save();
+
+        return response()->json(['message' => 'Card added to column', 'card' => $card]);
+    }
+
+    public function updateCard(Request $request, $cardId)
+    {
+        $user = parent::checkUserLogin();
+
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        // Explicitly update fields instead of using $request->all()
+        $card->title = $request->input('title');
+        $card->description = $request->input('description');
+        $card->points = $request->input('points');
+        $card->save();
+
+        // Return fresh instance from database
+        return response()->json([
+            'message' => 'Card updated',
+            'card' => Card::find($cardId)
+        ]);
+    }
+
+    public function deleteCard($cardId)
+    {
+        $user = parent::checkUserLogin();
+
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        $card->column()->dissociate();
+        $card->delete();
+
+        return response()->json(['message' => 'Card deleted']);
+    }
+
+    public function moveCardToColumn(Request $request, $cardId)
+    {
+        $user = parent::checkUserLogin();
+
+        $card = Card::find($cardId);
+
+        if (!$card) {
+            return response()->json(['error' => 'Card not found']);
+        }
+
+        $card->column()->dissociate();
+        $card->column()->associate(Column::find($request->column_id));
+        $card->status_updated_at = \Carbon\Carbon::now();
+        $card->save();
+
+        return response()->json(['message' => 'Card moved to column', 'card' => $card]);
+    }
+}

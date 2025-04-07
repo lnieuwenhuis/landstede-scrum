@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BoardController;
+use App\Http\Controllers\CardController;
 use App\Http\Controllers\ColumnController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VacationController;
@@ -31,18 +32,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     //Board API Routes
     Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
-    Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
-    Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
-    Route::post('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
-    Route::post('/api/addColumn', [BoardController::class, 'addColumn']);
-    Route::post('/api/deleteColumn', [BoardController::class, 'deleteColumn']);
-    Route::post('/api/updateColumn', [BoardController::class, 'updateColumn']);
-    Route::post('/api/cards/{cardId}/move', [BoardController::class, 'moveCardToColumn']);
     Route::post('/api/boards/storeBoard', [BoardController::class,'storeBoard']);
     Route::post('/api/boards/deleteBoard', [BoardController::class,'deleteBoard']);
 
+    //Card API Routes
+    Route::post('/api/addCardToColumn/{columnId}', [CardController::class, 'addCardToColumn']);
+    Route::post('/api/updateCard/{cardId}', [CardController::class, 'updateCard']);
+    Route::post('/api/deleteCard/{cardId}', [CardController::class, 'deleteCard']);
+    Route::post('/api/cards/{cardId}/move', [CardController::class, 'moveCardToColumn']);
+
     //Column API Routes
     Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);
+    Route::post('/api/addColumn', [ColumnController::class, 'addColumn']);
+    Route::post('/api/deleteColumn', [ColumnController::class, 'deleteColumn']);
+    Route::post('/api/updateColumn', [ColumnController::class, 'updateColumn']);
 
     //User API Routes
     Route::post('/api/users/searchUsers', [UserController::class,'searchUsers']);
