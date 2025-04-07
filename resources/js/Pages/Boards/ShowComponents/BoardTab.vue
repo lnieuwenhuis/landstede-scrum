@@ -380,7 +380,7 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
             <!-- Board header -->
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
                     <h1 class="text-2xl font-semibold text-gray-800">{{ board.title }}</h1>
                     <span v-if="currentSprint" class="text-gray-600">
@@ -401,9 +401,16 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                 </button>
             </div>
 
+            <div v-if="showDescription" class="py-2 rounded-lg">
+                <p class="text-gray-500">{{ board.description }}</p>
+            </div>
+
             <!-- Columns container -->
             <div class="flex justify-center">
-                <div class="flex space-x-4 overflow-x-auto pb-4 w-full">
+                <div 
+                    class="flex space-x-4 overflow-x-auto pb-4 w-full"
+                    :class="{ '': showDescription, 'mt-6': !showDescription }"
+                >
                     <!-- Regular columns -->
                     <div 
                         v-for="column in regularColumns" 

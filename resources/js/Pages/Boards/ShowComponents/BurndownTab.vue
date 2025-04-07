@@ -8,16 +8,25 @@ const props = defineProps({
     sprints: Array,
     freeDates: Array,
     chartData: Object,
-    chartOptions: Object
+    chartOptions: Object,
+    currentSprint: Object,
+    showDescription: {
+        type: Boolean,
+        default: false
+    }
 });
 
-const emit = defineEmits(['period-change']);
+const emit = defineEmits(['period-change', 'toggle-description']);
 
 const selectedPeriod = ref('board');
 
 const handlePeriodChange = (event) => {
     selectedPeriod.value = event.target.value;
     emit('period-change', selectedPeriod.value);
+};
+
+const toggleDescription = () => {
+    emit('toggle-description');
 };
 
 // Format date to show only the date part (YYYY-MM-DD)
@@ -36,7 +45,7 @@ watch(() => props.columns, () => {
 <template>
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-semibold text-gray-800">Burndown Chart</h2>
                 <div class="flex items-center space-x-4">
                     <h2 class="text-xl font-semibold text-gray-800">{{ board.title }}</h2>
@@ -57,8 +66,14 @@ watch(() => props.columns, () => {
                     </button>
                 </div>
             </div>
+            
+            <!-- Board description section -->
+            <div v-if="showDescription && board.description" class="py-3 rounded-lg">
+                <p class="text-gray-700">{{ board.description }}</p>
+            </div>
+            
             <div class="mb-6 px-4">
-                <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1">Select Period</label>
+                <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1" :class="{ '': showDescription, 'mt-6': !showDescription }" >Select Period</label>
                 <select 
                     id="period-select" 
                     v-model="selectedPeriod"
