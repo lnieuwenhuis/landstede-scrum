@@ -176,7 +176,6 @@ const handleSaveSprint = async () => {
     }
 };
 
-// Update the emit definition to include the full sprint object
 const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
 </script>
 

@@ -24,12 +24,8 @@ const sortedColumns = computed(() => {
 
 const emit = defineEmits(['toggle-description']);
 
-// Toggle description visibility
-const toggleDescription = () => {
-    emit('toggle-description');
-};
-
 const expandedColumns = ref({});
+
 // Add state for edit modal
 const editModalOpen = ref(false);
 const editingCard = ref(null);

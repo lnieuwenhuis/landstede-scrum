@@ -3,16 +3,14 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\ColumnController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VacationController;
 use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome'); // Matches Welcome.vue
+    return Inertia::render('Welcome');
 });
 
 Route::get('/dashboard', [BoardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -33,7 +31,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     //Board API Routes
     Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
-    Route::get('/api/addUserToGroup/{groupId}/{email}', [GroupController::class, 'addUser']);
     Route::post('/api/addCardToColumn/{columnId}', [BoardController::class, 'addCardToColumn']);
     Route::post('/api/updateCard/{cardId}', [BoardController::class, 'updateCard']);
     Route::post('/api/deleteCard/{cardId}', [BoardController::class, 'deleteCard']);
@@ -43,13 +40,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/cards/{cardId}/move', [BoardController::class, 'moveCardToColumn']);
     Route::post('/api/boards/storeBoard', [BoardController::class,'storeBoard']);
     Route::post('/api/boards/deleteBoard', [BoardController::class,'deleteBoard']);
-
-    //Group API Routes
-    Route::get('/api/users/{groupId}', [GroupController::class, 'getUsers']);
-    Route::post('/api/users/{groupId}/add', [GroupController::class, 'addUserToGroup']);
-    Route::post('/api/users/{groupId}/remove', [GroupController::class, 'removeUser']);
-    Route::post('/api/groups/createGroup', [GroupController::class,'store']);
-    Route::post('/api/groups/deleteGroup', [GroupController::class,'destroy']);
 
     //Column API Routes
     Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);

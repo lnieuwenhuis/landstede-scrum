@@ -10,7 +10,6 @@ const props = defineProps({
         type: Object,
         default: null
     },
-    // Add loading prop
     loading: {
         type: Boolean,
         default: false

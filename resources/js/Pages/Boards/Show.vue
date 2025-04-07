@@ -2,7 +2,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
-import { useToast } from 'vue-toastification';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
 
@@ -29,7 +28,7 @@ const currentSprint = ref(props.currentSprint);
 const sprints = ref(typeof props.board.sprints === 'string' 
     ? JSON.parse(props.board.sprints) 
     : props.sprints);
-const expandedColumns = ref({});
+
 // Parse freeDates from board if it's a string
 const freeDates = typeof props.board.non_working_days === 'string' 
     ? JSON.parse(props.board.non_working_days) 
@@ -95,7 +94,6 @@ watch(columns, () => {
     );
 }, { deep: true });
 
-// Add this function to handle burndown chart updates
 const updateBurndownChart = () => {
     // Regenerate chart with current settings
     const chartResult = buildChart(
@@ -113,7 +111,6 @@ const updateBurndownChart = () => {
 
 const showDescription = ref(false);
 
-// Add this function to handle sprint updates
 const handleSprintUpdated = (updatedSprint) => {
     // Check if the updated sprint is the current sprint
     if (currentSprint.value && currentSprint.value.id === updatedSprint.id) {
@@ -143,7 +140,6 @@ const handleSprintUpdated = (updatedSprint) => {
     }
 };
 
-// Add this function to handle sprint deletion
 const handleSprintDeleted = (sprintId) => {
     // If the deleted sprint is the current sprint, set currentSprint to null
     if (currentSprint.value && currentSprint.value.id === sprintId) {
@@ -188,7 +184,6 @@ const handleSprintDeleted = (sprintId) => {
 
             <!-- Tab Content -->
             <div v-if="activeTab === 'board'">
-                <!-- Update the BoardTab component to include the currentSprint -->
                 <BoardTab
                     v-if="activeTab === 'board'"
                     :columns="columns"
@@ -236,7 +231,7 @@ const handleSprintDeleted = (sprintId) => {
                 />
             </div>
 
-            <!-- Update the SprintsTab component to include the new handlers -->
+            <!-- Sprints Tab -->
             <SprintsTab
                 v-if="activeTab === 'sprints'"
                 :sprints="sprints"

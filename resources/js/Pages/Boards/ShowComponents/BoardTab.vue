@@ -19,11 +19,10 @@ const props = defineProps({
     currentSprint: Object,
 });
 
-// Add isColumnLocked function
 const isColumnLocked = computed(() => {
     return (columnTitle) => {
         if (!props.currentSprint || !props.currentSprint.status) {
-            return false; // If no current sprint, nothing is locked
+            return false;
         }
         
         const status = props.currentSprint.status;
@@ -36,7 +35,7 @@ const isColumnLocked = computed(() => {
             return true;
         }
         
-        return false; // Default case
+        return false;
     };
 });
 
@@ -51,7 +50,6 @@ const toggleDescription = () => {
     emit('toggle-description');
 };
 
-// Add computed properties to separate regular columns from the Done column
 const regularColumns = computed(() => {
     return props.columns.filter(column => column.title !== 'Done');
 });
@@ -103,7 +101,7 @@ const handleDrop = async (event, targetColumnId) => {
     const targetColumn = props.columns.find(col => col.id === targetColumnId);
     if (!targetColumn || isColumnLocked.value(targetColumn.title)) {
         toast.error('Cannot move cards to locked columns');
-        currentDragColumnId.value = null; // Add this line to reset border state
+        currentDragColumnId.value = null;
         return;
     }
     
@@ -159,7 +157,7 @@ const resetNewColumnForm = () => {
 };
 
 // API handlers
-const handleUpdateCard = async ({ cardId, columnId, title, description, points }) => {
+const handleUpdateCard = async ({ cardId, title, description, points }) => {
     loading.value = true;
     try {
         const response = await axios.post(`/api/updateCard/${cardId}`, {
@@ -187,12 +185,11 @@ const handleUpdateCard = async ({ cardId, columnId, title, description, points }
         toast.error('Failed to update card');
     } finally {
         loading.value = false;
-        cardEditing.value = null;  // Explicitly clear editing state
+        cardEditing.value = null;
         resetForm();
     }
 };
 
-// In all API handlers, remove optimistic updates and add loading states
 const loading = ref(false);
 
 const handleAddCard = async ({ columnId, title, description, points }) => {
@@ -209,7 +206,7 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
                 updatedColumns[columnIndex].cards.push(response.data.card);
                 emit('columns-updated', updatedColumns);
             }
-            cardOpen.value[columnId] = false;  // Add this line to close the form
+            cardOpen.value[columnId] = false;
             toast.success('Card added successfully');
         }
     } catch (error) {
@@ -277,14 +274,12 @@ const handleUpdateColumn = async ({ id, title }) => {
             );
             emit('columns-updated', updatedColumns);
             toast.success('Column updated successfully');
-            resetNewColumnForm();  // Add this line
+            resetNewColumnForm();
         }
     } catch (error) {
         toast.error('Failed to update column');
     } finally {
         loading.value = false;
-        // Remove this redundant emit
-        // emit('columns-updated');
     }
 };
 

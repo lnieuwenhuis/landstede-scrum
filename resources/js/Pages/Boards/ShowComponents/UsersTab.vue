@@ -13,7 +13,6 @@ const props = defineProps({
 const users = ref(props.users);
 const ownerId = users.value.length > 0 ? users.value[0].id : null;
 
-// Add user modal state
 const showAddUserModal = ref(false);
 const userSearchInput = ref('');
 const usersToAdd = ref([]);
@@ -69,7 +68,6 @@ const searchUsers = async () => {
             board_id: props.board.id
         });
         
-        // Handle the raw response format directly
         if (response.data && Array.isArray(response.data)) {
             // Filter out users that are already in the board or already in the usersToAdd list
             const currentUserIds = users.value.map(user => user.id);
@@ -97,8 +95,6 @@ const searchUsers = async () => {
 const addUserToList = (user) => {
     usersToAdd.value.push(user);
     searchResults.value = searchResults.value.filter(u => u.id !== user.id);
-    // Remove this line to keep the search input and results visible
-    // userSearchInput.value = ''; 
 };
 
 // Remove user from temporary list
@@ -109,7 +105,6 @@ const removeUserFromList = (userId) => {
     // Remove from usersToAdd array
     usersToAdd.value = usersToAdd.value.filter(user => user.id !== userId);
     
-    // If we found the user and there's a search term, add back to search results
     if (userToRemove && userSearchInput.value.trim()) {
         // Check if the user matches current search criteria
         if (userToRemove.name.toLowerCase().includes(userSearchInput.value.toLowerCase())) {
@@ -121,18 +116,16 @@ const removeUserFromList = (userId) => {
     }
 };
 
-// Save users to board
-// Add a new state variable to track the saving state
 const isSaving = ref(false);
 
-// Update the saveUsers function to handle the saving state
+// Save users to board
 const saveUsers = async () => {
     if (usersToAdd.value.length === 0) {
         toggleAddUserModal();
         return;
     }
     
-    isSaving.value = true; // Set saving state to true before API call
+    isSaving.value = true;
     
     try {
         const userIds = usersToAdd.value.map(user => user.id);
@@ -153,7 +146,7 @@ const saveUsers = async () => {
         console.error('Error adding users:', error);
         toast.error(error.message || 'Failed to add users');
     } finally {
-        isSaving.value = false; // Reset saving state when done
+        isSaving.value = false;
     }
 };
 

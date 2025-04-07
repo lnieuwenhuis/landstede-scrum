@@ -103,10 +103,8 @@ export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDa
             idealData.push(totalPoints);
         } else if (isWorkingDay) {
             workingDays++;
-            // We'll calculate the actual values after counting working days
             idealData.push(null);
         } else {
-            // For non-working days, use the same value as the previous day
             idealData.push(null);
         }
     }
@@ -134,7 +132,6 @@ export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDa
 };
 
 export const buildChart = (board, selectedSprint, columns, startDate, endDate, freeDates) => {
-    // Ensure we have valid dates
     if (!startDate || startDate === 'Invalid Date') startDate = board.start_date;
     if (!endDate || endDate === 'Invalid Date') endDate = board.end_date;
     
@@ -257,9 +254,9 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                         text: 'Days'
                     },
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.1)',  // Use the same color for all grid lines
+                        color: 'rgba(0, 0, 0, 0.1)',
                         drawOnChartArea: true,
-                        lineWidth: 1  // Use the same line width for all grid lines
+                        lineWidth: 1
                     }
                 }
             },
@@ -276,14 +273,12 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                         title: (tooltipItems) => {
                             const index = tooltipItems[0].dataIndex;
                             const label = dateLabels[index];
-                            // Add indicator for free dates in tooltip
                             return freeDateIndices.includes(index) ? 
                                 `${label} (Non-working day)` : 
                                 label;
                         }
                     }
                 },
-                // Configure our custom plugin
                 nonWorkingDaysHighlighter: {
                     freeDateIndices: freeDateIndices,
                     fillColor: 'rgba(200, 200, 200, 0.6)'
@@ -353,7 +348,6 @@ export const generateCustomIdealBurndown = (startPoints, endPoints, totalDays, f
 }
 
 
-// Register a custom plugin for highlighting non-working days
 const nonWorkingDaysPlugin = {
     id: 'nonWorkingDaysHighlighter',
     beforeDraw: (chart, args, options) => {
@@ -405,5 +399,4 @@ const nonWorkingDaysPlugin = {
     }
 };
 
-// Register the plugin
 Chart.register(nonWorkingDaysPlugin);

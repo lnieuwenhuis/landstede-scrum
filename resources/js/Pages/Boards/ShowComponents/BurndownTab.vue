@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch } from 'vue';
 import { Line } from 'vue-chartjs';
 
 const props = defineProps({
@@ -29,7 +29,7 @@ const toggleDescription = () => {
     emit('toggle-description');
 };
 
-// Format date to show only the date part (YYYY-MM-DD)
+// Format date to show only the date part
 const formatDate = (dateString) => {
     if (!dateString) return '';
     return dateString.split(' ')[0];
