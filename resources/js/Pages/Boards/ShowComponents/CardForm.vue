@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     columnId: {
@@ -61,6 +61,13 @@ const handleSubmit = () => {
     emit('save', cardData);
 };
 
+const displayPoints = computed({
+    get: () => points.value === 0 ? '' : points.value.toString(),
+    set: (value) => {
+        points.value = value === '' ? 0 : parseInt(value.replace(/[^0-9]/g, '')) || 0;
+    }
+});
+
 const handleCancel = () => {
     emit('cancel');
 };
@@ -73,7 +80,6 @@ const handleCancel = () => {
         
         <form @submit.prevent="handleSubmit">
             <div class="mb-3">
-                <label for="card-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <input 
                     id="card-title"
                     v-model="title"
@@ -85,7 +91,6 @@ const handleCancel = () => {
             </div>
             
             <div class="mb-3">
-                <label for="card-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea 
                     id="card-description"
                     v-model="description"
@@ -96,12 +101,12 @@ const handleCancel = () => {
             </div>
             
             <div class="mb-4">
-                <label for="card-points" class="block text-sm font-medium text-gray-700 mb-1">Points</label>
                 <input 
                     id="card-points"
-                    v-model="points"
-                    type="number"
-                    min="0"
+                    v-model="displayPoints"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Story points"
                 />
