@@ -40,6 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/updateCard/{cardId}', [CardController::class, 'updateCard']);
     Route::post('/api/deleteCard/{cardId}', [CardController::class, 'deleteCard']);
     Route::post('/api/cards/{cardId}/move', [CardController::class, 'moveCardToColumn']);
+    Route::post('/api/cards/{card}/assign', [CardController::class, 'assignUser']);
 
     //Column API Routes
     Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);
