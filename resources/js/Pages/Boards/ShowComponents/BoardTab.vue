@@ -801,7 +801,7 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen" class="fixed inset-0 z-50 overflow-y-auto" @click.self="userDropdownOpen = null">
+    <div v-if="userDropdownOpen" class="absolute inset-0 z-50 overflow-y-auto" @click.self="userDropdownOpen = null">
         <div class="flex items-center justify-center min-h-screen">
             <div 
                 class="bg-white rounded-md shadow-lg w-64 absolute"
