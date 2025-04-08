@@ -49,8 +49,6 @@ let { chartData, chartOptions } = buildChart(
     freeDates
 );
 
-console.log('Initial chart data:', chartData.value); // Add this line for debugging
-
 // Handle period selection change
 const handlePeriodChange = (periodValue) => {
     selectedPeriod.value = periodValue;
@@ -100,8 +98,6 @@ const updateBurndownChart = () => {
         endDate.value,
         freeDates
     );
-
-    console.log('Updating chart with new data:', result); // Add this line for debugging
     
     // Replace chart data with new references
     chartData.value = { ...result.chartData.value };
