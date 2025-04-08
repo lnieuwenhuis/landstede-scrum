@@ -71,9 +71,11 @@ export const generateBurndownData = (board, columns, startDate, endDate) => {
 export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDate, endDate) => {
     if (totalDays <= 1) return [totalPoints, 0];
     
-    // Convert start and end dates to Date objects
+    // Convert and normalize dates to midnight
     const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
     const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
     
     // Parse freeDates string into an actual array
     let freeDatesArray = [];
@@ -94,39 +96,53 @@ export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDa
     let workingDays = 0;
     const idealData = [];
     
+    // First pass: count working days and initialize array
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
         date.setHours(0, 0, 0, 0);
         const isWorkingDay = !freeDateObjects.includes(date.getTime());
-        
-        // For the first day, always use the total points
-        if (date.getTime() === start.getTime()) {
-            idealData.push(totalPoints);
-        } else if (isWorkingDay) {
-            workingDays++;
-            idealData.push(null);
-        } else {
-            idealData.push(null);
-        }
+        if (isWorkingDay) workingDays++;
+        idealData.push(null);
     }
+
+    // Handle edge cases
+    workingDays = Math.max(workingDays, 1);
+    const pointsPerDay = parseFloat((totalPoints / (workingDays - 1)).toFixed(3));
     
-    // Calculate points to burn per working day
-    const pointsPerWorkingDay = totalPoints / Math.max(1, workingDays);
+    // Second pass: calculate values with zero-fill
+    let dayCounter = 0;
+    let zeroReached = false;
     
-    // Fill in the actual values
-    let remainingPoints = totalPoints;
-    for (let i = 1; i < idealData.length; i++) {
+    for (let i = 0; i < idealData.length; i++) {
         const currentDate = new Date(start);
-        currentDate.setDate(currentDate.getDate() + i);
+        currentDate.setDate(start.getDate() + i);
         currentDate.setHours(0, 0, 0, 0);
         
         const isWorkingDay = !freeDateObjects.includes(currentDate.getTime());
         
-        if (isWorkingDay) {
-            remainingPoints -= pointsPerWorkingDay;
+        if (zeroReached) {
+            idealData[i] = 0;
+            continue;
         }
         
-        idealData[i] = Math.max(0, remainingPoints);
+        if (isWorkingDay) {
+            const calculatedValue = parseFloat((totalPoints - (pointsPerDay * dayCounter)).toFixed(3));
+            idealData[i] = Math.max(0, calculatedValue < 0.1 ? 0 : calculatedValue);
+            dayCounter++;
+            
+            if (calculatedValue <= 0) {
+                zeroReached = true;
+            }
+        } else {
+            idealData[i] = idealData[i-1] || totalPoints;
+        }
     }
+
+    // Force exact zero at end and fill any remaining values after first zero
+    let firstZeroIndex = idealData.findIndex(val => val <= 0);
+    if (firstZeroIndex !== -1) {
+        idealData.fill(0, firstZeroIndex);
+    }
+    idealData[idealData.length - 1] = 0;
     
     return idealData;
 };
@@ -335,13 +351,33 @@ export const generateCustomIdealBurndown = (startPoints, endPoints, totalDays, f
     
     // Fill in the actual values
     let remainingPoints = startPoints;
+    let zeroReached = false;
     
     for (let i = 1; i < totalDays; i++) {
+        if (zeroReached) {
+            idealData.push(0);
+            continue;
+        }
+        
         if (workingDayFlags[i]) {
             remainingPoints -= pointsPerWorkingDay;
         }
         
-        idealData.push(Math.max(endPoints, remainingPoints));
+        idealData.push(Math.max(endPoints, remainingPoints < 0.1 ? 0 : remainingPoints));
+
+        // Once we hit 0, mark remaining days
+        if (idealData[i] <= 0) {
+            zeroReached = true;
+        }
+    }
+
+    // Force exact end value and fill trailing zeros
+    for (let i = 0; i < idealData.length; i++) {
+        if (idealData[i] <= 0) {
+            // Set all subsequent values to 0
+            idealData.fill(0, i);
+            break;
+        }
     }
     
     return idealData;

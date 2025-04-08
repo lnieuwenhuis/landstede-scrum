@@ -35,11 +35,19 @@ const formatDate = (dateString) => {
     return dateString.split(' ')[0];
 };
 
-// Add a watch to detect changes in columns data
-watch(() => props.columns, () => {
-    // This will trigger when columns change, but the parent component
-    // will handle the actual chart update through the burndown-update event
+// Replace the existing columns watch with this deep watcher
+watch(() => [
+    props.columns,
+    props.chartData,
+    props.chartOptions,
+    props.freeDates,
+    props.currentSprint
+], () => {
+    // Force chart update by changing component key
+    chartKey.value++
 }, { deep: true });
+
+const chartKey = ref(0);
 </script>
 
 <template>
@@ -94,7 +102,7 @@ watch(() => props.columns, () => {
             <div class="overflow-x-auto">
                 <div class="flex justify-center items-center h-full min-w-[800px]">
                     <div class="w-full h-[450px]">
-                        <Line :data="chartData" :options="chartOptions"/>
+                        <Line :key="chartKey" :data="chartData" :options="chartOptions"/>
                     </div>
                 </div>
             </div>

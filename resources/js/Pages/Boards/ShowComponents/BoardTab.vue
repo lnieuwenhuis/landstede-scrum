@@ -22,17 +22,6 @@ const props = defineProps({
 const userDropdownOpen = ref(null);
 const userDropdownPosition = ref({ top: '0px', left: '0px' });
 
-// Helper function to get card by ID
-const getCardById = (cardId) => {
-    if (!cardId) return null;
-    
-    for (const column of props.columns) {
-        const card = column.cards.find(c => c.id === cardId);
-        if (card) return card;
-    }
-    return null;
-};
-
 const toggleUserDropdown = (cardId, event) => {
     if (userDropdownOpen.value === cardId) {
         userDropdownOpen.value = null;
@@ -119,7 +108,6 @@ const isColumnLocked = computed(() => {
 
 const emit = defineEmits([
     'columns-updated',
-    'burndown-update',
     'toggle-description'
 ]);
 
