@@ -8,7 +8,7 @@ class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
             \SocialiteProviders\Manager\SocialiteWasCalled::class => [
-            'SocialiteProviders\\Azure\\AzureExtendSocialite@handle',
+                \SocialiteProviders\Azure\AzureExtendSocialite::class.'@handle',
         ],
     ];
 
