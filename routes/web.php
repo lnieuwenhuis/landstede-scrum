@@ -14,6 +14,9 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 });
 
+Route::get('/login/azure', [\App\Http\Controllers\Auth\LoginController::class, 'redirectToProvider'])->name('auth.login');
+Route::get('/login/azure/callback', [\App\Http\Controllers\Auth\LoginController::class, 'handleProviderCallback'])->name('auth.login.callback');
+
 Route::get('/dashboard', [BoardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
