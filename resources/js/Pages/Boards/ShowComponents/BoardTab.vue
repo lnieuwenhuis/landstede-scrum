@@ -36,10 +36,24 @@ const toggleUserDropdown = (cardId, event) => {
         const avatarElement = event.target.closest('.relative');
         if (avatarElement) {
             const rect = avatarElement.getBoundingClientRect();
-            userDropdownPosition.value = {
-                top: `${rect.bottom + window.scrollY + 5}px`,
-                left: `${rect.left + window.scrollX - 100}px` // Offset to center better
-            };
+            const dropdownHeight = 240;
+            const viewportHeight = window.innerHeight;
+            
+            const spaceBelow = viewportHeight - rect.bottom;
+            
+            if (spaceBelow < dropdownHeight) {
+                // Not enough space below, position above but not too far
+                userDropdownPosition.value = {
+                    top: `${rect.top + window.scrollY - 160}px`,
+                    left: `${rect.left + window.scrollX - 100}px` // Offset to center better
+                };
+            } else {
+                // Enough space below, position below as before
+                userDropdownPosition.value = {
+                    top: `${rect.bottom + window.scrollY + 5}px`,
+                    left: `${rect.left + window.scrollX - 100}px` // Offset to center better
+                };
+            }
         }
     });
 };
@@ -435,6 +449,17 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
         emit('columns-updated', props.columns);
     }
 };
+
+const isUserAssigned = (cardId, userId) => {
+    for (const column of props.columns) {
+        const card = column.cards.find(c => c.id === cardId);
+        if (card) {
+            return card.user_id === userId;
+        }
+    }
+    return false;
+};
+
 </script>
 
 <template>
@@ -692,28 +717,10 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                                     <!-- User avatar with dropdown -->
                                     <div class="relative">
                                         <div 
-                                            @click="toggleUserDropdown(card.id)"
+                                            @click="toggleUserDropdown(card.id, $event)"
                                             class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
                                         >
                                             {{ card.user_id && props.users ? props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() : '+' }}
-                                        </div>
-                                        <!-- User selection dropdown -->
-                                        <div 
-                                            v-if="userDropdownOpen === card.id" 
-                                            class="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10"
-                                        >
-                                            <div class="py-1">
-                                                <div class="px-4 py-2 text-xs text-gray-500 border-b">Assign to:</div>
-                                                <div v-for="user in props.users" :key="user.id" 
-                                                    @click="assignUserToCard(card.id, user.id)"
-                                                    class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
-                                                >
-                                                    <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
-                                                        {{ user.name.charAt(0).toUpperCase() }}
-                                                    </div>
-                                                    {{ user.name }}
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -801,23 +808,21 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
     </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen" class="absolute inset-0 z-50 overflow-y-auto" @click.self="userDropdownOpen = null">
-        <div class="flex items-center justify-center min-h-screen">
-            <div 
-                class="bg-white rounded-md shadow-lg w-64 absolute"
-                :style="userDropdownPosition"
-            >
-                <div class="py-1">
-                    <div class="px-4 py-2 text-sm font-medium text-gray-700 border-b">Assign to:</div>
-                    <div v-for="user in props.users" :key="user.id" 
-                        @click="assignUserToCard(userDropdownOpen, user.id)"
-                        class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
-                    >
-                        <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
-                            {{ user.name.charAt(0).toUpperCase() }}
-                        </div>
-                        {{ user.name }}
+    <div v-if="userDropdownOpen" class="absolute inset-0 z-50" @click.self="userDropdownOpen = null">
+        <div 
+            class="bg-white rounded-md shadow-lg w-64 absolute"
+            :style="userDropdownPosition"
+        >
+            <div class="py-1">
+                <div v-for="user in props.users" :key="user.id" 
+                    @click="assignUserToCard(userDropdownOpen, user.id)"
+                    class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 cursor-pointer flex items-center"
+                    :class="{ 'bg-green-100': isUserAssigned(userDropdownOpen, user.id) }"
+                >
+                    <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
+                        {{ user.name.charAt(0).toUpperCase() }}
                     </div>
+                    {{ user.name }}
                 </div>
             </div>
         </div>
