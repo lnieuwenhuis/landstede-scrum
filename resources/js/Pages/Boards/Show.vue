@@ -223,6 +223,7 @@ const handleSprintDeleted = (sprintId) => {
                     :board="board"
                     :show-description="showDescription"
                     @toggle-description="showDescription = !showDescription"
+                    @users-updated="users = $event"
                 />
             </div>
 

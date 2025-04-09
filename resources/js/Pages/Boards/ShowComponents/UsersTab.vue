@@ -10,6 +10,8 @@ const props = defineProps({
     board: Object
 });
 
+const emit = defineEmits(['users-updated']);
+
 const users = ref(props.users);
 const ownerId = users.value.length > 0 ? users.value[0].id : null;
 
@@ -138,6 +140,7 @@ const saveUsers = async () => {
             // Add the new users to the users list
             users.value = [...users.value, ...usersToAdd.value];
             toast.success('Users added successfully');
+            emit('users-updated', users.value);
             toggleAddUserModal();
         } else {
             throw new Error(response.data.error || 'Failed to add users');
@@ -160,6 +163,7 @@ const handleDeleteUser = async (userId) => {
         if (response.data.message) {
             users.value = users.value.filter(user => user.id !== userId);
             toast.success('User removed successfully');
+            emit('users-updated', users.value);
         } else {
             throw new Error(response.data.error || 'Failed to remove user');
         }
