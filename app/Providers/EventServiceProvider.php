@@ -7,8 +7,9 @@ use Illuminate\Support\ServiceProvider;
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-            \SocialiteProviders\Manager\SocialiteWasCalled::class => [
-                \SocialiteProviders\Azure\AzureExtendSocialite::class.'@handle',
+        \SocialiteProviders\Manager\SocialiteWasCalled::class => [
+            // ... other providers
+            \SocialiteProviders\Azure\AzureExtendSocialite::class.'@handle',
         ],
     ];
 
