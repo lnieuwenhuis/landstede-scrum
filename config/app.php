@@ -123,4 +123,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'providers' => [
+        // Other providers...
+        SocialiteProviders\Manager\ServiceProvider::class,
+    ],
+
 ];
