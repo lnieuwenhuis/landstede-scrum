@@ -22,6 +22,40 @@ const props = defineProps({
 const userDropdownOpen = ref(null);
 const userDropdownPosition = ref({ top: '0px', left: '0px' });
 
+function getInitials(name) {
+    if (!name || typeof name !== 'string') {
+        return '?'; // Return a placeholder if name is invalid
+    }
+
+    let nameToProcess = name.trim();
+
+  // Check if the name starts with "Student " and remove it if it does
+    if (nameToProcess.startsWith('Student ')) {
+        nameToProcess = nameToProcess.substring('Student '.length).trim();
+    }
+
+    // Remove potential parentheses around names, e.g., "(firstname)" -> "firstname"
+    // This regex replaces leading '(' and trailing ')' from words
+    nameToProcess = nameToProcess.replace(/\b\(/g, '').replace(/\)\b/g, '');
+
+    // Split the remaining name into parts based on spaces
+    const nameParts = nameToProcess.split(' ').filter((part) => part.length > 0); // Filter out empty strings from multiple spaces
+
+    if (nameParts.length === 0) {
+        // If nothing is left, maybe fallback to the first char of the original name?
+        return name.trim()[0]?.toUpperCase() || '?';
+    } else if (nameParts.length === 1) {
+        // If only one part (e.g., "Admin", or just "Firstname"), take its first letter
+        return nameParts[0][0].toUpperCase();
+    } else {
+        // If two or more parts, take the first letter of the first part
+        // and the first letter of the *last* part (to handle middle names)
+        const firstInitial = nameParts[0][0];
+        const lastInitial = nameParts[nameParts.length - 1][0];
+        return (firstInitial + lastInitial).toUpperCase();
+    }
+}
+
 const toggleUserDropdown = (cardId, event) => {
     if (userDropdownOpen.value === cardId) {
         userDropdownOpen.value = null;
@@ -617,7 +651,7 @@ const isUserAssigned = (cardId, userId) => {
                                                 @click="toggleUserDropdown(card.id, $event)"
                                                 class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
                                             >
-                                                {{ card.user_id && props.users ? props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() : '+' }}
+                                                {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
                                             </div>
                                         </div>
                                     </div>
