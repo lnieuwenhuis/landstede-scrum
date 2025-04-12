@@ -10,7 +10,7 @@ import {Head} from "@inertiajs/vue3"
       <header class="flex justify-between items-center p-6 bg-pink-100 shadow-md">
         <h1 class="text-2xl font-bold text-blue-600">Landstede Scrum</h1>
         <div>
-          <a href="/login" class="px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          <a href="/login/azure" class="px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">
             Inloggen
           </a>
         </div>

@@ -1,6 +1,6 @@
 <script setup>
 import CardForm from './CardForm.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
@@ -17,6 +17,87 @@ const props = defineProps({
         default: false
     },
     currentSprint: Object,
+});
+
+const userDropdownOpen = ref(null);
+const userDropdownPosition = ref({ top: '0px', left: '0px' });
+
+const toggleUserDropdown = (cardId, event) => {
+    if (userDropdownOpen.value === cardId) {
+        userDropdownOpen.value = null;
+        return;
+    }
+    
+    userDropdownOpen.value = cardId;
+    
+    // We need to wait for the next tick to get the element position
+    // after the modal is rendered
+    nextTick(() => {
+        const avatarElement = event.target.closest('.relative');
+        if (avatarElement) {
+            const rect = avatarElement.getBoundingClientRect();
+            const dropdownHeight = 240;
+            const viewportHeight = window.innerHeight;
+            
+            const spaceBelow = viewportHeight - rect.bottom;
+            
+            if (spaceBelow < dropdownHeight) {
+                // Not enough space below, position above but not too far
+                userDropdownPosition.value = {
+                    top: `${rect.top + window.scrollY - 160}px`,
+                    left: `${rect.left + window.scrollX - 100}px` // Offset to center better
+                };
+            } else {
+                // Enough space below, position below as before
+                userDropdownPosition.value = {
+                    top: `${rect.bottom + window.scrollY + 5}px`,
+                    left: `${rect.left + window.scrollX - 100}px` // Offset to center better
+                };
+            }
+        }
+    });
+};
+
+// assign user to card
+const assignUserToCard = async (cardId, userId) => {
+    loading.value = true;
+    try {
+        const response = await axios.post(`/api/cards/${cardId}/assign`, {
+            user_id: userId
+        });
+        
+        if (response.data.success) {
+            // Update the card in the local state
+            const updatedColumns = props.columns.map(column => {
+                const updatedCards = column.cards.map(card => {
+                    if (card.id === cardId) {
+                        return { ...card, user_id: userId };
+                    }
+                    return card;
+                });
+                return { ...column, cards: updatedCards };
+            });
+            
+            emit('columns-updated', updatedColumns);
+            toast.success(userId ? 'User assigned successfully' : 'User unassigned successfully');
+        } else {
+            throw new Error('Failed to assign user');
+        }
+    } catch (error) {
+        toast.error('Failed to assign user to card');
+    } finally {
+        loading.value = false;
+        userDropdownOpen.value = null; // Close dropdown after action
+    }
+};
+
+// close dropdown when clicking outside
+onMounted(() => {
+    document.addEventListener('click', (e) => {
+        if (userDropdownOpen.value && !e.target.closest('.relative')) {
+            userDropdownOpen.value = null;
+        }
+    });
 });
 
 const isColumnLocked = computed(() => {
@@ -39,43 +120,8 @@ const isColumnLocked = computed(() => {
     };
 });
 
-function getInitials(name) {
-    if (!name || typeof name !== 'string') {
-        return '?'; // Return a placeholder if name is invalid
-    }
-
-    let nameToProcess = name.trim();
-
-  // Check if the name starts with "Student " and remove it if it does
-    if (nameToProcess.startsWith('Student ')) {
-        nameToProcess = nameToProcess.substring('Student '.length).trim();
-    }
-
-    // Remove potential parentheses around names, e.g., "(firstname)" -> "firstname"
-    // This regex replaces leading '(' and trailing ')' from words
-    nameToProcess = nameToProcess.replace(/\b\(/g, '').replace(/\)\b/g, '');
-
-    // Split the remaining name into parts based on spaces
-    const nameParts = nameToProcess.split(' ').filter((part) => part.length > 0); // Filter out empty strings from multiple spaces
-
-    if (nameParts.length === 0) {
-        // If nothing is left, maybe fallback to the first char of the original name?
-        return name.trim()[0]?.toUpperCase() || '?';
-    } else if (nameParts.length === 1) {
-        // If only one part (e.g., "Admin", or just "Firstname"), take its first letter
-        return nameParts[0][0].toUpperCase();
-    } else {
-        // If two or more parts, take the first letter of the first part
-        // and the first letter of the *last* part (to handle middle names)
-        const firstInitial = nameParts[0][0];
-        const lastInitial = nameParts[nameParts.length - 1][0];
-        return (firstInitial + lastInitial).toUpperCase();
-    }
-}
-
 const emit = defineEmits([
     'columns-updated',
-    'burndown-update',
     'toggle-description'
 ]);
 
@@ -403,6 +449,17 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
         emit('columns-updated', props.columns);
     }
 };
+
+const isUserAssigned = (cardId, userId) => {
+    for (const column of props.columns) {
+        const card = column.cards.find(c => c.id === cardId);
+        if (card) {
+            return card.user_id === userId;
+        }
+    }
+    return false;
+};
+
 </script>
 
 <template>
@@ -554,9 +611,14 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                                     <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
                                     <div class="flex justify-between items-center mt-2">
                                         <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
-                                        <!-- Add user avatar -->
-                                        <div v-if="card.user_id && props.users" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                            {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
+                                        <!-- User avatar with dropdown -->
+                                        <div class="relative">
+                                            <div 
+                                                @click="toggleUserDropdown(card.id, $event)"
+                                                class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                            >
+                                                {{ card.user_id && props.users ? props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() : '+' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -652,9 +714,14 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                                 </div>
                                 <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>                                <div class="flex justify-between items-center mt-2">
                                     <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
-                                    <!-- Add user avatar -->
-                                    <div v-if="card.user_id && props.users" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                                        {{ props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() }}
+                                    <!-- User avatar with dropdown -->
+                                    <div class="relative">
+                                        <div 
+                                            @click="toggleUserDropdown(card.id, $event)"
+                                            class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                        >
+                                            {{ card.user_id && props.users ? props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() : '+' }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -735,6 +802,27 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
                             <span class="mt-2 block text-sm font-medium text-gray-600">Add Column</span>
                         </div>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User assignment modal -->
+    <div v-if="userDropdownOpen" class="absolute inset-0 z-50" @click.self="userDropdownOpen = null">
+        <div 
+            class="bg-white rounded-md shadow-lg w-64 absolute"
+            :style="userDropdownPosition"
+        >
+            <div class="py-1">
+                <div v-for="user in props.users" :key="user.id" 
+                    @click="assignUserToCard(userDropdownOpen, user.id)"
+                    class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 cursor-pointer flex items-center"
+                    :class="{ 'bg-green-100': isUserAssigned(userDropdownOpen, user.id) }"
+                >
+                    <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
+                        {{ user.name.charAt(0).toUpperCase() }}
+                    </div>
+                    {{ user.name }}
                 </div>
             </div>
         </div>

@@ -93,4 +93,25 @@ class CardController extends Controller
 
         return response()->json(['message' => 'Card moved to column', 'card' => $card]);
     }
+
+    public function assignUser(Request $request, Card $card): \Illuminate\Http\JsonResponse
+    {
+        $user = parent::checkUserLogin();
+
+        $board_users = $card->column->board->users;
+        if (!$board_users->contains($user->id)) {
+            return response()->json([
+               'success' => false,
+               'message' => 'You are not authorized to assign users to this card'
+            ]);
+        }
+        $card->user_id = $request->user_id;
+        $card->save();
+        
+        return response()->json([
+            'success' => true,
+            'message' => $request->user_id ? 'User assigned successfully' : 'User unassigned successfully',
+            'card' => $card
+        ]);
+    }
 }

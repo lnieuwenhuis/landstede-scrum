@@ -40,8 +40,7 @@ const selectedSprint = ref(null);
 const startDate = ref(board.start_date);
 const endDate = ref(board.end_date);
 
-// Initialize chart with board data
-const { chartData, chartOptions } = buildChart(
+let { chartData, chartOptions } = buildChart(
     board,
     currentSprint.value || null, // Handle undefined currentSprint
     columns,
@@ -84,29 +83,25 @@ const handlePeriodChange = (periodValue) => {
 };
 
 // Update chart when columns change
-watch(columns, () => {
-    chartData.value.datasets[0].data = generateBurndownData(
-        board, 
-        columns, 
-        startDate.value, 
-        endDate.value,
-        freeDates
-    );
+// Add this watch to handle column updates
+watch(columns, (newColumns) => {
+    updateBurndownChart();
 }, { deep: true });
 
 const updateBurndownChart = () => {
-    // Regenerate chart with current settings
-    const chartResult = buildChart(
-        board, 
-        selectedSprint.value, 
+    // Force fresh calculation with current columns value
+    const result = buildChart(
+        board,
+        selectedSprint.value,
         columns, 
-        startDate.value, 
+        startDate.value,
         endDate.value,
         freeDates
     );
     
-    chartData.value = chartResult.chartData.value;
-    chartOptions.value = chartResult.chartOptions.value;
+    // Replace chart data with new references
+    chartData.value = { ...result.chartData.value };
+    chartOptions.value = { ...result.chartOptions.value };
 };
 
 const showDescription = ref(false);
@@ -228,6 +223,7 @@ const handleSprintDeleted = (sprintId) => {
                     :board="board"
                     :show-description="showDescription"
                     @toggle-description="showDescription = !showDescription"
+                    @users-updated="users = $event"
                 />
             </div>
 

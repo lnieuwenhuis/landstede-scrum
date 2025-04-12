@@ -14,6 +14,9 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 });
 
+Route::get('/login/azure', [\App\Http\Controllers\Auth\LoginController::class, 'redirectToProvider'])->name('auth.login');
+Route::get('/login/azure/callback', [\App\Http\Controllers\Auth\LoginController::class, 'handleProviderCallback'])->name('auth.login.callback');
+
 Route::get('/dashboard', [BoardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -40,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/updateCard/{cardId}', [CardController::class, 'updateCard']);
     Route::post('/api/deleteCard/{cardId}', [CardController::class, 'deleteCard']);
     Route::post('/api/cards/{cardId}/move', [CardController::class, 'moveCardToColumn']);
+    Route::post('/api/cards/{card}/assign', [CardController::class, 'assignUser']);
 
     //Column API Routes
     Route::post('/api/columns/toggleSprintChecked', [ColumnController::class,'toggleSprintChecked']);

@@ -31,8 +31,22 @@ Landstede-Scrum is een lichtgewicht Scrum-board geïnspireerd door Jira, met ing
    ```
 5. **Start de applicatie**
    ```bash
-   npm run build
    composer run dev
+   ```
+
+## 🛠️ Installatie op Productie
+
+1. Stappen 1->3 van Installatie
+2. **Maak een Nginx Server Block aan**
+3. **Zorg er voor dat je PHP8.4-fpm hebt**
+4. **In plaats van** `composer run dev`, **bouw de applicatie**
+   ```bash
+   npm run build
+   ```
+5. **Herstart Nginx en PHP-fpm na configuratie**
+   ```bash
+   sudo systemctl restart php8.4-fpm
+   sudo systemctl restart nginx
    ```
 
 ## 📌 Gebruik
