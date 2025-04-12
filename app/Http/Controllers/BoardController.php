@@ -169,7 +169,8 @@ class BoardController extends Controller
             return response()->json(['error' => 'Board not found']);
         }
 
-        if ($board->creator_id !== $user->id || ! $user) {
+        // Allow admin to bypass ownership check
+        if ($user->role !== 'admin' && ($board->creator_id !== $user->id || !$user)) {
             return response()->json(['error' => 'Unauthorized']);
         }
 

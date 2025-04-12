@@ -7,6 +7,7 @@ use App\Models\Card;
 use App\Models\Column;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CardController extends Controller
 {
@@ -98,13 +99,17 @@ class CardController extends Controller
     {
         $user = parent::checkUserLogin();
 
-        $board_users = $card->column->board->users;
-        if (!$board_users->contains($user->id)) {
-            return response()->json([
-               'success' => false,
-               'message' => 'You are not authorized to assign users to this card'
-            ]);
+        // Add admin bypass check
+        if ($user->role !== 'admin') {
+            $board_users = $card->column->board->users;
+            if (!$board_users->contains($user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to assign users to this card'
+                ]);
+            }
         }
+        
         $card->user_id = $request->user_id;
         $card->save();
         

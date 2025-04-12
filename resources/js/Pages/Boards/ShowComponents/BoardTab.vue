@@ -649,7 +649,7 @@ const isUserAssigned = (cardId, userId) => {
                                         <div class="relative">
                                             <div 
                                                 @click="toggleUserDropdown(card.id, $event)"
-                                                class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                                class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
                                             >
                                                 {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
                                             </div>
@@ -746,15 +746,16 @@ const isUserAssigned = (cardId, userId) => {
                                         />
                                     </div>
                                 </div>
-                                <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>                                <div class="flex justify-between items-center mt-2">
+                                <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>                                
+                                <div class="flex justify-between items-center mt-2">
                                     <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
                                     <!-- User avatar with dropdown -->
                                     <div class="relative">
                                         <div 
                                             @click="toggleUserDropdown(card.id, $event)"
-                                            class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                            class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
                                         >
-                                            {{ card.user_id && props.users ? props.users.find(u => u.id === card.user_id)?.name.charAt(0).toUpperCase() : '+' }}
+                                            {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
                                         </div>
                                     </div>
                                 </div>
@@ -853,8 +854,8 @@ const isUserAssigned = (cardId, userId) => {
                     class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 cursor-pointer flex items-center"
                     :class="{ 'bg-green-100': isUserAssigned(userDropdownOpen, user.id) }"
                 >
-                    <div class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
-                        {{ user.name.charAt(0).toUpperCase() }}
+                    <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
+                        {{ getInitials(user.name) }}
                     </div>
                     {{ user.name }}
                 </div>
