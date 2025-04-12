@@ -649,7 +649,7 @@ const isUserAssigned = (cardId, userId) => {
                                         <div class="relative">
                                             <div 
                                                 @click="toggleUserDropdown(card.id, $event)"
-                                                class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                                class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer border-gray-400 border-2"
                                             >
                                                 {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
                                             </div>
@@ -753,7 +753,7 @@ const isUserAssigned = (cardId, userId) => {
                                     <div class="relative">
                                         <div 
                                             @click="toggleUserDropdown(card.id, $event)"
-                                            class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer"
+                                            class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer border-gray-400 border-2"
                                         >
                                             {{ getInitials(props.users.find(u => u.id === card.user_id).name) }}
                                         </div>
