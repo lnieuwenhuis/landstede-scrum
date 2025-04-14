@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
 
@@ -81,6 +81,10 @@ const handlePeriodChange = (periodValue) => {
     chartData.value = chartResult.chartData.value;
     chartOptions.value = chartResult.chartOptions.value;
 };
+
+onMounted(() => {
+    handlePeriodChange('board')
+})
 
 // Update chart when columns change
 // Add this watch to handle column updates
