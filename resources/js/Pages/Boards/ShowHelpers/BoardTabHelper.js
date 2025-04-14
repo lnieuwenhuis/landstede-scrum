@@ -141,6 +141,8 @@ export async function tryAddCard({ columnId, title, description, points, columns
                 toast.success('Card added successfully');
                 return updatedColumns;
             }
+        } else {
+            throw new Error(response.data.error);
         }
         return null;
     } catch (error) {
@@ -158,7 +160,7 @@ export async function tryUpdateCard({ cardId, title, description, points, column
         });
 
         if (!response.data.card) {
-            throw new Error('Failed to update card');
+            throw new Error(response.data.error);
         }
         
         // Update from server response
@@ -190,8 +192,9 @@ export async function tryDeleteCard(cardId, columns) {
             
             toast.success(response.data.message);
             return updatedColumns;
+        } else {
+            throw new Error(response.data.error); 
         }
-        return null;
     } catch (error) {
         toast.error('Failed to delete card');
         throw error;
@@ -208,8 +211,9 @@ export async function tryAddColumn({ title, done, board_id, status }) {
         if (response.data.column) {
             toast.success('Column added successfully!');
             return response.data.column;
+        } else {
+            throw new Error(response.data.error);
         }
-        return null;
     } catch (error) {
         toast.error('Failed to add column');
         throw error;
@@ -226,8 +230,9 @@ export async function tryUpdateColumn({ id, title }) {
         if (response.data.column) {
             toast.success('Column updated successfully');
             return response.data.column;
+        } else {
+            throw new Error(response.data.error);
         }
-        return null;
     } catch (error) {
         toast.error('Failed to update column');
         throw error;
