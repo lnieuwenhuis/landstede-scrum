@@ -205,6 +205,7 @@ const handleSprintDeleted = (sprintId) => {
                     :chartData="chartData"
                     :chartOptions="chartOptions"
                     :show-description="showDescription"
+                    :current-sprint="currentSprint"
                     @period-change="handlePeriodChange"
                     @toggle-description="showDescription = !showDescription"
                 />
