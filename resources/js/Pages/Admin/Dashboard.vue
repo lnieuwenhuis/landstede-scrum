@@ -96,11 +96,11 @@ const toggleBoardsList = () => {
                                 <div v-for="board in boards" :key="board.id" 
                                     class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
                                     <div class="flex justify-between items-center">
-                                        <div>
-                                            <h4 class="font-medium text-gray-900">{{ board.title }}</h4>
-                                            <p class="text-gray-500 mt-1">{{ board.description }}</p>
+                                        <div class="flex-1 min-w-0 mr-4">
+                                            <h4 class="font-medium text-gray-900 truncate">{{ board.title }}</h4>
+                                            <p class="text-gray-500 mt-1 truncate">{{ board.description }}</p>
                                         </div>
-                                        <div class="flex flex-col space-y-2">
+                                        <div class="flex flex-col space-y-2 flex-shrink-0">
                                             <a :href="`/boards/${board.id}`" 
                                                 class="px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-center">
                                                 View Board
