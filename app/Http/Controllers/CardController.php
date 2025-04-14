@@ -48,6 +48,10 @@ class CardController extends Controller
             return response()->json(['error' => 'Card not found']);
         }
 
+        if ($card->column->status === 'locked') {
+            return response()->json(['error' => 'Card is locked']);
+        }
+
         // Explicitly update fields instead of using $request->all()
         $card->title = $request->input('title');
         $card->description = $request->input('description');

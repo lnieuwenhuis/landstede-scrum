@@ -260,6 +260,22 @@ class BoardController extends Controller
             // Save updated sprints back to the board
             $board->sprints = json_encode($sprints);
             $board->save();
+
+            $columns = $board->columns;
+            foreach ($columns as $column) {
+                if ($board->currentSprint()['status'] === 'locked') {
+                    $column->status = 'locked';
+                } else if ($board->currentSprint()['status'] === 'planning') {
+                    if ($column->title === 'Sprint Backlog' || $column->title === 'Project Backlog') {
+                        $column->status = 'active';
+                    } else {
+                        $column->status = 'locked';
+                    }
+                } else {
+                    $column->status = 'active';
+                }
+                $column->save();
+            }
             
             return response()->json([
                 'message' => 'Sprint updated successfully',
