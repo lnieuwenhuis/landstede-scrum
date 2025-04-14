@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import ConfirmModal from './ConfirmModal.vue';
 
 const toast = useToast();
 
@@ -80,10 +81,20 @@ const closeEditModal = () => {
     editingCard.value = null;
 };
 
-const handleDeleteCard = async (cardId) => {
-    if (!confirm('Are you sure you want to delete this card?')) {
-        return;
-    }
+// Add state for delete confirmation modal
+const pendingDeleteCardId = ref(null);
+const showDeleteCardModal = ref(false);
+
+// Update handleDeleteCard to show the confirmation modal
+const handleDeleteCard = (cardId) => {
+    pendingDeleteCardId.value = cardId;
+    showDeleteCardModal.value = true;
+};
+
+// Add function to confirm and execute card deletion
+const confirmDeleteCard = async () => {
+    const cardId = pendingDeleteCardId.value;
+    if (!cardId) return;
     
     // Find the card and its column
     let deletedCard;
@@ -112,6 +123,15 @@ const handleDeleteCard = async (cardId) => {
         }
         toast.error('Failed to delete card');
     }
+    
+    // Close the modal
+    closeDeleteModal();
+};
+
+// Add function to close delete modal
+const closeDeleteModal = () => {
+    showDeleteCardModal.value = false;
+    pendingDeleteCardId.value = null;
 };
 </script>
 
@@ -241,5 +261,17 @@ const handleDeleteCard = async (cardId) => {
                 </div>
             </div>
         </div>
+        
+        <!-- Add Delete Confirmation Modal -->
+        <ConfirmModal
+            :show="showDeleteCardModal"
+            title="Delete Card"
+            message="Are you sure you want to delete this card? This action cannot be undone."
+            confirm-text="Delete"
+            cancel-text="Cancel"
+            confirm-button-class="bg-red-600 hover:bg-red-700"
+            @confirm="confirmDeleteCard"
+            @cancel="closeDeleteModal"
+        />
     </div>
 </template>
