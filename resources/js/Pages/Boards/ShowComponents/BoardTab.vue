@@ -3,6 +3,17 @@ import CardForm from './CardForm.vue';
 import { ref, computed, onMounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { 
+    getInitials, 
+    tryAssignUserToCard, 
+    tryMoveCard, 
+    tryAddCard, 
+    tryUpdateCard, 
+    tryDeleteCard, 
+    tryAddColumn, 
+    tryUpdateColumn, 
+    tryDeleteColumn 
+} from '../ShowHelpers/BoardTabHelper';
 
 const toast = useToast();
 
@@ -21,40 +32,6 @@ const props = defineProps({
 
 const userDropdownOpen = ref(null);
 const userDropdownPosition = ref({ top: '0px', left: '0px' });
-
-function getInitials(name) {
-    if (!name || typeof name !== 'string') {
-        return '?'; // Return a placeholder if name is invalid
-    }
-
-    let nameToProcess = name.trim();
-
-  // Check if the name starts with "Student " and remove it if it does
-    if (nameToProcess.startsWith('Student ')) {
-        nameToProcess = nameToProcess.substring('Student '.length).trim();
-    }
-
-    // Remove potential parentheses around names, e.g., "(firstname)" -> "firstname"
-    // This regex replaces leading '(' and trailing ')' from words
-    nameToProcess = nameToProcess.replace(/\b\(/g, '').replace(/\)\b/g, '');
-
-    // Split the remaining name into parts based on spaces
-    const nameParts = nameToProcess.split(' ').filter((part) => part.length > 0); // Filter out empty strings from multiple spaces
-
-    if (nameParts.length === 0) {
-        // If nothing is left, maybe fallback to the first char of the original name?
-        return name.trim()[0]?.toUpperCase() || '?';
-    } else if (nameParts.length === 1) {
-        // If only one part (e.g., "Admin", or just "Firstname"), take its first letter
-        return nameParts[0][0].toUpperCase();
-    } else {
-        // If two or more parts, take the first letter of the first part
-        // and the first letter of the *last* part (to handle middle names)
-        const firstInitial = nameParts[0][0];
-        const lastInitial = nameParts[nameParts.length - 1][0];
-        return (firstInitial + lastInitial).toUpperCase();
-    }
-}
 
 const toggleUserDropdown = (cardId, event) => {
     if (userDropdownOpen.value === cardId) {
@@ -96,27 +73,10 @@ const toggleUserDropdown = (cardId, event) => {
 const assignUserToCard = async (cardId, userId) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/cards/${cardId}/assign`, {
-            user_id: userId
-        });
+        const updatedColumns = await tryAssignUserToCard(cardId, userId, props);
         
-        if (response.data.success) {
-            // Update the card in the local state
-            const updatedColumns = props.columns.map(column => {
-                const updatedCards = column.cards.map(card => {
-                    if (card.id === cardId) {
-                        return { ...card, user_id: userId };
-                    }
-                    return card;
-                });
-                return { ...column, cards: updatedCards };
-            });
-            
-            emit('columns-updated', updatedColumns);
-            toast.success(userId ? 'User assigned successfully' : 'User unassigned successfully');
-        } else {
-            throw new Error('Failed to assign user');
-        }
+        emit('columns-updated', updatedColumns);
+        toast.success(userId ? 'User assigned successfully' : 'User unassigned successfully');
     } catch (error) {
         toast.error('Failed to assign user to card');
     } finally {
@@ -270,33 +230,40 @@ const resetNewColumnForm = () => {
     columnEditing.value = null;
 };
 
+const loading = ref(false);
+
+// Card movement handler
+const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
+    const updatedColumns = await tryMoveCard({ 
+        cardId, 
+        sourceColumnId, 
+        targetColumnId, 
+        columns: props.columns,
+        onSuccess: () => emit('burndown-update')
+    });
+    
+    if (updatedColumns) {
+        emit('columns-updated', updatedColumns);
+    }
+};
+
 // API handlers
 const handleUpdateCard = async ({ cardId, title, description, points }) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/updateCard/${cardId}`, {
-            title,
-            description,
-            points
+        const updatedColumns = await tryUpdateCard({ 
+            cardId, 
+            title, 
+            description, 
+            points, 
+            columns: props.columns 
         });
-
-        if (!response.data.card) {
-            throw new Error('Failed to update card');
-        }
         
-        // Update from server response
-        const updatedColumns = [...props.columns];
-        updatedColumns.forEach(column => {
-            const cardIndex = column.cards.findIndex(c => c.id === cardId);
-            if (cardIndex !== -1) {
-                column.cards[cardIndex] = response.data.card;
-            }
-        });
-        emit('columns-updated', updatedColumns);
-
-        toast.success('Card updated successfully');
+        if (updatedColumns) {
+            emit('columns-updated', updatedColumns);
+        }
     } catch (error) {
-        toast.error('Failed to update card');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
         cardEditing.value = null;
@@ -304,27 +271,23 @@ const handleUpdateCard = async ({ cardId, title, description, points }) => {
     }
 };
 
-const loading = ref(false);
-
 const handleAddCard = async ({ columnId, title, description, points }) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
-            title, description, points
+        const updatedColumns = await tryAddCard({ 
+            columnId, 
+            title, 
+            description, 
+            points, 
+            columns: props.columns 
         });
-
-        if (response.data.card) {
-            const columnIndex = props.columns.findIndex(col => col.id === columnId);
-            if (columnIndex > -1) {
-                const updatedColumns = [...props.columns];
-                updatedColumns[columnIndex].cards.push(response.data.card);
-                emit('columns-updated', updatedColumns);
-            }
+        
+        if (updatedColumns) {
+            emit('columns-updated', updatedColumns);
             cardOpen.value[columnId] = false;
-            toast.success('Card added successfully');
         }
     } catch (error) {
-        toast.error('Failed to add card');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
         resetForm();
@@ -334,20 +297,13 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
 const handleDeleteCard = async (cardId) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/deleteCard/${cardId}`);
-        if (response.data.message) {
-            // Create a deep copy of columns with the card removed
-            const updatedColumns = props.columns.map(column => ({
-                ...column,
-                cards: column.cards.filter(card => card.id !== cardId)
-            }));
-            
-            // Emit the updated columns array
+        const updatedColumns = await tryDeleteCard(cardId, props.columns);
+        
+        if (updatedColumns) {
             emit('columns-updated', updatedColumns);
-            toast.success(response.data.message);
         }
     } catch (error) {
-        toast.error('Failed to delete card');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
     }
@@ -356,18 +312,15 @@ const handleDeleteCard = async (cardId) => {
 const handleAddColumn = async ({ title, done, board_id, status }) => {
     loading.value = true;
     try {
-        const response = await axios.post('/api/addColumn', {
-            title, done, board_id, status
-        });
-
-        if (response.data.column) {
-            const updatedColumns = [...props.columns, response.data.column];
+        const newColumn = await tryAddColumn({ title, done, board_id, status });
+        
+        if (newColumn) {
+            const updatedColumns = [...props.columns, newColumn];
             emit('columns-updated', updatedColumns);
-            toast.success('Column added successfully!');
             resetNewColumnForm();
         }
     } catch (error) {
-        toast.error('Failed to add column');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
         showNewColumn.value = false; 
@@ -377,21 +330,17 @@ const handleAddColumn = async ({ title, done, board_id, status }) => {
 const handleUpdateColumn = async ({ id, title }) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/updateColumn`, {
-            column_id: id,
-            title
-        });
+        const updatedColumn = await tryUpdateColumn({ id, title });
         
-        if (response.data.column) {
+        if (updatedColumn) {
             const updatedColumns = props.columns.map(col => 
-                col.id === id ? { ...col, title: response.data.column.title } : col
+                col.id === id ? { ...col, title: updatedColumn.title } : col
             );
             emit('columns-updated', updatedColumns);
-            toast.success('Column updated successfully');
             resetNewColumnForm();
         }
     } catch (error) {
-        toast.error('Failed to update column');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
     }
@@ -400,87 +349,16 @@ const handleUpdateColumn = async ({ id, title }) => {
 const handleDeleteColumn = async (columnId) => {
     loading.value = true;
     try {
-        const response = await axios.post(`/api/deleteColumn`, {
-            column_id: columnId
-        });
-
-        if (!response.data.message) {
-            throw new Error('Failed to delete column');
+        const success = await tryDeleteColumn(columnId);
+        
+        if (success) {
+            const filteredColumns = props.columns.filter(column => column.id !== columnId);
+            emit('columns-updated', filteredColumns);
         }
-        
-        // Remove column after successful API response
-        const filteredColumns = props.columns.filter(column => column.id !== columnId);
-        emit('columns-updated', filteredColumns);
-        
-        toast.success(response.data.message);
     } catch (error) {
-        toast.error('Failed to delete column');
+        // Error is already handled in the helper
     } finally {
         loading.value = false;
-    }
-};
-
-// Card movement handler
-const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
-    // Check if columns array exists
-    if (!props.columns || !Array.isArray(props.columns)) {
-        toast.error('Columns data is not available');
-        return;
-    }
-    
-    // Find source and target columns with null checks
-    const sourceColumn = props.columns.find(col => col && col.id == sourceColumnId);
-    const targetColumn = props.columns.find(col => col && col.id == targetColumnId);
-    
-    // Validate columns exist
-    if (!sourceColumn || !targetColumn) {
-        toast.error('Source or target column not found');
-        return;
-    }
-    
-    // Ensure cards arrays exist
-    if (!Array.isArray(sourceColumn.cards) || !Array.isArray(targetColumn.cards)) {
-        toast.error('Cards data is not available');
-        return;
-    }
-    
-    // Find card in source column
-    const cardIndex = sourceColumn.cards.findIndex(c => c && c.id == cardId);
-    if (cardIndex === -1) {
-        toast.error('Card not found in source column');
-        return;
-    }
-
-    // Create a copy of the card to move
-    const movedCard = { ...sourceColumn.cards[cardIndex] };
-    
-    try {
-        // Remove from source
-        sourceColumn.cards.splice(cardIndex, 1);
-        
-        // Add to target
-        targetColumn.cards.push(movedCard);
-        
-        // Make API call after optimistic update
-        await axios.post(`/api/cards/${cardId}/move`, {
-            column_id: targetColumnId
-        });
-        
-        toast.success('Card moved successfully');
-        emit('columns-updated', props.columns);
-        emit('burndown-update');
-    } catch (error) {
-        // Revert changes if API call fails
-        if (Array.isArray(sourceColumn.cards) && Array.isArray(targetColumn.cards)) {
-            sourceColumn.cards.splice(cardIndex, 0, movedCard);
-            const targetCardIndex = targetColumn.cards.findIndex(c => c && c.id == cardId);
-            if (targetCardIndex !== -1) {
-                targetColumn.cards.splice(targetCardIndex, 1);
-            }
-        }
-        
-        toast.error('Failed to move card');
-        emit('columns-updated', props.columns);
     }
 };
 
