@@ -5,6 +5,7 @@ import ConfirmModal from './ConfirmModal.vue';
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useToast } from 'vue-toastification';
 import { 
+    getInitials,
     tryAssignUserToCard, 
     tryMoveCard, 
     tryAddCard, 
