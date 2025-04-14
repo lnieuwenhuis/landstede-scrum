@@ -17,16 +17,15 @@ class CardController extends Controller
 
         $column = Column::find($columnId);
 
-        if ($column->status === 'locked') {
-            return response()->json(['error' => 'Column is locked']);
-        }
-
         $title = $request->input('title');
         $description = $request->input('description');
         $points = $request->input('points');
 
         if (!$column) {
             return response()->json(['error' => 'Column not found']);
+        }
+        if ($column->status === 'locked') {
+            return response()->json(['error' => 'Column is locked']);
         }
 
         $card = Card::factory()->create([
