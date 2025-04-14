@@ -175,7 +175,7 @@ export async function tryUpdateCard({ cardId, title, description, points, column
         toast.success('Card updated successfully');
         return updatedColumns;
     } catch (error) {
-        toast.error(response.data.error);
+        toast.error('Failed to update card');
         throw error;
     }
 }

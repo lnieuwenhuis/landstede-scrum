@@ -77,6 +77,9 @@ class CardController extends Controller
         if (!$card) {
             return response()->json(['error' => 'Card not found']);
         }
+        if ($card->column->status === 'locked') {
+            return response()->json(['error' => 'Card is locked']);
+        }
 
         $card->column()->dissociate();
         $card->delete();
