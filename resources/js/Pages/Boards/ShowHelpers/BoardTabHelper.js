@@ -200,6 +200,7 @@ export async function tryDeleteCard(cardId, columns) {
 
 export async function tryAddColumn({ title, done, board_id, status }) {
     try {
+        if (!done) done = false;
         const response = await axios.post('/api/addColumn', {
             title, done, board_id, status
         });
