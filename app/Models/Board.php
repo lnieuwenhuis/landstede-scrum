@@ -120,7 +120,7 @@ class Board extends Model
 
     public function nonWorkingDays()
     {
-        $vacation = Vacation::activeVacation();
+        $vacation = Vacation::where('status', 'active')->first();
         
         // Handle non_working_days - could be JSON string or already an array
         $non_working_days = $this->non_working_days;

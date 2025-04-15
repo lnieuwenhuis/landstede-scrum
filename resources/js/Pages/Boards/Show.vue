@@ -30,8 +30,8 @@ const sprints = ref(typeof props.board.sprints === 'string'
     : props.sprints);
 
 // Parse freeDates from board if it's a string
-const freeDates = typeof props.board.non_working_days === 'string' 
-    ? JSON.parse(props.board.non_working_days) 
+const freeDates = typeof props.freeDates === 'string' 
+    ? JSON.parse(props.freeDates) 
     : props.freeDates;
 
 // Burndown chart settings
