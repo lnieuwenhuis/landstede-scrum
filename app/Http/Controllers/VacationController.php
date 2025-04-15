@@ -44,4 +44,15 @@ class VacationController extends Controller
         $vacation = Vacation::find($request->vacationId);
         return response()->json($vacation);
     }
+
+    public function setActiveVacation(Request $request)
+    {
+        Vacation::query()->update(['status' => 'inactive']);
+        
+        $vacation = Vacation::find($request->vacationId);
+        $vacation->status = 'active';
+        $vacation->save();
+        
+        return response()->json(['vacations' => Vacation::all(), 'message' => 'Vacation set as active']);
+    }
 }

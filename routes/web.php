@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/vacations/createVacation', [VacationController::class,'createVacation']);
     Route::post('/api/vacations/deleteVacation', [VacationController::class,'deleteVacation']);
     Route::post('/api/vacations/editVacation', [VacationController::class,'editVacation']);
+    Route::post('/api/vacations/setActiveVacation', [VacationController::class,'setActiveVacation']);
 
     //Other API Routes
     Route::post('/api/disableLoginMessage', [AuthenticatedSessionController::class,'disableLoginMessage']);

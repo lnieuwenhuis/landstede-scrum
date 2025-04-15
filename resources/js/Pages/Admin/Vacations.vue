@@ -213,6 +213,33 @@ const getDaysInMonth = (year, month) => {
 const getFirstDayOfMonth = (year, month) => {
     return new Date(year, month, 1).getDay();
 };
+
+const handleSetActiveVacation = (selectedVacationId) => {
+    axios.post('/api/vacations/setActiveVacation', { vacationId: selectedVacationId })
+       .then(response => {
+            if (response.data.vacations) {
+                vacations.value = response.data.vacations;
+                
+                if (selectedVacation.value) {
+                    const updatedVacation = response.data.vacations.find(v => v.id === selectedVacationId);
+                    if (updatedVacation) {
+                        selectedVacation.value = {
+                            ...updatedVacation,
+                            vacation_dates: JSON.parse(updatedVacation.vacation_dates || '[]')
+                        };
+                    }
+                }
+                
+                toast.success(response.data.message);
+            } else {
+                toast.error(response.data.error);
+            }
+       })
+       .catch(error => {
+           console.error('Error setting active vacation:', error);
+           toast.error('Failed to update vacation status');
+       });
+}
 </script>
 
 <template>
@@ -239,9 +266,16 @@ const getFirstDayOfMonth = (year, month) => {
                                 >
                                     <option v-for="vacation in vacations" :key="vacation.id" :value="vacation.id">
                                         {{ vacation.schoolyear }}
-                                        {{ (vacation.status === 'active') ? '(Active)' : '' }}
+                                        {{ vacation.status === 'active' ? '(Active)' : '' }}
                                     </option>
                                 </select>
+                                <button
+                                    v-if="selectedVacation && selectedVacation.status !== 'active'"
+                                    @click="handleSetActiveVacation(selectedVacationId)"
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    Activate
+                                </button>
                             </div>
                             <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
                                 <button
