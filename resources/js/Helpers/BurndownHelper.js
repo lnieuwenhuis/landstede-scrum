@@ -167,33 +167,74 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
     // Calculate ideal burndown based on sprint selection
     let idealBurndownData;
     if (selectedSprint) {
-        // For a specific sprint, calculate the expected starting and ending points
-        const boardStart = new Date(board.start_date);
-        const boardEnd = new Date(board.end_date);
-        const sprintStart = new Date(startDate);
-        const sprintEnd = new Date(endDate);
+        // Parse sprints if they're in string format
+        let sprintsArray = [];
+        try {
+            sprintsArray = typeof board.sprints === 'string' 
+                ? JSON.parse(board.sprints) 
+                : Array.isArray(board.sprints) 
+                    ? board.sprints 
+                    : [];
+        } catch (e) {
+            console.error('Error parsing sprints:', e);
+            sprintsArray = [];
+        }
+
+        // Calculate working days across ALL sprints
+        let totalWorkingDays = 0;
+        const allFreeDatesSet = new Set(allFreeDates.map(d => new Date(d).setHours(0,0,0,0)));
         
-        const totalBoardDays = (boardEnd - boardStart) / (1000 * 60 * 60 * 24);
-        
-        // Calculate what percentage of the project timeline has passed at sprint start
-        const daysPassedAtStart = (sprintStart - boardStart) / (1000 * 60 * 60 * 24);
-        const startProgressPercentage = Math.max(0, Math.min(1, daysPassedAtStart / totalBoardDays));
-        
-        // Calculate what percentage of the project timeline has passed at sprint end
-        const daysPassedAtEnd = (sprintEnd - boardStart) / (1000 * 60 * 60 * 24);
-        const endProgressPercentage = Math.max(0, Math.min(1, daysPassedAtEnd / totalBoardDays));
-        
-        // Calculate expected remaining points at sprint start and end
-        const expectedStartPoints = totalPoints * (1 - startProgressPercentage);
-        const expectedEndPoints = totalPoints * (1 - endProgressPercentage);
-        
-        // Generate ideal burndown for this sprint from start to end points, accounting for free dates
+        sprintsArray.forEach(sprint => {
+            const sprintStart = new Date(sprint.start_date);
+            const sprintEnd = new Date(sprint.end_date);
+            for (let d = new Date(sprintStart); d <= sprintEnd; d.setDate(d.getDate() + 1)) {
+                d.setHours(0,0,0,0);
+                if (!allFreeDatesSet.has(d.getTime())) {
+                    totalWorkingDays++;
+                }
+            }
+        });
+
+        // Calculate working days in THIS sprint
+        let sprintWorkingDays = 0;
+        const currentSprintStart = new Date(startDate);
+        const currentSprintEnd = new Date(endDate);
+        for (let d = new Date(currentSprintStart); d <= currentSprintEnd; d.setDate(d.getDate() + 1)) {
+            d.setHours(0,0,0,0);
+            if (!allFreeDatesSet.has(d.getTime())) {
+                sprintWorkingDays++;
+            }
+        }
+
+        // Calculate points allocation based on working day ratio
+        const pointsAllocation = totalWorkingDays > 0 
+            ? (sprintWorkingDays / totalWorkingDays) * totalPoints
+            : totalPoints / (board.sprints?.length || 1);
+
+        // Find sprint index
+        const sprintIndex = sprintsArray.findIndex(s => s?.id === selectedSprint?.id) ?? 0;  
+              
+        // Calculate cumulative points burned from previous sprints
+        const previousPoints = sprintsArray.slice(0, sprintIndex).reduce((sum, s) => {
+            const sprintStart = new Date(s.start_date);
+            const sprintEnd = new Date(s.end_date);
+            let days = 0;
+            for (let d = new Date(sprintStart); d <= sprintEnd; d.setDate(d.getDate() + 1)) {
+                d.setHours(0,0,0,0);
+                if (!allFreeDatesSet.has(d.getTime())) days++;
+            }
+            return sum + (days/totalWorkingDays * totalPoints);
+        }, 0) || 0;
+
+        const expectedStartPoints = totalPoints - previousPoints;
+        const expectedEndPoints = Math.max(0, expectedStartPoints - pointsAllocation);
+
         idealBurndownData = generateCustomIdealBurndown(
-            expectedStartPoints, 
-            expectedEndPoints, 
-            dateLabels.length, 
-            allFreeDates, 
-            startDate, 
+            expectedStartPoints,
+            expectedEndPoints,
+            dateLabels.length,
+            allFreeDates,
+            startDate,
             endDate
         );
     } else {
