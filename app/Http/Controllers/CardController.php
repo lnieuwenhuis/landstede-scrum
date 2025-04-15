@@ -119,6 +119,10 @@ class CardController extends Controller
                 ]);
             }
         }
+
+        if ($card->column->status === 'locked') {
+            return response()->json(['error' => 'Card is locked']);
+        }
         
         $card->user_id = $request->user_id;
         $card->save();

@@ -30,7 +30,14 @@ const props = defineProps({
 const userDropdownOpen = ref(null);
 const userDropdownPosition = ref({ top: '0px', left: '0px' });
 
+// User assignment modal
 const toggleUserDropdown = (cardId, event) => {
+    // Check if the sprint is locked - silently return without showing warning
+    if (props.currentSprint && (props.currentSprint.status === 'locked' || props.currentSprint.status === 'checked')) {
+        // No warning toast here
+        return;
+    }
+    
     if (userDropdownOpen.value === cardId) {
         userDropdownOpen.value = null;
         return;
@@ -64,6 +71,12 @@ const toggleUserDropdown = (cardId, event) => {
 
 // assign user to card
 const assignUserToCard = async (cardId, userId) => {
+    if (props.currentSprint && (props.currentSprint.status === 'locked' || props.currentSprint.status === 'checked')) {
+        toast.warning("Cannot assign users while sprint is locked");
+        userDropdownOpen.value = null;
+        return;
+    }
+
     loading.value = true;
     try {
         const updatedColumns = await tryAssignUserToCard(cardId, userId, props);
@@ -570,7 +583,7 @@ const handleConfirm = () => {
     </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen" class="absolute inset-0 z-50" @click.self="userDropdownOpen = null">
+    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="absolute inset-0 z-50" @click.self="userDropdownOpen = null">
         <div 
             class="bg-white rounded-md shadow-lg w-64 absolute"
             :style="userDropdownPosition"
