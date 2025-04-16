@@ -180,17 +180,18 @@ const toggleUserDropdown = (cardId, event) => {
 
 <template>
     <div 
-        class="flex-shrink-0 w-72 p-3 rounded-lg shadow relative"
-        :class="[
-            props.column.status === 'locked' ? 'opacity-50' : '', 
-            props.column.isDragging ? 'bg-blue-50' : (props.column.is_done_column ? 'bg-green-100' : 'bg-gray-100') 
-        ]"
+        class="flex flex-col flex-shrink-0 w-72 bg-gray-100 p-3 rounded-lg shadow max-h-[82vh]" 
+        :class="{ 
+            'border-2 border-blue-500': isDragging, 
+            'bg-green-50': isDone,
+            'opacity-70': column.status === 'locked'
+        }"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop"
     >
-        <!-- Column Header -->
-        <div class="flex justify-between items-center mb-3">
+        <!-- Column Header (remains fixed at the top) -->
+        <div class="flex justify-between items-center mb-3 flex-shrink-0">
             <h3 v-if="columnEditing !== column.id" class="font-medium text-gray-700">{{ column.title }}</h3>
             <!-- Column Edit Form -->
             <form v-if="columnEditing === column.id" @submit.prevent="handleUpdateColumn({ id: column.id, title: newColumnTitle })" class="flex-grow mr-2">
@@ -235,8 +236,10 @@ const toggleUserDropdown = (cardId, event) => {
              </div>
         </div>
 
-        <!-- Swimlanes Container -->
-        <div class="space-y-3">
+        <!-- Scrollable Swimlanes Container -->
+        <!-- Add flex-grow, overflow-y-auto, and potentially min-height -->
+        <div class="flex-grow overflow-y-auto space-y-3 pr-1 min-h-[50px]"> 
+            <!-- Swimlanes loop -->
             <div v-for="swimlane in column.swimlanes" :key="swimlane.userId || 'unassigned'" class="swimlane border-t pt-2 first:border-t-0 first:pt-0">
                 <!-- Swimlane Header -->
                 <div v-if="swimlane.cards.length > 0 || !selectedUserId" class="flex items-center space-x-2 mb-2 px-1 text-sm font-medium text-gray-600">
@@ -250,7 +253,7 @@ const toggleUserDropdown = (cardId, event) => {
                 </div>
 
                 <!-- Cards within Swimlane -->
-                <div class="space-y-2 min-h-[10px]"> <!-- Reduced min-height -->
+                <div class="space-y-2 min-h-[10px]"> 
                      <div 
                         v-for="card in swimlane.cards" 
                         :key="card.id"
@@ -304,8 +307,8 @@ const toggleUserDropdown = (cardId, event) => {
             </div>
         </div>
 
-        <!-- Add Card Button/Form -->
-        <div class="mt-3">
+        <!-- Add Card Button/Form (remains fixed at the bottom) -->
+        <div class="mt-3 flex-shrink-0">
             <!-- Use parent's cardOpen state -->
             <div v-if="cardOpen && cardOpen[column.id]"> 
                  <!-- Pass columnId to the slot scope -->
