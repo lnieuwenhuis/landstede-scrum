@@ -94,10 +94,29 @@ const assignUserToCard = async (cardId, userId) => {
 // close dropdown when clicking outside
 // Add near other modal state
 const showUserFilter = ref(false);
+const userFilterPosition = ref({ right: 'auto' });
 
 // Add click handler similar to toggleUserDropdown
 const toggleUserFilter = (event) => {
     showUserFilter.value = !showUserFilter.value;
+    
+    // Calculate position when opening the dropdown
+    if (showUserFilter.value) {
+        nextTick(() => {
+            const buttonElement = event.target.closest('button');
+            if (buttonElement) {
+                const rect = buttonElement.getBoundingClientRect();
+                const dropdownWidth = 200;
+                const viewportWidth = window.innerWidth;
+                
+                if (rect.right + dropdownWidth > viewportWidth) {
+                    userFilterPosition.value = { right: '0px', left: 'auto' };
+                } else {
+                    userFilterPosition.value = { right: 'auto', left: '0px' };
+                }
+            }
+        });
+    }
     
     // Prevent interference with user assignment modal
     if (userDropdownOpen.value) {
@@ -456,6 +475,7 @@ const handleConfirm = () => {
                         <div 
                             v-if="showUserFilter"
                             class="absolute z-50 mt-1 min-w-[200px] w-max bg-white rounded-md shadow-lg border border-gray-200"
+                            :style="userFilterPosition"
                         >
                             <div class="py-1 max-h-60 overflow-auto">
                                 <div 
