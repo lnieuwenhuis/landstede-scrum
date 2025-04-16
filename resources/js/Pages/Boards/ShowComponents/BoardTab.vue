@@ -421,7 +421,8 @@ const createSwimlanes = (cards, users) => {
 
 // Modify regularColumns and doneColumn computed properties
 const regularColumns = computed(() => {
-    const filteredColumns = props.columns.filter(column => !column.done);
+    console.log(props.columns);
+    const filteredColumns = props.columns.filter(column => !column.is_done_column);
     
     return filteredColumns.map(column => {
         // Apply user filter *before* grouping if a user is selected
@@ -446,7 +447,7 @@ const regularColumns = computed(() => {
 });
 
 const doneColumn = computed(() => {
-    const found = props.columns.find(column => column.done);
+    const found = props.columns.find(column => column.is_done_column);
     if (!found) return null;
 
     // Apply user filter *before* grouping if a user is selected
@@ -615,7 +616,7 @@ const handleConfirm = () => {
                     class="flex space-x-4 overflow-x-auto pb-4 w-full"
                     :class="{ '': showDescription, 'mt-6': !showDescription }"
                 >
-                    <!-- Regular columns -->
+                    <!-- Regular columns are rendered first using v-for -->
                     <Column 
                         v-for="column in regularColumns" 
                         :key="column.id"
@@ -666,7 +667,7 @@ const handleConfirm = () => {
                         </template>
                     </Column>
                     
-                    <!-- Done column -->
+                    <!-- Done column is rendered *after* the regular columns -->
                     <Column 
                         v-if="doneColumn"
                         :key="doneColumn.id"
@@ -716,7 +717,7 @@ const handleConfirm = () => {
                         </template>
                     </Column>
                     
-                    <!-- Add column form -->
+                    <!-- Add column form/button is rendered last -->
                     <div v-if="showNewColumn" class="flex-shrink-0 w-72 bg-white p-3 rounded-lg shadow">
                         <h3 class="font-medium text-gray-700 mb-2">Add New Column</h3>
                         <div class="relative">
