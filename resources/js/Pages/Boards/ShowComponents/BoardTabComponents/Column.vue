@@ -136,7 +136,7 @@ const handleDeleteCard = async () => {
     try {
         // Assume tryDeleteCard now returns the updated columns array on success
         // or throws an error on failure.
-        const updatedColumns = await tryDeleteCard(cardId, props.columns); // Pass columnId if needed by helper
+        const updatedColumns = await tryDeleteCard(cardId, props.columns); // Pass columns if needed by helper
         
         // Emit the updated columns array received from the helper
         emit('columns-updated', updatedColumns); 
