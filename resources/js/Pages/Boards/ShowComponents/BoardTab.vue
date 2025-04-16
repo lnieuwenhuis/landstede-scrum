@@ -455,7 +455,7 @@ const handleConfirm = () => {
                         
                         <div 
                             v-if="showUserFilter"
-                            class="absolute z-50 mt-1 min-w-[200px] bg-white rounded-md shadow-lg border border-gray-200"
+                            class="absolute z-50 mt-1 min-w-[200px] w-max bg-white rounded-md shadow-lg border border-gray-200"
                         >
                             <div class="py-1 max-h-60 overflow-auto">
                                 <div 
