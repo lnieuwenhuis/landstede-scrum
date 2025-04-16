@@ -237,31 +237,43 @@ const toggleUserDropdown = (cardId, event) => {
         </div>
 
         <!-- Scrollable Swimlanes Container -->
-        <!-- Add flex-grow, overflow-y-auto, and potentially min-height -->
         <div class="flex-grow overflow-y-auto space-y-3 pr-1 min-h-[50px]"> 
-            <!-- Swimlanes loop -->
-            <div v-for="swimlane in column.swimlanes" :key="swimlane.userId || 'unassigned'" class="swimlane border-t pt-2 first:border-t-0 first:pt-0">
-                <!-- Swimlane Header -->
-                <div v-if="swimlane.cards.length > 0 || !selectedUserId" class="flex items-center space-x-2 mb-2 px-1 text-sm font-medium text-gray-600">
-                     <div v-if="swimlane.userId" class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                         {{ getInitials(swimlane.userName) }}
-                     </div>
-                     <!-- Show 'Unassigned' header -->
-                     <span v-else class="text-gray-500 italic">Unassigned</span> 
-                     <span class="truncate">{{ swimlane.userId ? swimlane.userName : '' }}</span>
-                     <span class="text-gray-400 text-xs">({{ swimlane.cards.length }})</span>
-                </div>
-
-                <!-- Cards within Swimlane -->
-                <div class="space-y-2 min-h-[10px]"> 
-                     <div 
-                        v-for="card in swimlane.cards" 
-                        :key="card.id"
-                        :draggable="props.column.status !== 'locked'"
-                        @dragstart="handleDragStart($event, card.id)"
-                        class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200"
-                        :class="{ 'opacity-75': cardEditing === card.id }"
+            <!-- Placeholder: Show if there are no swimlanes or no cards in any swimlane -->
+            <div v-if="!column.swimlanes || column.swimlanes.every(lane => !lane.cards || lane.cards.length === 0)" class="text-center text-gray-500 text-sm py-4">
+                No cards
+            </div>
+            
+            <!-- Swimlanes loop: Render only if there are swimlanes with cards -->
+            <template v-else>
+                <!-- Use v-for on the <template> tag -->
+                <template v-for="swimlane in column.swimlanes" :key="swimlane.userId || 'unassigned'">
+                    <!-- Apply v-if to the inner div, ensuring swimlane is defined -->
+                    <div 
+                        v-if="swimlane && swimlane.cards && swimlane.cards.length > 0" 
+                        class="swimlane border-t pt-2 first:border-t-0 first:pt-0"
                     >
+                        <!-- Swimlane Header -->
+                        <!-- The outer v-if ensures swimlane and cards exist, this condition might need review based on filtering logic -->
+                        <div v-if="(swimlane.cards && swimlane.cards.length > 0) || !selectedUserId" class="flex items-center space-x-2 mb-2 px-1 text-sm font-medium text-gray-600">
+                             <div v-if="swimlane.userId" class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                                 {{ getInitials(swimlane.userName) }}
+                             </div>
+                             <!-- Show 'Unassigned' header -->
+                             <span v-else class="text-gray-500 italic">Unassigned</span> 
+                             <span class="truncate">{{ swimlane.userId ? swimlane.userName : '' }}</span>
+                             <span class="text-gray-400 text-xs">({{ swimlane.cards.length }})</span>
+                        </div>
+
+                        <!-- Cards within Swimlane -->
+                        <div class="space-y-2"> 
+                             <div 
+                                v-for="card in swimlane.cards" 
+                                :key="card.id"
+                                :draggable="props.column.status !== 'locked'"
+                                @dragstart="handleDragStart($event, card.id)"
+                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200"
+                                :class="{ 'opacity-75': cardEditing === card.id }"
+                            >
                         <!-- Card Edit Form Slot -->
                          <div v-if="cardEditing === card.id">
                              <slot name="card-edit-form" :card="card"></slot>
@@ -304,7 +316,9 @@ const toggleUserDropdown = (cardId, event) => {
                          </div>
                     </div>
                 </div>
-            </div>
+                </div>
+            </template>
+            </template>
         </div>
 
         <!-- Add Card Button/Form (remains fixed at the bottom) -->
