@@ -184,8 +184,8 @@ export async function tryDeleteCard(cardId, columns) {
     try {
         const response = await axios.post(`/api/deleteCard/${cardId}`);
         if (response.data.message) {
-            // Create a deep copy of columns with the card removed
-            const updatedColumns = columns.map(column => ({
+            let parsedColumns = typeof columns === 'string' ? JSON.parse(columns) : (Array.isArray(columns) ? columns : []);
+            const updatedColumns = parsedColumns.map(column => ({
                 ...column,
                 cards: column.cards.filter(card => card.id !== cardId)
             }));

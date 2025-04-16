@@ -20,7 +20,8 @@ const pendingDeleteColumnId = ref(null);
 const pendingDeleteCardId = ref(null);
 
 const props = defineProps({
-    column: Object, // Expects column object with 'swimlanes' array and 'status' ('locked' or 'active')
+    column: Object,// Expects column object with 'swimlanes' array and 'status' ('locked' or 'active')
+    columns: Array, 
     users: Array,
     isDone: Boolean, // Keep this if it's separate from column.status
     // isLocked: Boolean, // Remove this prop if status is the source of truth
@@ -135,7 +136,7 @@ const handleDeleteCard = async () => {
     try {
         // Assume tryDeleteCard now returns the updated columns array on success
         // or throws an error on failure.
-        const updatedColumns = await tryDeleteCard(cardId, props.column.id); // Pass columnId if needed by helper
+        const updatedColumns = await tryDeleteCard(cardId, props.columns); // Pass columnId if needed by helper
         
         // Emit the updated columns array received from the helper
         emit('columns-updated', updatedColumns); 
