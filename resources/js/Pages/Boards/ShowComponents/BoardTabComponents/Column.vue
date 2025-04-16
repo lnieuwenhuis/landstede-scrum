@@ -139,8 +139,7 @@ const handleDeleteCard = async () => {
         const updatedColumns = await tryDeleteCard(cardId, props.columns); // Pass columns if needed by helper
         
         // Emit the updated columns array received from the helper
-        emit('columns-updated', updatedColumns); 
-        toast.success('Card deleted successfully'); // Move toast here from BoardTab if preferred
+        emit('columns-updated', updatedColumns);
 
     } catch (error) {
         // Error toast is likely handled within tryDeleteCard or BoardTab catches it

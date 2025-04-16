@@ -84,7 +84,7 @@ class CardController extends Controller
         $card->column()->dissociate();
         $card->delete();
 
-        return response()->json(['message' => 'Card deleted']);
+        return response()->json(['message' => 'Card deleted successfully']);
     }
 
     public function moveCardToColumn(Request $request, $cardId)
