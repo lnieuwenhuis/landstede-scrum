@@ -20,14 +20,12 @@ const pendingDeleteColumnId = ref(null);
 const pendingDeleteCardId = ref(null);
 
 const props = defineProps({
-    column: Object, // Expects column object with a 'swimlanes' array
+    column: Object, // Expects column object with 'swimlanes' array and 'status' ('locked' or 'active')
     users: Array,
-    isDone: Boolean,
-    isLocked: Boolean,
-    isDragging: Boolean,
-    // columns: Array, // Might not be needed directly if events handle updates
+    isDone: Boolean, // Keep this if it's separate from column.status
+    // isLocked: Boolean, // Remove this prop if status is the source of truth
+    isDragging: Boolean, // Keep this for drag state
     cardEditing: [Number, null], 
-    // Add cardOpen state from parent to control form visibility
     cardOpen: Object, 
 });
 
@@ -175,12 +173,18 @@ const handleDrop = (event) => {
 const toggleUserDropdown = (cardId, event) => {
     emit('toggle-user-dropdown', cardId, event);
 };
+
+// Remove the console.log
+// console.log("hmm", props.column.status)
 </script>
 
 <template>
     <div 
-        class="flex-shrink-0 w-72 bg-gray-100 p-3 rounded-lg shadow relative"
-        :class="{ 'bg-blue-50': isDragging, 'opacity-50': isLocked }"
+        class="flex-shrink-0 w-72 p-3 rounded-lg shadow relative"
+        :class="[
+            props.column.status === 'locked' ? 'opacity-50' : '', 
+            props.column.isDragging ? 'bg-blue-50' : (props.column.is_done_column ? 'bg-green-100' : 'bg-gray-100') 
+        ]"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop"
@@ -196,8 +200,8 @@ const toggleUserDropdown = (cardId, event) => {
                     :disabled="loading"
                 />
             </form>
-            <!-- Column Actions: Add checks for specific titles and isDone -->
-             <div v-if="!isDone && column.title !== 'Project Backlog' && column.title !== 'Sprint Backlog' && !isLocked" class="flex space-x-1 flex-shrink-0">
+            <!-- Column Actions: Shown only if NOT done, NOT backlog, and NOT locked -->
+             <div v-if="!props.column.is_done_column && column.title !== 'Project Backlog' && column.title !== 'Sprint Backlog' && props.column.status !== 'locked'" class="flex space-x-1 flex-shrink-0">
                  <!-- Edit Button -->
                  <button v-if="columnEditing !== column.id" @click="toggleEditColumn(column)" class="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-200" title="Edit column">
                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -223,6 +227,12 @@ const toggleUserDropdown = (cardId, event) => {
                      </svg>
                  </button>
              </div>
+             <!-- Lock Icon: Shown only if locked -->
+             <div v-if="props.column.status === 'locked'" class="flex-shrink-0 ml-2" title="Column is locked">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                     <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+                 </svg>
+             </div>
         </div>
 
         <!-- Swimlanes Container -->
@@ -244,7 +254,7 @@ const toggleUserDropdown = (cardId, event) => {
                      <div 
                         v-for="card in swimlane.cards" 
                         :key="card.id"
-                        :draggable="!isLocked"
+                        :draggable="props.column.status !== 'locked'"
                         @dragstart="handleDragStart($event, card.id)"
                         class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200"
                         :class="{ 'opacity-75': cardEditing === card.id }"
@@ -302,7 +312,7 @@ const toggleUserDropdown = (cardId, event) => {
                  <slot name="add-card-form" :column-id="column.id"></slot> 
             </div>
              <button 
-                v-else-if="!isLocked" 
+                v-else-if="props.column.status !== 'locked'" 
                 @click="$emit('add-card-toggle', column.id)"
                 class="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-200 rounded transition-colors" 
             >

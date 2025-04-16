@@ -164,7 +164,9 @@ const handleSaveSprint = async () => {
             // Emit the updated sprint with full data for column locking updates
             emit('sprint-updated', {
                 id: sprintToEdit.value.id,
-                ...editedSprintData.value
+                sprints: sprints.value,
+                sprint: response.data.sprints.find(s => s.id === sprintToEdit.value.id),
+                columns: response.data.columns,
             });
             
             toast.success('Sprint updated successfully');

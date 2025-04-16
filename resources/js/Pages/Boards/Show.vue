@@ -4,6 +4,9 @@ import { Head, usePage } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 // Importing all tabs
 import BoardTab from './ShowComponents/BoardTab.vue';
@@ -110,48 +113,59 @@ const updateBurndownChart = () => {
 
 const showDescription = ref(false);
 
-const handleSprintUpdated = (updatedSprint) => {
-    // Check if the updated sprint is the current sprint
-    if (currentSprint.value && currentSprint.value.id === updatedSprint.id) {
-        // Update the current sprint with the new data
-        currentSprint.value = {
-            ...currentSprint.value,
-            ...updatedSprint
-        };
-    }
-    
-    // Also update the sprint in the sprints array
-    const sprintIndex = sprints.value.findIndex(s => s.id === updatedSprint.id);
-    if (sprintIndex !== -1) {
-        sprints.value[sprintIndex] = {
-            ...sprints.value[sprintIndex],
-            ...updatedSprint
-        };
-    }
-    
-    // Update the burndown chart if needed
-    if (selectedSprint.value && selectedSprint.value.id === updatedSprint.id) {
-        selectedSprint.value = {
-            ...selectedSprint.value,
-            ...updatedSprint
-        };
-        updateBurndownChart();
+const handleSprintUpdated = (payload) => {
+    console.log(payload);
+    // Check if the payload contains the expected arrays
+    if (payload && payload.sprints && payload.columns) {
+        // Directly replace the local columns state with the array from the backend
+        columns.value = payload.columns;
+
+        // Update the local list of all sprints
+        sprints.value = payload.sprints;
+
+        // Find and update the current sprint based on the updated list
+        // Prioritize 'active', then 'planning', then fallback
+        const updatedCurrent = 
+            payload.sprints.find(s => s.status === 'active') || 
+            payload.sprints.find(s => s.status === 'planning') || 
+            payload.sprints[0] || // Fallback to the first sprint if none are active/planning
+            null; 
+        currentSprint.value = updatedCurrent;
+
+        // Update the burndown chart as both sprints and columns might have changed
+        updateBurndownChart(); 
+
+    } else {
+        console.error("Received unexpected payload from sprint update:", payload);
+        toast.error("Failed to process sprint update data."); // Use toast for user feedback
     }
 };
 
+
 const handleSprintDeleted = (sprintId) => {
-    // If the deleted sprint is the current sprint, set currentSprint to null
+    // If the deleted sprint is the current sprint, find a new current sprint
     if (currentSprint.value && currentSprint.value.id === sprintId) {
-        currentSprint.value = null;
+         // Remove the deleted sprint first
+        const remainingSprints = sprints.value.filter(s => s.id !== sprintId);
+        // Find a new current sprint (active > planning > first)
+        currentSprint.value = 
+            remainingSprints.find(s => s.status === 'active') ||
+            remainingSprints.find(s => s.status === 'planning') ||
+            remainingSprints[0] ||
+            null;
+        sprints.value = remainingSprints; // Update the main sprints list
+    } else {
+        // Just remove the sprint from the list if it wasn't the current one
+        sprints.value = sprints.value.filter(s => s.id !== sprintId);
     }
     
-    // Remove the sprint from the sprints array
-    sprints.value = sprints.value.filter(s => s.id !== sprintId);
-    
-    // Update the burndown chart if needed
+    // Update the burndown chart if the selected sprint for the chart was deleted
     if (selectedSprint.value && selectedSprint.value.id === sprintId) {
         selectedSprint.value = null;
-        selectedPeriod.value = 'board';
+        selectedPeriod.value = 'board'; // Reset period selector to 'board'
+        handlePeriodChange('board'); // Trigger chart update for board period
+    } else {
+        // Even if the selected wasn't deleted, the data might change, so update
         updateBurndownChart();
     }
 };

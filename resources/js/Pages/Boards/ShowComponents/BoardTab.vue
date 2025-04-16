@@ -158,6 +158,7 @@ const isColumnLocked = computed(() => {
     };
 });
 
+
 const emit = defineEmits([
     'columns-updated',
     'toggle-description',
@@ -187,8 +188,11 @@ const loading = ref(false);
 
 // Card drag and drop handlers
 const handleDragStart = (event, cardId, columnId) => {
+    // Find the source column directly from props.columns
     const sourceColumn = props.columns.find(col => col.id === columnId);
-    if (!sourceColumn || isColumnLocked.value(sourceColumn.title)) {
+    // Check the status property directly on the column object
+    if (!sourceColumn || sourceColumn.status === 'locked') { 
+        toast.warning('Cannot move cards from a locked column.'); // Optional: Add feedback
         event.preventDefault();
         return;
     }
@@ -199,8 +203,15 @@ const handleDragStart = (event, cardId, columnId) => {
 };
 
 const handleDragOver = (event, columnId) => {
-    event.preventDefault();
-    currentDragColumnId.value = columnId;
+    // Check if the target column is locked before allowing drop indication
+    const targetColumn = props.columns.find(col => col.id === columnId);
+    if (targetColumn && targetColumn.status === 'locked') {
+        event.dataTransfer.dropEffect = 'none'; // Indicate drop is not allowed
+    } else {
+        event.dataTransfer.dropEffect = 'move'; // Indicate drop is allowed
+        event.preventDefault(); // Only prevent default if drop is allowed
+        currentDragColumnId.value = columnId;
+    }
 };
 
 const handleDragLeave = () => {
@@ -210,25 +221,47 @@ const handleDragLeave = () => {
 const handleDrop = async (event, targetColumnId) => {
     event.preventDefault();
     
+    // Find the target column directly from props.columns
     const targetColumn = props.columns.find(col => col.id === targetColumnId);
-    if (!targetColumn || isColumnLocked.value(targetColumn.title)) {
-        toast.error('Cannot move cards to locked columns');
+    // Check the status property directly on the column object
+    if (!targetColumn || targetColumn.status === 'locked') { 
+        toast.error('Cannot move cards to a locked column.');
+        currentDragCardId.value = null; // Reset drag state
+        currentDragSourceColumnId.value = null;
         currentDragColumnId.value = null;
         return;
     }
     
-    if (currentDragCardId.value && currentDragSourceColumnId.value && targetColumnId) {
-        await handleMoveCard({
-            cardId: currentDragCardId.value,
-            sourceColumnId: currentDragSourceColumnId.value,
-            targetColumnId
-        });
+    if (currentDragCardId.value && currentDragSourceColumnId.value && targetColumnId && currentDragSourceColumnId.value !== targetColumnId) {
+        loading.value = true; // Set loading state
+        try {
+            const updatedColumns = await tryMoveCard({
+                cardId: currentDragCardId.value,
+                sourceColumnId: currentDragSourceColumnId.value,
+                targetColumnId: targetColumnId,
+                columns: props.columns // Pass current columns state
+            });
+            
+            // Emit the updated columns array received from the helper
+            emit('columns-updated', updatedColumns); 
+            emit('burndown-update'); // Emit burndown update after successful move
+            
+        } catch (error) {
+            console.error("Error moving card:", error);
+            toast.error('Failed to move card.'); 
+        } finally {
+            loading.value = false; // Reset loading state
+            // Reset drag state regardless of success/failure
+            currentDragCardId.value = null;
+            currentDragSourceColumnId.value = null;
+            currentDragColumnId.value = null;
+        }
+    } else {
+         // Reset drag state if dropped on the same column or invalid drop
+         currentDragCardId.value = null;
+         currentDragSourceColumnId.value = null;
+         currentDragColumnId.value = null;
     }
-    
-    // Reset drag state
-    currentDragCardId.value = null;
-    currentDragSourceColumnId.value = null;
-    currentDragColumnId.value = null;
 };
 
 // Card form handlers

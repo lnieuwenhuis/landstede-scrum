@@ -279,7 +279,18 @@ class BoardController extends Controller
             
             return response()->json([
                 'message' => 'Sprint updated successfully',
-                'sprints' => $sprints
+                'sprints' => $sprints,
+                'columns' => $board->columns->map(function ($column) {
+                    return [
+                        'id' => $column->id,
+                        'title' => $column->title,
+                        'cards' => $column->cards,
+                        'is_done_column' => $column->is_done_column,
+                        'status' => $column->status,
+                        'user_created' => $column->user_created,
+                        'sprint_checked' => $column->sprint_checked,
+                    ];
+                })
             ]);
         }
         
