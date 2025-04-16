@@ -51,20 +51,30 @@ const toggleUserDropdown = (cardId, event) => {
         if (avatarElement) {
             const rect = avatarElement.getBoundingClientRect();
             const dropdownHeight = 240;
+            const dropdownWidth = 256;
             const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
             
             const spaceBelow = viewportHeight - rect.bottom;
             
+            // Vertical positioning
             if (spaceBelow < dropdownHeight) {
                 userDropdownPosition.value = {
                     top: `${rect.top + window.scrollY - 160}px`,
-                    left: `${rect.left + window.scrollX - 100}px`
                 };
             } else {
                 userDropdownPosition.value = {
                     top: `${rect.bottom + window.scrollY + 5}px`,
-                    left: `${rect.left + window.scrollX - 100}px`
                 };
+            }
+            
+            // Horizontal positioning
+            if (rect.right + dropdownWidth > viewportWidth) {
+                userDropdownPosition.value.right = `${window.innerWidth - rect.right - window.scrollX}px`;
+                userDropdownPosition.value.left = 'auto';
+            } else {
+                userDropdownPosition.value.left = `${rect.left + window.scrollX}px`;
+                userDropdownPosition.value.right = 'auto';
             }
         }
     });
@@ -129,7 +139,7 @@ const toggleUserFilter = (event) => {
 onMounted(() => {
     document.addEventListener('click', (e) => {
         // Close user assignment modal
-        if (userDropdownOpen.value && !e.target.closest('.relative')) {
+        if (userDropdownOpen.value && !e.target.closest('.user-dropdown') && !e.target.closest('.user-avatar')) {
             userDropdownOpen.value = null;
         }
         
@@ -532,7 +542,7 @@ const handleConfirm = () => {
                         
                         <div 
                             v-if="showUserFilter"
-                            class="absolute z-50 mt-1 min-w-[200px] w-max bg-white rounded-md shadow-lg border border-gray-200"
+                            class="absolute z-50 mt-1 min-w-[200px] max-w-[325px] bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden"
                             :style="userFilterPosition"
                         >
                             <div class="py-1 max-h-60 overflow-auto">
@@ -542,7 +552,7 @@ const handleConfirm = () => {
                                     :class="{ 'bg-blue-50': !selectedUserId }"
                                 >
                                     <span class="w-6"></span>
-                                    <span>All Users</span>
+                                    <span class="truncate">All Users</span>
                                 </div>
                                 <div 
                                     v-for="user in users" 
@@ -551,10 +561,10 @@ const handleConfirm = () => {
                                     class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
                                     :class="{ 'bg-blue-50': selectedUserId === user.id }"
                                 >
-                                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
                                         {{ getInitials(user.name) }}
                                     </div>
-                                    <span>{{ user.name }}</span>
+                                    <span class="truncate">{{ user.name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -740,9 +750,9 @@ const handleConfirm = () => {
     </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="absolute inset-0 z-50" @click.self="userDropdownOpen = null">
+    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="absolute inset-0 z-50">
         <div 
-            class="bg-white rounded-md shadow-lg w-64 absolute"
+            class="bg-white rounded-md shadow-lg w-64 absolute overflow-hidden user-dropdown"
             :style="userDropdownPosition"
         >
             <div class="py-1">
@@ -751,10 +761,10 @@ const handleConfirm = () => {
                     class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 cursor-pointer flex items-center"
                     :class="{ 'bg-green-100': isUserAssigned(userDropdownOpen, user.id) }"
                 >
-                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
+                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2 flex-shrink-0">
                         {{ getInitials(user.name) }}
                     </div>
-                    {{ user.name }}
+                    <span class="truncate">{{ user.name }}</span>
                 </div>
             </div>
         </div>
