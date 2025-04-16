@@ -92,10 +92,30 @@ const assignUserToCard = async (cardId, userId) => {
 };
 
 // close dropdown when clicking outside
+// Add near other modal state
+const showUserFilter = ref(false);
+
+// Add click handler similar to toggleUserDropdown
+const toggleUserFilter = (event) => {
+    showUserFilter.value = !showUserFilter.value;
+    
+    // Prevent interference with user assignment modal
+    if (userDropdownOpen.value) {
+        userDropdownOpen.value = null;
+    }
+};
+
+// Update the click-outside handler in onMounted
 onMounted(() => {
     document.addEventListener('click', (e) => {
+        // Close user assignment modal
         if (userDropdownOpen.value && !e.target.closest('.relative')) {
             userDropdownOpen.value = null;
+        }
+        
+        // Close user filter dropdown
+        if (showUserFilter.value && !e.target.closest('.relative')) {
+            showUserFilter.value = false;
         }
     });
 });
@@ -124,18 +144,33 @@ const emit = defineEmits([
     'burndown-update'
 ]);
 
+// Add filter state
+const selectedUserId = ref(null);
+
+// Modify regularColumns and doneColumn computed properties to filter cards
+const regularColumns = computed(() => {
+    return props.columns.filter(column => column.title !== 'Done').map(column => ({
+        ...column,
+        cards: selectedUserId.value 
+            ? column.cards.filter(card => card.user_id === selectedUserId.value)
+            : column.cards
+    }));
+});
+
+const doneColumn = computed(() => {
+    const found = props.columns.find(column => column.title === 'Done');
+    return found ? {
+        ...found,
+        cards: selectedUserId.value 
+            ? found.cards.filter(card => card.user_id === selectedUserId.value)
+            : found.cards
+    } : null;
+});
+
 // Toggle description visibility
 const toggleDescription = () => {
     emit('toggle-description');
 };
-
-const regularColumns = computed(() => {
-    return props.columns.filter(column => column.title !== 'Done');
-});
-
-const doneColumn = computed(() => {
-    return props.columns.find(column => column.title === 'Done');
-});
 
 // Local state management
 const cardOpen = ref({});
@@ -389,20 +424,64 @@ const handleConfirm = () => {
                     <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
                     <span v-if="currentSprint" class="text-gray-600 truncate flex-shrink-0">
                         <span>({{ currentSprint.title }})</span>
-                    </span>
-                    <span v-else class="text-sm text-gray-600 flex-shrink-0">
-                        <span class="font-medium">No active sprint</span>
+                        <button 
+                        @click="toggleDescription" 
+                        class="text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 ml-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
+                            <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                     </span>
                 </div>
-                <button 
-                    @click="toggleDescription" 
-                    class="text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+                <div class="flex items-center space-x-4">
+                    <div class="relative min-w-[200px]">
+                        <button 
+                            @click.stop="toggleUserFilter"
+                            class="flex items-center justify-between w-full px-2 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-w-[200px]"
+                        >
+                            <div class="flex items-center space-x-2 flex-1 min-w-0">
+                                <div v-if="selectedUserId" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                                    {{ getInitials(users.find(u => u.id === selectedUserId)?.name || '') }}
+                                </div>
+                                <span class="truncate">{{ selectedUserId ? users.find(u => u.id === selectedUserId)?.name : 'All Users' }}</span>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0 ml-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path v-if="!showUserFilter" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        
+                        <div 
+                            v-if="showUserFilter"
+                            class="absolute z-50 mt-1 min-w-[200px] bg-white rounded-md shadow-lg border border-gray-200"
+                        >
+                            <div class="py-1 max-h-60 overflow-auto">
+                                <div 
+                                    @click="selectedUserId = null; showUserFilter = false"
+                                    class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
+                                    :class="{ 'bg-blue-50': !selectedUserId }"
+                                >
+                                    <span class="w-6"></span>
+                                    <span>All Users</span>
+                                </div>
+                                <div 
+                                    v-for="user in users" 
+                                    :key="user.id" 
+                                    @click="selectedUserId = user.id; showUserFilter = false"
+                                    class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
+                                    :class="{ 'bg-blue-50': selectedUserId === user.id }"
+                                >
+                                    <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                        {{ getInitials(user.name) }}
+                                    </div>
+                                    <span>{{ user.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div v-if="showDescription" class="py-2 rounded-lg">
