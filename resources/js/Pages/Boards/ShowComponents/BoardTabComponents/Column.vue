@@ -8,7 +8,6 @@ import {
     tryDeleteCard, 
     tryUpdateColumn, 
     tryDeleteColumn,
-    tryAddCard
 } from '../../ShowHelpers/BoardTabHelper';
 
 const toast = useToast();
@@ -21,29 +20,34 @@ const pendingDeleteColumnId = ref(null);
 const pendingDeleteCardId = ref(null);
 
 const props = defineProps({
-    column: Object,
+    column: Object, // Expects column object with a 'swimlanes' array
     users: Array,
     isDone: Boolean,
     isLocked: Boolean,
     isDragging: Boolean,
-    columns: Array,
+    // columns: Array, // Might not be needed directly if events handle updates
     cardEditing: [Number, null], 
+    // Add cardOpen state from parent to control form visibility
+    cardOpen: Object, 
 });
 
 const emit = defineEmits([
-    'columns-updated',
+    'columns-updated', // Keep this if Column modifies columns directly (e.g., title edit)
     'drag-start',
     'drag-over',
     'drag-leave',
     'drop',
     'toggle-user-dropdown',
-    'card-editing-changed'
+    'card-editing-changed',
+    // Remove 'delete-card' emit, handle update via 'columns-updated'
+    'add-card-toggle', 
 ]);
 
 // Internal state
 const newColumnTitle = ref('');
 const columnEditing = ref(null);
-const cardOpen = ref({});
+// Remove cardOpen ref - controlled by parent prop now
+// const cardOpen = ref({}); 
 
 // Column functions
 const resetNewColumnForm = () => {
@@ -81,33 +85,14 @@ const handleUpdateColumn = async ({ id, title }) => {
 };
 
 // Card functions
-const toggleAddCard = () => {
-    cardOpen.value = { ...cardOpen.value, [props.column.id]: !cardOpen.value[props.column.id] };
-};
+// Remove toggleAddCard - handled by parent via emit
+// const toggleAddCard = () => { ... };
 
-const handleAddCard = async ({ columnId, title, description, points }) => {
-    loading.value = true;
-    try {
-        const updatedColumns = await tryAddCard({ 
-            columnId, 
-            title, 
-            description, 
-            points, 
-            columns: props.columns 
-        });
-        
-        if (updatedColumns) {
-            emit('columns-updated', updatedColumns);
-            cardOpen.value[columnId] = false;
-        }
-    } catch (error) {
-        toast.error('Failed to add card');
-    } finally {
-        loading.value = false;
-    }
-};
+// Remove handleAddCard - handled by parent via slot event
+// const handleAddCard = async ({ columnId, title, description, points }) => { ... };
 
 const toggleEditCard = (card) => {
+    // Emit the card ID to BoardTab to handle which card is being edited
     emit('card-editing-changed', card.id);
 };
 
@@ -143,32 +128,26 @@ const handleDeleteColumn = async () => {
     }
 };
 
+// Modify handleDeleteCard to rely on tryDeleteCard returning updated columns
 const handleDeleteCard = async () => {
     const cardId = pendingDeleteCardId.value;
     if (!cardId) return;
     
     loading.value = true;
     try {
-        const success = await tryDeleteCard(cardId, props.columns);
+        // Assume tryDeleteCard now returns the updated columns array on success
+        // or throws an error on failure.
+        const updatedColumns = await tryDeleteCard(cardId, props.column.id); // Pass columnId if needed by helper
         
-        if (success) {
-            // Create a deep copy of the columns array to ensure reactivity
-            const updatedColumns = JSON.parse(JSON.stringify(props.columns));
-            
-            // Find and remove the card from the appropriate column
-            for (const column of updatedColumns) {
-                const cardIndex = column.cards.findIndex(card => card.id === cardId);
-                if (cardIndex !== -1) {
-                    column.cards.splice(cardIndex, 1);
-                    break;
-                }
-            }
-            
-            emit('columns-updated', updatedColumns);
-        }
+        // Emit the updated columns array received from the helper
+        emit('columns-updated', updatedColumns); 
+        toast.success('Card deleted successfully'); // Move toast here from BoardTab if preferred
+
     } catch (error) {
-        toast.error('Failed to delete card');
-        console.error(error);
+        // Error toast is likely handled within tryDeleteCard or BoardTab catches it
+        console.error("Error deleting card:", error);
+        // Optionally add a toast here if the helper doesn't show one on error
+        // toast.error('Failed to delete card on frontend.'); 
     } finally {
         loading.value = false;
         showDeleteCardModal.value = false;
@@ -200,158 +179,153 @@ const toggleUserDropdown = (cardId, event) => {
 
 <template>
     <div 
-        class="flex-shrink-0 w-72 rounded-lg shadow"
-        :class="{ 
-            'bg-gray-100': !isLocked && !isDone,
-            'bg-gray-200': isLocked && !isDone,
-            'bg-green-50': !isLocked && isDone,
-            'bg-green-100': isLocked && isDone,
-            'border-2 border-blue-400': isDragging 
-        }"
+        class="flex-shrink-0 w-72 bg-gray-100 p-3 rounded-lg shadow relative"
+        :class="{ 'bg-blue-50': isDragging, 'opacity-50': isLocked }"
         @dragover.prevent="handleDragOver"
-        @dragleave="handleDragLeave"
+        @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop"
     >
-        <!-- Column header -->
-        <div 
-            class="p-3 rounded-t-lg flex justify-between items-center"
-            :class="{ 'bg-gray-200': !isDone, 'bg-green-100': isDone }"
-        >
-            <div v-if="columnEditing === column.id" class="flex-1 relative">
-                <input 
+        <!-- Column Header -->
+        <div class="flex justify-between items-center mb-3">
+            <h3 v-if="columnEditing !== column.id" class="font-medium text-gray-700">{{ column.title }}</h3>
+            <!-- Column Edit Form -->
+            <form v-if="columnEditing === column.id" @submit.prevent="handleUpdateColumn({ id: column.id, title: newColumnTitle })" class="flex-grow mr-2">
+                 <input 
                     v-model="newColumnTitle" 
-                    @keyup.enter="handleUpdateColumn({ id: column.id, title: newColumnTitle })"
+                    class="w-full px-2 py-1 border border-gray-300 rounded"
                     :disabled="loading"
-                    class="w-full px-2 py-1 border border-gray-300 rounded pr-8"
-                    placeholder="Column title"
                 />
-                <span v-if="loading" class="absolute right-3 top-1/2 -translate-y-1/2">⏳</span>
-            </div>
-            <div v-else class="flex items-center justify-between w-full">
-                <h3 class="font-medium" :class="{ 'text-gray-700': !isDone, 'text-green-800': isDone }">{{ column.title }}</h3>
-                <span v-if="isLocked" class="flex items-center text-sm text-red-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                    </svg>
-                    <span>Locked</span>
-                </span>
-            </div>
-            <div v-if="column.user_created !== 0 && !isLocked" class="flex space-x-1">
-                <button 
-                    @click="toggleEditColumn(column)"
-                    class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-                    :disabled="loading"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                </button>
-                <button
-                    @click="confirmDeleteColumn(column.id)"
-                    class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
-                    :disabled="loading"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
+            </form>
+            <!-- Column Actions: Add checks for specific titles and isDone -->
+             <div v-if="!isDone && column.title !== 'Project Backlog' && column.title !== 'Sprint Backlog' && !isLocked" class="flex space-x-1 flex-shrink-0">
+                 <!-- Edit Button -->
+                 <button v-if="columnEditing !== column.id" @click="toggleEditColumn(column)" class="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-200" title="Edit column">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                     </svg>
+                 </button>
+                 <!-- Save Button -->
+                 <button v-if="columnEditing === column.id" @click="handleUpdateColumn({ id: column.id, title: newColumnTitle })" class="p-1 text-green-500 hover:text-green-700 rounded hover:bg-green-100" :disabled="loading || !newColumnTitle.trim()" title="Save">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                     </svg>
+                 </button>
+                 <!-- Cancel Button -->
+                 <button v-if="columnEditing === column.id" @click="resetNewColumnForm" class="p-1 text-red-500 hover:text-red-700 rounded hover:bg-red-100" :disabled="loading" title="Cancel">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                     </svg>
+                 </button>
+                 <!-- Delete Button -->
+                 <button v-if="columnEditing !== column.id" @click="confirmDeleteColumn(column.id)" class="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-red-100" title="Delete column">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                     </svg>
+                 </button>
+             </div>
+        </div>
+
+        <!-- Swimlanes Container -->
+        <div class="space-y-3">
+            <div v-for="swimlane in column.swimlanes" :key="swimlane.userId || 'unassigned'" class="swimlane border-t pt-2 first:border-t-0 first:pt-0">
+                <!-- Swimlane Header -->
+                <div v-if="swimlane.cards.length > 0 || !selectedUserId" class="flex items-center space-x-2 mb-2 px-1 text-sm font-medium text-gray-600">
+                     <div v-if="swimlane.userId" class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                         {{ getInitials(swimlane.userName) }}
+                     </div>
+                     <!-- Show 'Unassigned' header -->
+                     <span v-else class="text-gray-500 italic">Unassigned</span> 
+                     <span class="truncate">{{ swimlane.userId ? swimlane.userName : '' }}</span>
+                     <span class="text-gray-400 text-xs">({{ swimlane.cards.length }})</span>
+                </div>
+
+                <!-- Cards within Swimlane -->
+                <div class="space-y-2 min-h-[10px]"> <!-- Reduced min-height -->
+                     <div 
+                        v-for="card in swimlane.cards" 
+                        :key="card.id"
+                        :draggable="!isLocked"
+                        @dragstart="handleDragStart($event, card.id)"
+                        class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200"
+                        :class="{ 'opacity-75': cardEditing === card.id }"
+                    >
+                        <!-- Card Edit Form Slot -->
+                         <div v-if="cardEditing === card.id">
+                             <slot name="card-edit-form" :card="card"></slot>
+                         </div>
+                         <!-- Card Display -->
+                         <div v-else>
+                             <div class="flex justify-between items-start mb-1"> <!-- Added margin-bottom -->
+                                 <span class="font-medium text-gray-800 break-words">{{ card.title }}</span> <!-- Added break-words -->
+                                 <!-- Card Actions (Edit/Delete) -->
+                                 <div v-if="!isLocked" class="flex space-x-1 flex-shrink-0 ml-2"> <!-- Added margin-left -->
+                                     <!-- Edit Card Button -->
+                                     <button @click="toggleEditCard(card)" class="p-0.5 text-xs text-gray-400 hover:text-blue-500 rounded hover:bg-gray-100" title="Edit card">
+                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                         </svg>
+                                     </button>
+                                     <!-- Delete Card Button -->
+                                     <button @click="confirmDeleteCard(card.id)" class="p-0.5 text-xs text-gray-400 hover:text-red-500 rounded hover:bg-red-100" title="Delete card">
+                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                         </svg>
+                                     </button>
+                                 </div>
+                             </div>
+                             <p v-if="card.description" class="text-sm text-gray-600 mt-1 break-words">{{ card.description }}</p> <!-- Added break-words -->
+                             <div class="flex justify-between items-center mt-2">
+                                 <span class="text-xs text-gray-500">Points: {{ card.points || 0 }}</span>
+                                 <!-- User Avatar/Assignment -->
+                                 <div class="relative user-assign-trigger-class"> <!-- Added trigger class -->
+                                     <button 
+                                        @click.stop="toggleUserDropdown(card.id, $event)" 
+                                        class="w-7 h-6 rounded-full flex items-center justify-center text-white font-medium text-xs border-2 border-gray-300"
+                                        :class="card.user_id ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 hover:bg-gray-500'"
+                                        :title="users.find(u => u.id === card.user_id)?.name || 'Assign user'"
+                                    >
+                                         {{ card.user_id ? getInitials(users.find(u => u.id === card.user_id)?.name || '?') : '+' }}
+                                     </button>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <!-- Cards container -->
-        <div class="p-2 max-h-[calc(100vh-12rem)] overflow-y-auto">
-            <!-- Cards -->
-            <div 
-                v-for="card in column.cards" 
-                :key="card.id"
-                class="bg-white p-3 rounded shadow-sm mb-2"
-                :class="{ 'cursor-pointer': !isLocked }"
-                :draggable="!isLocked"
-                @dragstart="handleDragStart($event, card.id)"
-            >
-                <!-- Use the cardEditing prop directly -->
-                <template v-if="cardEditing === card.id">
-                    <slot name="card-edit-form" :card="card"></slot>
-                </template>
-                
-                <template v-else>
-                    <div class="flex justify-between items-start">
-                        <h4 class="font-medium text-gray-800">{{ card.title }}</h4>
-                        <div class="flex space-x-1" v-if="!isLocked">
-                            <button 
-                                @click="toggleEditCard(card)"
-                                class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                </svg>
-                            </button>
-                            <button 
-                                @click="confirmDeleteCard(card.id)"
-                                class="p-1 text-gray-500 hover:text-red-600 focus:outline-none"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-gray-600 text-sm mt-1">{{ card.description }}</p>
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ card.points }} points</span>
-                        <!-- User avatar with dropdown -->
-                        <div class="relative">
-                            <div 
-                                @click="toggleUserDropdown(card.id, $event)"
-                                class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium cursor-pointer border-gray-400 border-2"
-                            >
-                                {{ getInitials(users.find(u => u.id === card.user_id)?.name || '') }}
-                            </div>
-                        </div>
-                    </div>
-                </template>
+
+        <!-- Add Card Button/Form -->
+        <div class="mt-3">
+            <!-- Use parent's cardOpen state -->
+            <div v-if="cardOpen && cardOpen[column.id]"> 
+                 <!-- Pass columnId to the slot scope -->
+                 <slot name="add-card-form" :column-id="column.id"></slot> 
             </div>
-            
-            <!-- Add card form -->
-            <CardForm 
-                v-if="cardOpen[column.id]"
-                :loading="loading"
-                :column-id="column.id"
-                :key="`form-${column.id}-${Date.now()}`"
-                @save="handleAddCard"
-                @cancel="toggleAddCard"
-            />
-            
-            <!-- Add card button -->
-            <button 
-                @click="toggleAddCard"
-                class="w-full py-2 px-3 text-sm text-gray-600 hover:bg-gray-200 rounded flex items-center justify-center mt-2"
-                :disabled="isLocked"
-                :class="{ 'opacity-50 cursor-not-allowed': isLocked }"
+             <button 
+                v-else-if="!isLocked" 
+                @click="$emit('add-card-toggle', column.id)"
+                class="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-200 rounded transition-colors" 
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Add Card
+                + Add a card
             </button>
-            
-            <ConfirmModal
-                :show="showDeleteColumnModal"
-                title="Delete Column"
-                message="Are you sure you want to delete this column? All cards will be lost."
-                confirm-text="Delete"
-                @confirm="handleDeleteColumn"
-                @cancel="showDeleteColumnModal = false"
-            />
-            
-            <ConfirmModal
-                :show="showDeleteCardModal"
-                title="Delete Card"
-                message="Are you sure you want to delete this card?"
-                confirm-text="Delete"
-                @confirm="handleDeleteCard"
-                @cancel="showDeleteCardModal = false"
-            />
         </div>
+
+        <!-- Modals -->
+         <ConfirmModal
+            :show="showDeleteColumnModal"
+            title="Delete Column"
+            message="Are you sure you want to delete this column and all its cards?"
+            confirm-text="Delete"
+            @confirm="handleDeleteColumn"
+            @cancel="showDeleteColumnModal = false"
+        />
+         <ConfirmModal
+            :show="showDeleteCardModal"
+            title="Delete Card"
+            message="Are you sure you want to delete this card?"
+            confirm-text="Delete"
+            @confirm="handleDeleteCard" 
+            @cancel="showDeleteCardModal = false"
+        />
     </div>
 </template>

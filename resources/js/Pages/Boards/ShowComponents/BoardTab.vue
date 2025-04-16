@@ -13,6 +13,7 @@ import {
     tryDeleteCard, 
     tryAddColumn
 } from '../ShowHelpers/BoardTabHelper';
+import { groupBy } from 'lodash-es'; // Import lodash groupBy
 
 const toast = useToast();
 
@@ -165,26 +166,6 @@ const emit = defineEmits([
 
 // Add filter state
 const selectedUserId = ref(null);
-
-// Modify regularColumns and doneColumn computed properties to filter cards
-const regularColumns = computed(() => {
-    return props.columns.filter(column => column.title !== 'Done').map(column => ({
-        ...column,
-        cards: selectedUserId.value 
-            ? column.cards.filter(card => card.user_id === selectedUserId.value)
-            : column.cards
-    }));
-});
-
-const doneColumn = computed(() => {
-    const found = props.columns.find(column => column.title === 'Done');
-    return found ? {
-        ...found,
-        cards: selectedUserId.value 
-            ? found.cards.filter(card => card.user_id === selectedUserId.value)
-            : found.cards
-    } : null;
-});
 
 // Toggle description visibility
 const toggleDescription = () => {
@@ -362,10 +343,87 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
 const pendingDeleteCardId = ref(null);
 const showDeleteCardModal = ref(false);
 
-const confirmDeleteCard = (cardId) => {
-    pendingDeleteCardId.value = cardId;
-    showDeleteCardModal.value = true;
+// Helper function to create swimlanes structure
+const createSwimlanes = (cards, users) => {
+    const grouped = groupBy(cards, 'user_id');
+    
+    const swimlanes = [];
+    
+    // Add Unassigned lane first if it exists
+    if (grouped['null'] || grouped['undefined']) {
+        swimlanes.push({
+            userId: null,
+            userName: 'Unassigned',
+            cards: grouped['null'] || grouped['undefined'] || []
+        });
+    }
+    
+    // Add lanes for assigned users, ensuring order matches props.users
+    users.forEach(user => {
+        if (grouped[user.id]) {
+            swimlanes.push({
+                userId: user.id,
+                userName: user.name,
+                cards: grouped[user.id]
+            });
+        }
+        // Optional: Add empty lanes for users with no cards in this column
+        // else {
+        //     swimlanes.push({ userId: user.id, userName: user.name, cards: [] });
+        // }
+    });
+    
+    return swimlanes;
 };
+
+// Modify regularColumns and doneColumn computed properties
+const regularColumns = computed(() => {
+    const filteredColumns = props.columns.filter(column => !column.done);
+    
+    return filteredColumns.map(column => {
+        // Apply user filter *before* grouping if a user is selected
+        const cardsToGroup = selectedUserId.value
+            ? column.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null) // Show selected user + unassigned
+            : column.cards;
+            
+        const swimlanes = createSwimlanes(cardsToGroup, props.users);
+        
+        // If filtering, only keep relevant swimlanes
+        const finalSwimlanes = selectedUserId.value
+            ? swimlanes.filter(lane => lane.userId === selectedUserId.value || lane.userId === null)
+            : swimlanes;
+
+        return {
+            ...column,
+            swimlanes: finalSwimlanes,
+            // Keep original cards array if needed elsewhere, but swimlanes are for display
+            // cards: column.cards 
+        };
+    });
+});
+
+const doneColumn = computed(() => {
+    const found = props.columns.find(column => column.done);
+    if (!found) return null;
+
+    // Apply user filter *before* grouping if a user is selected
+    const cardsToGroup = selectedUserId.value
+        ? found.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null) // Show selected user + unassigned
+        : found.cards;
+
+    const swimlanes = createSwimlanes(cardsToGroup, props.users);
+
+    // If filtering, only keep relevant swimlanes
+    const finalSwimlanes = selectedUserId.value
+        ? swimlanes.filter(lane => lane.userId === selectedUserId.value || lane.userId === null)
+        : swimlanes;
+        
+    return {
+        ...found,
+        swimlanes: finalSwimlanes,
+        // cards: found.cards 
+    };
+});
 
 const handleDeleteCard = async () => {
     const cardId = pendingDeleteCardId.value;
@@ -493,7 +551,7 @@ const handleConfirm = () => {
                                     class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
                                     :class="{ 'bg-blue-50': selectedUserId === user.id }"
                                 >
-                                    <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
                                         {{ getInitials(user.name) }}
                                     </div>
                                     <span>{{ user.name }}</span>
@@ -693,7 +751,7 @@ const handleConfirm = () => {
                     class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-100 cursor-pointer flex items-center"
                     :class="{ 'bg-green-100': isUserAssigned(userDropdownOpen, user.id) }"
                 >
-                    <div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
+                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium mr-2">
                         {{ getInitials(user.name) }}
                     </div>
                     {{ user.name }}
