@@ -148,6 +148,7 @@ class Board extends Model
         $currentDate = Carbon::now();
         $sprints = json_decode($this->sprints, true);
         $changedSprints = [];
+        $boardColumnsLocked = false;
         
         // First pass: identify which sprints need status changes
         foreach ($sprints as $index => &$sprint) {
@@ -166,6 +167,16 @@ class Board extends Model
                     'start_date' => $sprint['start_date'],
                     'end_date' => $sprint['end_date']
                 ];
+
+                // Lock all columns associated with this board if not already done
+                if (!$boardColumnsLocked) {
+                    $columns = $this->columns()->get();
+                    foreach ($columns as $column) {
+                        $column->is_locked = true;
+                        $column->save();
+                    }
+                    $boardColumnsLocked = true;
+                }
             }
             // If a sprint is 'checked', it stays checked
             // If a sprint is 'locked', it stays locked until manually checked
