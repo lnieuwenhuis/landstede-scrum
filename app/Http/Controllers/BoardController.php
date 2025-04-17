@@ -164,7 +164,7 @@ class BoardController extends Controller
     {
         $user = Auth::user();
 
-        $board = Board::find($request->board_id)->first();
+        $board = Board::find($request->boardId);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
         }
