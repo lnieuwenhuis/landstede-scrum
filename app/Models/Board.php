@@ -172,7 +172,7 @@ class Board extends Model
                 if (!$boardColumnsLocked) {
                     $columns = $this->columns()->get();
                     foreach ($columns as $column) {
-                        $column->is_locked = true;
+                        $column->status = 'locked';
                         $column->save();
                     }
                     $boardColumnsLocked = true;
