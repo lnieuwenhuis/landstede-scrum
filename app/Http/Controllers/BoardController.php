@@ -215,7 +215,7 @@ class BoardController extends Controller
     {
         $user = parent::checkUserLogin();
 
-        $board = Board::find($request->board_id)->first();
+        $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
         }
@@ -301,7 +301,7 @@ class BoardController extends Controller
     {
         $user = parent::checkUserLogin();
 
-        $board = Board::find($request->board_id)->first();
+        $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
         }
@@ -349,7 +349,7 @@ class BoardController extends Controller
     {
         $user = parent::checkUserLogin();
 
-        $board = Board::find($request->board_id)->first();
+        $board = Board::find($request->board_id);
         if (!$board) {
             return response()->json(['error' => 'Board not found']);
         }
