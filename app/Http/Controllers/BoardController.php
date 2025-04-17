@@ -58,6 +58,7 @@ class BoardController extends Controller
                 }),
                 'users' => $board->users,
                 'freeDates' => json_encode($board->nonWorkingDays()),
+                'weekdays' => json_encode($board->weekdays),
                 'currentUser' => $user,
                 'currentSprint' => $board->currentSprint(),
             ]);
@@ -88,28 +89,15 @@ class BoardController extends Controller
             'endDate' =>'required|string',       
             'sprints' => 'nullable|string',
             'non_working_days' => 'required|string',
+            'weekdays' =>'required|string',
             'status' =>'required|string',
         ]);
 
-        $sprintsInput = json_decode($validatedData['sprints']);
-        $sprints = [];
-        foreach ($sprintsInput as $index => $sprint) {
-            $status = ($index === 0) ? 'planning' : 'inactive';
-                
-            $sprints[] = [
-                'id' => count($sprints) + 1,
-                'title' => $sprint->name,
-                'start_date' => $sprint->start_date,
-                'end_date' => $sprint->end_date,
-                'status' => $status,
-            ];
-        }
-
-        $nonWorkingDaysInput = json_decode($validatedData['non_working_days']);
-        $nonWorkingDays = [];
-        foreach ($nonWorkingDaysInput as $nonWorkingDay) {
-            $nonWorkingDays[] = $nonWorkingDay;
-        }
+        [$sprints, $nonWorkingDays, $weekdays] = $this->formatBoardInputs(
+            $validatedData['sprints'], 
+            $validatedData['non_working_days'], 
+            $validatedData['weekdays']
+        );
 
         $board = Board::factory()->create([
             'title' => $validatedData['title'],
@@ -118,6 +106,7 @@ class BoardController extends Controller
             'end_date' => date("Y-m-d H:i:s", strtotime($validatedData['endDate'])),
             'sprints' => json_encode($sprints) ?? null,
             'non_working_days' => json_encode($nonWorkingDays),
+            'weekdays' => json_encode($weekdays),
             'status' => $validatedData['status'],
             'creator_id' => $user->id,
         ]);
@@ -157,6 +146,45 @@ class BoardController extends Controller
             'message' => 'Board created',
             'board_id' => $board->id, 
             'status' => 'redirect',        
+        ]);
+    }
+
+    public function updateBoard(Request $request)
+    {
+        $user = parent::checkUserLogin();
+
+        $board = Board::find($request->boardId);
+        if (!$board) {
+            return response()->json(['error' => 'Board not found']);
+        }
+        // Allow admin to bypass ownership check
+        if ($user->role!== 'admin' && ($board->creator_id!== $user->id ||!$user)) {
+            return response()->json(['error' => 'Unauthorized']);
+        }
+        $validatedData = $request->validate([
+            'title' =>'required|string|max:255',
+            'description' =>'required|string',
+            'non_working_days' =>'required|string',
+            'weekdays' =>'required|string',
+            'status' =>'required|string',
+        ]);
+
+        [$_, $nonWorkingDays, $weekdays] = $this->formatBoardInputs(
+            null,
+            $validatedData['non_working_days'], 
+            $validatedData['weekdays']
+        );
+
+        $board->title = $validatedData['title'];
+        $board->description = $validatedData['description'];
+        $board->non_working_days = json_encode($nonWorkingDays);
+        $board->weekdays = json_encode($weekdays);
+        $board->status = $validatedData['status'];
+        $board->save();
+
+        return response()->json([
+            'message' => 'Board updated successfully!',
+            'board' => $board,
         ]);
     }
 
@@ -403,5 +431,44 @@ class BoardController extends Controller
         }
     
         return response()->json(['error' => 'Sprint not found']);
+    }
+
+    private function formatBoardInputs ($sprints, $nonWorkingDays, $weekdays)
+    {
+        if ($sprints !== null) {
+            $sprintsInput = json_decode($sprints);
+            $sprints = [];
+            foreach ($sprintsInput as $index => $sprint) {
+                $status = ($index === 0) ? 'planning' : 'inactive';
+                    
+                $sprints[] = [
+                    'id' => count($sprints) + 1,
+                    'title' => $sprint->name,
+                    'start_date' => $sprint->start_date,
+                    'end_date' => $sprint->end_date,
+                    'status' => $status,
+                ];
+            }
+        } else {
+            $sprints = [];
+        }
+
+        $nonWorkingDaysInput = json_decode($nonWorkingDays);
+        $nonWorkingDays = [];
+        foreach ($nonWorkingDaysInput as $nonWorkingDay) {
+            $nonWorkingDays[] = $nonWorkingDay;
+        }
+
+        $weekdaysInput = json_decode($weekdays);
+        $weekdays = [];
+        foreach ($weekdaysInput as $weekday) {
+            $weekdays[] = $weekday;
+        }
+
+        return [
+            $sprints,
+            $nonWorkingDays,
+            $weekdays,
+        ];
     }
 }

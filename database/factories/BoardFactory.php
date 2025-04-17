@@ -38,6 +38,7 @@ class BoardFactory extends Factory
             'end_date' => $this->faker->date,
             'sprints' => json_encode([$sprint1, $sprint2]),
             'non_working_days' => json_encode($this->faker->randomElements(['2023-01-01', '2023-01-02', '2023-01-03'])),
+            'weekdays' => json_encode($this->faker->randomElements(['monday', 'tuesday', 'wednesday'])),
             'status' => $this->faker->randomElement(['active', 'archived', 'completed'])
         ];
     }

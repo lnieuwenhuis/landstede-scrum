@@ -14,17 +14,19 @@ import ListTab from './ShowComponents/ListTab.vue';
 import BurndownTab from './ShowComponents/BurndownTab.vue';
 import UsersTab from './ShowComponents/UsersTab.vue';
 import SprintsTab from './ShowComponents/SprintsTab.vue';
+import SettingsTab from './ShowComponents/SettingsTab.vue'; // Import the new SettingsTab component
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const { props } = usePage();
 
 // Board data
-const board = props.board;
+const board = ref(props.board); 
 const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('board');
 const isAdmin = props.currentUser.role === 'admin';
+const currentUser = ref(props.currentUser);
 const currentSprint = ref(props.currentSprint);
 
 // Parse sprints from board if it's a string
@@ -36,6 +38,10 @@ const sprints = ref(typeof props.board.sprints === 'string'
 const freeDates = typeof props.freeDates === 'string' 
     ? JSON.parse(props.freeDates) 
     : props.freeDates;
+
+const weekdays = typeof props.weekdays === 'string'
+    ? JSON.parse(props.weekdays)
+    : props.weekdays;
 
 // Burndown chart settings
 const selectedPeriod = ref('board');
@@ -169,6 +175,12 @@ const handleSprintDeleted = (sprintId) => {
         updateBurndownChart();
     }
 };
+
+// Add handler for board updates from SettingsTab
+const handleBoardUpdated = (updatedBoardData) => {
+    board.value = { ...board.value, ...updatedBoardData }; // Merge updates into the local board ref
+};
+
 </script>
 
 <template>
@@ -180,7 +192,7 @@ const handleSprintDeleted = (sprintId) => {
                 <div class="border-b border-gray-200 mb-4">
                     <nav class="flex flex-wrap space-x-2 sm:space-x-4 md:space-x-6" aria-label="Tabs">
                         <button
-                            v-for="tab in ['board', 'list', 'burndown', 'users', 'sprints']"
+                            v-for="tab in ['board', 'list', 'burndown', 'users', 'sprints', 'settings']" 
                             :key="tab"
                             @click="activeTab = tab"
                             :class="[
@@ -200,7 +212,7 @@ const handleSprintDeleted = (sprintId) => {
                 <BoardTab
                     v-if="activeTab === 'board'"
                     :columns="columns"
-                    :board="board"
+                    :board="board" 
                     :users="users"
                     :show-description="showDescription"
                     :current-sprint="currentSprint"
@@ -224,20 +236,20 @@ const handleSprintDeleted = (sprintId) => {
                     @toggle-description="showDescription = !showDescription"
                 />
             </div>
-            
+
             <!-- List View Tab -->
             <div v-if="activeTab === 'list'">
-                <ListTab 
+                <ListTab
                     :columns="columns"
-                    :board="board"
+                    :board="board" 
                     :show-description="showDescription"
                     @toggle-description="showDescription = !showDescription"
                 />
             </div>
-            
+
             <!-- Users Tab -->
             <div v-if="activeTab === 'users'">
-                <UsersTab 
+                <UsersTab
                     :users="users"
                     :board="board"
                     :show-description="showDescription"
@@ -250,11 +262,20 @@ const handleSprintDeleted = (sprintId) => {
             <SprintsTab
                 v-if="activeTab === 'sprints'"
                 :sprints="sprints"
-                :board="board"
+                :board="board" 
                 :is-admin="isAdmin"
                 @sprint-updated="handleSprintUpdated"
                 @sprint-deleted="handleSprintDeleted"
             />
+
+            <SettingsTab
+                v-if="activeTab === 'settings'"
+                :board="board"
+                :weekdays="weekdays"
+                :current-user="currentUser"
+                @board-updated="handleBoardUpdated"
+            />
+
         </div>
     </AuthenticatedLayout>
 </template>

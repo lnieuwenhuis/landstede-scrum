@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/{columnId}/cards', [BoardController::class, 'getColumnCards']);
     Route::post('/api/boards/storeBoard', [BoardController::class,'storeBoard']);
     Route::post('/api/boards/deleteBoard', [BoardController::class,'deleteBoard']);
+    Route::post('/api/boards/updateBoard', [BoardController::class,'updateBoard']);
+    Route::post('/api/boards/setNewOwner', [BoardController::class,'setNewOwner']);
 
     //Card API Routes
     Route::post('/api/addCardToColumn/{columnId}', [CardController::class, 'addCardToColumn']);

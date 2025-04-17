@@ -9,6 +9,11 @@ import '@vuepic/vue-datepicker/dist/main.css';
 
 const toast = useToast();
 
+// Helper function to initialize weekdays state
+const initializeWeekdaysState = () => [
+    { monday: 0 }, { tuesday: 0 }, { wednesday: 0 }, { thursday: 0 }, { friday: 0 }, { saturday: 1 }, { sunday: 1 }
+];
+
 // Board form data
 const board = ref({
     title: '',
@@ -16,7 +21,8 @@ const board = ref({
     startDate: null,
     endDate: null,
     sprints: [],
-    non_working_days: [],
+    non_working_days: [], 
+    weekdays: initializeWeekdaysState(), 
     status: 'active'
 });
 
@@ -24,8 +30,8 @@ const board = ref({
 const isSubmitting = ref(false);
 const showSprintEditor = ref(false);
 const selectedDays = ref([]);
-const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const selectedWeekdays = ref([]);
+const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; 
+const selectedWeekdays = ref(['Saturday', 'Sunday']);
 
 // Computed properties
 const dateRange = computed(() => {
@@ -90,36 +96,46 @@ const formatDate = (date) => {
     return date.toISOString().split('T')[0];
 };
 
-// Handle weekday selection for non-working days
-const toggleWeekday = (day) => {
-    const index = selectedWeekdays.value.indexOf(day);
+// Handle weekday selection for BOTH non-working days calculation AND weekdays state
+const toggleWeekday = (dayName) => {
+    const index = selectedWeekdays.value.indexOf(dayName);
     if (index === -1) {
-        selectedWeekdays.value.push(day);
+        selectedWeekdays.value.push(dayName);
     } else {
         selectedWeekdays.value.splice(index, 1);
     }
-    updateNonWorkingDays();
+    updateNonWorkingDays(); 
+
+    const lowerDayName = dayName.toLowerCase();
+    const dayObject = board.value.weekdays.find(item => Object.keys(item)[0] === lowerDayName);
+    if (dayObject) {
+        dayObject[lowerDayName] = selectedWeekdays.value.includes(dayName) ? 1 : 0;
+    } else {
+        console.warn(`Could not find weekday object for: ${dayName}`);
+    }
 };
 
-// Update non-working days based on selected weekdays
+// Update non-working days based on selected weekdays (Keep existing function)
 const updateNonWorkingDays = () => {
     if (!dateRange.value) return;
-    
+
     const nonWorkingDays = [];
     const start = new Date(dateRange.value.start);
     const end = new Date(dateRange.value.end);
-    
+
     // Add all selected weekdays within the date range
     for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
-        const weekdayIndex = (day.getDay() + 6) % 7; // Convert to Monday=0, Sunday=6
+        // Adjust index calculation if needed based on how 'weekdays' array is ordered
+        const dayOfWeekJS = day.getDay(); 
+        const weekdayIndex = dayOfWeekJS === 0 ? 6 : dayOfWeekJS - 1;
         const weekdayName = weekdays[weekdayIndex];
-        
+
         if (selectedWeekdays.value.includes(weekdayName)) {
             nonWorkingDays.push(formatDate(day));
         }
     }
-    
-    // Add individually selected dates
+
+    // Add individually selected dates (Keep if using selectedDays)
     if (selectedDays.value.length > 0) {
         selectedDays.value.forEach(date => {
             const formattedDate = formatDate(new Date(date));
@@ -128,8 +144,8 @@ const updateNonWorkingDays = () => {
             }
         });
     }
-    
-    board.value.non_working_days = nonWorkingDays;
+
+    board.value.non_working_days = nonWorkingDays.sort();
 };
 
 // Watch for date changes to update non-working days
@@ -139,7 +155,7 @@ watch([() => board.value.startDate, () => board.value.endDate], () => {
     }
 });
 
-watch(selectedDays, () => {
+watch(selectedDays, () => { 
     updateNonWorkingDays();
 });
 
@@ -149,19 +165,24 @@ const submitForm = async () => {
         toast.warning('Please fill in all required fields');
         return;
     }
-    
+
     isSubmitting.value = true;
-    
+
     try {
-        // Prepare data for submission
+        // Prepare data for submission, including BOTH non_working_days and weekdays
         const formData = {
-            ...board.value,
+            title: board.value.title,
+            description: board.value.description,
+            startDate: board.value.startDate ? formatDate(new Date(board.value.startDate)) : null,
+            endDate: board.value.endDate ? formatDate(new Date(board.value.endDate)) : null,
+            status: board.value.status,
             sprints: JSON.stringify(board.value.sprints),
-            non_working_days: JSON.stringify(board.value.non_working_days)
+            non_working_days: JSON.stringify(board.value.non_working_days), // Keep existing
+            weekdays: JSON.stringify(board.value.weekdays) // Add new weekdays
         };
-        
+
         const response = await axios.post('/api/boards/storeBoard', formData);
-        
+
         if (response.data.status === 'redirect') {
             toast.success(response.data.message);
             router.visit(`/boards/${response.data.board_id}`);
@@ -170,7 +191,12 @@ const submitForm = async () => {
         }
     } catch (error) {
         console.error('Error creating board:', error);
-        toast.error('Failed to create board');
+        if (error.response && error.response.data && error.response.data.errors) {
+            console.error("Validation Errors:", error.response.data.errors);
+            toast.error(error.response.data.message || 'Validation failed. Please check your input.');
+        } else {
+            toast.error('Failed to create board. Please try again.');
+        }
     } finally {
         isSubmitting.value = false;
     }
@@ -308,16 +334,16 @@ const submitForm = async () => {
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Select Non-working Weekdays</label>
                                     <div class="flex flex-wrap gap-2">
-                                        <button 
-                                            v-for="day in weekdays" 
+                                        <button
+                                            v-for="day in weekdays"
                                             :key="day"
                                             type="button"
                                             @click="toggleWeekday(day)"
                                             :class="[
-                                                'px-3 py-2 rounded-md text-sm font-medium',
+                                                'px-3 py-2 rounded-md text-sm font-medium border',
                                                 selectedWeekdays.includes(day) 
-                                                    ? 'bg-blue-600 text-white' 
-                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    ? 'bg-blue-600 text-white border-blue-700'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                             ]"
                                         >
                                             {{ day }}
