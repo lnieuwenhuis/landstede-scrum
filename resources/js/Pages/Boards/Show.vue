@@ -65,8 +65,8 @@ const handlePeriodChange = (periodValue) => {
     if (periodValue === 'board') {
         // Use board dates
         selectedSprint.value = null;
-        startDate.value = board.start_date;
-        endDate.value = board.end_date;
+        startDate.value = board.value.start_date;
+        endDate.value = board.value.end_date;
     } else {
         // Find the selected sprint
         const sprint = sprints.value.find(s => s.id == periodValue);
