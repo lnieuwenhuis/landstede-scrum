@@ -29,6 +29,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('boards', BoardController::class);
 
     Route::get('/admin/vacations', [VacationController::class, 'index'])->name('admin.vacations');
+
+    Route::get('/admin/users/{userId}/boards', [BoardController::class, 'showUserBoards'])->name('admin.users.showBoards');
 });
 
 // API ROUTES
@@ -39,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/api/boards/deleteBoard', [BoardController::class,'deleteBoard']);
     Route::post('/api/boards/updateBoard', [BoardController::class,'updateBoard']);
     Route::post('/api/boards/setNewOwner', [BoardController::class,'setNewOwner']);
+    Route::post('/api/admin/search-all', [BoardController::class, 'searchAll']);
 
     //Card API Routes
     Route::post('/api/addCardToColumn/{columnId}', [CardController::class, 'addCardToColumn']);

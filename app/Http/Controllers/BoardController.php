@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Board;
 use App\Models\Column;
 use App\Models\Card;
+use App\Models\User;
 
 class BoardController extends Controller
 {
@@ -17,7 +18,7 @@ class BoardController extends Controller
 
         if ($user->role == 'admin') {
             return Inertia::render('Admin/Dashboard', [
-                'boards' => Board::all()
+                'boardCount' => Board::count(),
             ]);
         } else if ($user) {
             return Inertia::render('Dashboard', [
@@ -65,6 +66,27 @@ class BoardController extends Controller
         };
 
         return redirect('/');
+    }
+
+    public function showUserBoards($userId) 
+    {
+        $loginCheck = parent::checkUserLogin();
+        $loggedInUser = Auth::user(); 
+
+        if (!$loggedInUser || $loggedInUser->role !== 'admin') {
+            return redirect('/')->with('error', 'Unauthorized access.'); 
+        }
+
+        $user = User::find($userId);
+
+        if ($user) {
+            return Inertia::render('Admin/UserBoards', [
+                'boards' => $user->boards,
+                'user' => $user,
+            ]);
+        }
+
+        return redirect()->route('admin.dashboard')->with('error', 'User not found.'); 
     }
 
     public function create()
@@ -431,6 +453,21 @@ class BoardController extends Controller
         }
     
         return response()->json(['error' => 'Sprint not found']);
+    }
+
+    public function searchAll(Request $request)
+    {
+        $user = parent::checkUserLogin();
+        $searchTerm = $request->input('searchTerm');
+        $boards = Board::where('title', 'like', "%$searchTerm%")
+            ->orWhere('description', 'like', "%$searchTerm%")
+            ->get();
+        $users = User::where('name', 'like', "%$searchTerm%")
+            ->get();
+        return response()->json([
+            'boards' => $boards,
+            'users' => $users,
+        ]);
     }
 
     private function formatBoardInputs ($sprints, $nonWorkingDays, $weekdays)
