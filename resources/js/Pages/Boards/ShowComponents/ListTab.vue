@@ -227,7 +227,7 @@ const getInitials = (name) => {
                             <!-- Assignee Column -->
                             <td class="px-4 py-2 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ card.user_name || 'Unassigned' }}
+                                    {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
                                 </div>
                             </td>
                             
@@ -303,7 +303,7 @@ const getInitials = (name) => {
                                 <!-- Assignee Column -->
                                 <td class="px-4 py-2 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ card.user_name || 'Unassigned' }}
+                                        {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
                                     </div>
                                 </td>
                                 
