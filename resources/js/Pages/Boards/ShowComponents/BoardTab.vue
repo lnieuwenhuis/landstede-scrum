@@ -13,7 +13,7 @@ import {
     tryDeleteCard, 
     tryAddColumn
 } from '../ShowHelpers/BoardTabHelper';
-import { groupBy } from 'lodash-es'; // Import lodash groupBy
+import { groupBy } from 'lodash-es';
 
 const toast = useToast();
 
@@ -33,9 +33,8 @@ const userDropdownPosition = ref({ top: '0px', left: '0px' });
 
 // User assignment modal
 const toggleUserDropdown = (cardId, event) => {
-    // Check if the sprint is locked - silently return without showing warning
+    // Check if the sprint is locked
     if (props.currentSprint && (props.currentSprint.status === 'locked' || props.currentSprint.status === 'checked')) {
-        // No warning toast here
         return;
     }
     
@@ -102,12 +101,9 @@ const assignUserToCard = async (cardId, userId) => {
     }
 };
 
-// close dropdown when clicking outside
-// Add near other modal state
 const showUserFilter = ref(false);
 const userFilterPosition = ref({ right: 'auto' });
 
-// Add click handler similar to toggleUserDropdown
 const toggleUserFilter = (event) => {
     showUserFilter.value = !showUserFilter.value;
     
@@ -135,7 +131,6 @@ const toggleUserFilter = (event) => {
     }
 };
 
-// Update the click-outside handler in onMounted
 onMounted(() => {
     document.addEventListener('click', (e) => {
         // Close user assignment modal
@@ -175,7 +170,6 @@ const emit = defineEmits([
     'burndown-update'
 ]);
 
-// Add filter state
 const selectedUserId = ref(null);
 
 // Toggle description visibility
@@ -216,10 +210,10 @@ const handleDragOver = (event, columnId) => {
     // Check if the target column is locked before allowing drop indication
     const targetColumn = props.columns.find(col => col.id === columnId);
     if (targetColumn && targetColumn.status === 'locked') {
-        event.dataTransfer.dropEffect = 'none'; // Indicate drop is not allowed
+        event.dataTransfer.dropEffect = 'none';
     } else {
-        event.dataTransfer.dropEffect = 'move'; // Indicate drop is allowed
-        event.preventDefault(); // Only prevent default if drop is allowed
+        event.dataTransfer.dropEffect = 'move';
+        event.preventDefault();
         currentDragColumnId.value = columnId;
     }
 };
@@ -236,31 +230,31 @@ const handleDrop = async (event, targetColumnId) => {
     // Check the status property directly on the column object
     if (!targetColumn || targetColumn.status === 'locked') { 
         toast.error('Cannot move cards to a locked column.');
-        currentDragCardId.value = null; // Reset drag state
+        currentDragCardId.value = null;
         currentDragSourceColumnId.value = null;
         currentDragColumnId.value = null;
         return;
     }
     
     if (currentDragCardId.value && currentDragSourceColumnId.value && targetColumnId && currentDragSourceColumnId.value !== targetColumnId) {
-        loading.value = true; // Set loading state
+        loading.value = true;
         try {
             const updatedColumns = await tryMoveCard({
                 cardId: currentDragCardId.value,
                 sourceColumnId: currentDragSourceColumnId.value,
                 targetColumnId: targetColumnId,
-                columns: props.columns // Pass current columns state
+                columns: props.columns
             });
             
             // Emit the updated columns array received from the helper
             emit('columns-updated', updatedColumns); 
-            emit('burndown-update'); // Emit burndown update after successful move
+            emit('burndown-update');
             
         } catch (error) {
             console.error("Error moving card:", error);
             toast.error('Failed to move card.'); 
         } finally {
-            loading.value = false; // Reset loading state
+            loading.value = false;
             // Reset drag state regardless of success/failure
             currentDragCardId.value = null;
             currentDragSourceColumnId.value = null;
@@ -410,10 +404,6 @@ const createSwimlanes = (cards, users) => {
                 cards: grouped[user.id]
             });
         }
-        // Optional: Add empty lanes for users with no cards in this column
-        // else {
-        //     swimlanes.push({ userId: user.id, userName: user.name, cards: [] });
-        // }
     });
     
     return swimlanes;
@@ -440,8 +430,6 @@ const regularColumns = computed(() => {
         return {
             ...column,
             swimlanes: finalSwimlanes,
-            // Keep original cards array if needed elsewhere, but swimlanes are for display
-            // cards: column.cards 
         };
     });
 });
@@ -465,7 +453,6 @@ const doneColumn = computed(() => {
     return {
         ...found,
         swimlanes: finalSwimlanes,
-        // cards: found.cards 
     };
 });
 
@@ -517,7 +504,6 @@ const isUserAssigned = (cardId, userId) => {
     }
     return false;
 };
-// Add modal state if needed for any confirmations in BoardTab.vue
 const showConfirmModal = ref(false);
 const confirmModalMessage = ref('');
 const confirmModalAction = ref(null);
