@@ -283,15 +283,23 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                 label: 'Remaining Points',
                 data: actualBurndownData,
                 borderColor: '#3b82f6',
+                backgroundColor: '#3b82f6',
                 tension: 0,
-                fill: false
+                fill: false,
+                pointRadius: 0,
+                borderWidth: 3
             }, {
                 label: 'Ideal Burndown',
                 data: idealBurndownData,
                 borderColor: '#dc2626',
-                borderDash: [5, 5],
+                backgroundColor: '#dc2626',
+                borderWidth: 3,
                 tension: 0,
-                fill: false
+                fill: false,
+                pointRadius: 0, 
+                borderDash: [],
+                opacity: 0.6, 
+                borderColor: 'rgba(220, 38, 38, 0.6)' 
             }]
         }),
         chartOptions: ref({
