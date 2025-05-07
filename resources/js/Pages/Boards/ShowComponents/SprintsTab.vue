@@ -168,7 +168,7 @@ const toggleDeleteSprint = (sprintId = null) => {
         const sprintToCheck = sprints.value.find(sprint => sprint.id === sprintId);
         
         if (sprintToCheck && sprintToCheck.status === 'active') {
-            toast.error('Cannot delete an active or checked sprints');
+            toast.error('Cannot delete an active sprint');
             return;
         }
     }
