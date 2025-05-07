@@ -135,8 +135,10 @@ const renumberSprints = async () => {
     
     for (let i = 0; i < sortedSprints.length; i++) {
         const sprint = sortedSprints[i];
-        const newTitle = `Sprint ${i + 1}`;
-        if (sprint.title !== newTitle) {
+        const isDefaultName = /^Sprint \d+$/.test(sprint.title);
+        const newTitle = isDefaultName ? `Sprint ${i + 1}` : sprint.title;
+        
+        if (isDefaultName && sprint.title !== newTitle) {
             const updatePromise = axios.post('/api/updateSprint', {
                 board_id: props.board.id,
                 sprint_id: sprint.id,
@@ -147,9 +149,9 @@ const renumberSprints = async () => {
             });
             
             updatePromises.push(updatePromise);
+            sprint.title = newTitle;
         }
         
-        sprint.title = newTitle;
         updatedSprints.push(sprint);
     }
     
