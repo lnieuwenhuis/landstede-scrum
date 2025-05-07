@@ -74,17 +74,28 @@ const editedSprintData = ref({
 });
 
 const handleCreateSprint = async () => {
+    if (sprints.value.length >= 10) {
+        toast.error('Maximum number of sprints reached');
+        return;
+    }
+    
     loading.value = true;
     try {
+        // Calculate the next sprint number based on existing sprints
+        const nextSprintNumber = sprints.value.length + 1;
+        
         const response = await axios.post('/api/createSprint', {
             board_id: props.board.id,
-            title: 'New Sprint',
+            title: `Sprint ${nextSprintNumber}`,
         });
         
         if (response.data.sprints) {
             sprints.value = response.data.sprints;
             toast.success('Sprint created successfully');
         }
+    } catch (error) {
+        console.error('Error creating sprint:', error);
+        toast.error(error.message || 'Failed to create sprint');
     } finally {
         loading.value = false;
     }
@@ -99,6 +110,9 @@ const handleDeleteSprint = async () => {
 
         if (response.data.message) {
             sprints.value = sprints.value.filter(sprint => sprint.id !== sprintToDelete.value);
+            
+            renumberSprints();
+            
             emit('sprint-deleted', sprintToDelete.value);
             toast.success('Sprint deleted successfully');
             toggleDeleteSprint();
@@ -111,7 +125,54 @@ const handleDeleteSprint = async () => {
     }
 };
 
+const renumberSprints = async () => {
+    const sortedSprints = [...sprints.value].sort((a, b) => 
+        new Date(a.start_date) - new Date(b.start_date)
+    );
+    
+    const updatedSprints = [];
+    let updatePromises = [];
+    
+    for (let i = 0; i < sortedSprints.length; i++) {
+        const sprint = sortedSprints[i];
+        const newTitle = `Sprint ${i + 1}`;
+        if (sprint.title !== newTitle) {
+            const updatePromise = axios.post('/api/updateSprint', {
+                board_id: props.board.id,
+                sprint_id: sprint.id,
+                title: newTitle,
+                start_date: sprint.start_date,
+                end_date: sprint.end_date,
+                status: sprint.status
+            });
+            
+            updatePromises.push(updatePromise);
+        }
+        
+        sprint.title = newTitle;
+        updatedSprints.push(sprint);
+    }
+    
+    if (updatePromises.length > 0) {
+        try {
+            await Promise.all(updatePromises);
+            sprints.value = updatedSprints;
+        } catch (error) {
+            console.error('Error renumbering sprints:', error);
+            toast.error('Failed to renumber some sprints');
+        }
+    }
+};
 const toggleDeleteSprint = (sprintId = null) => {
+    if (sprintId !== null && !showDeleteSprintConfirmation.value) {
+        const sprintToCheck = sprints.value.find(sprint => sprint.id === sprintId);
+        
+        if (sprintToCheck && sprintToCheck.status === 'active') {
+            toast.error('Cannot delete an active sprint');
+            return;
+        }
+    }
+    
     document.body.style.overflow = showDeleteSprintConfirmation.value ? '' : 'hidden';
     showDeleteSprintConfirmation.value = !showDeleteSprintConfirmation.value;
     sprintToDelete.value = sprintId;
@@ -191,11 +252,13 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                     <button 
                         @click="handleCreateSprint"
                         class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+                        :disabled="loading"
+                        :class="{ 'opacity-50 cursor-not-allowed': loading }"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                         </svg>
-                        New Sprint
+                        {{ loading ? 'Creating...' : 'New Sprint' }}
                     </button>
                 </div>                        
                 <div class="space-y-4">
