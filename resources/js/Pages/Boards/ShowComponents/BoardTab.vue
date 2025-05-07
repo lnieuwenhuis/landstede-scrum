@@ -411,7 +411,6 @@ const createSwimlanes = (cards, users) => {
 
 // Modify regularColumns and doneColumn computed properties
 const regularColumns = computed(() => {
-    console.log(props.columns);
     const filteredColumns = props.columns.filter(column => !column.is_done_column);
     
     return filteredColumns.map(column => {

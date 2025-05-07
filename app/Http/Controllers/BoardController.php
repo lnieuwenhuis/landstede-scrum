@@ -186,6 +186,7 @@ class BoardController extends Controller
         $validatedData = $request->validate([
             'title' =>'required|string|max:255',
             'description' =>'required|string',
+            'endDate' => 'nullable|string',
             'non_working_days' =>'required|string',
             'weekdays' =>'required|string',
             'status' =>'required|string',
@@ -202,6 +203,72 @@ class BoardController extends Controller
         $board->non_working_days = json_encode($nonWorkingDays);
         $board->weekdays = json_encode($weekdays);
         $board->status = $validatedData['status'];
+        
+        $endDateChanged = false;
+        if (isset($validatedData['endDate']) && !empty($validatedData['endDate'])) {
+            $newEndDate = date("Y-m-d H:i:s", strtotime($validatedData['endDate'] . ' +1 day -1 second'));
+            if ($board->end_date != $newEndDate) {
+                $board->end_date = $newEndDate;
+                $endDateChanged = true;
+            }
+        }
+        
+        // If end date changed, recalculate non-working days based on weekday settings
+        if ($endDateChanged) {
+        $nonWorkingDaysArray = [];
+        $weekdaysSettings = $weekdays;
+        
+        $boardStart = new \DateTime($board->start_date);
+        $boardEnd = new \DateTime($board->end_date);
+        
+        $currentDay = clone $boardStart;
+        while ($currentDay <= $boardEnd) {
+            $dayOfWeek = strtolower($currentDay->format('l'));
+            
+            foreach ($weekdaysSettings as $weekdaySetting) {
+                $weekdaySetting = (array)$weekdaySetting;
+                $dayKey = key($weekdaySetting);
+                
+                if ($dayKey === $dayOfWeek && $weekdaySetting[$dayKey] === 1) {
+                    $nonWorkingDaysArray[] = $currentDay->format('Y-m-d');
+                    break;
+                }
+            }
+            
+            $currentDay->modify('+1 day');
+        }
+        
+        // Update the non-working days
+        $board->non_working_days = json_encode($nonWorkingDaysArray);
+        } else {
+        $board->non_working_days = json_encode($nonWorkingDays);
+        }
+        
+        if ($endDateChanged && $board->sprints) {
+            $sprints = json_decode($board->sprints, true);
+            if (count($sprints) > 0) {
+                $boardStart = strtotime($board->start_date);
+                $boardEnd = strtotime($board->end_date);
+                $totalDays = ($boardEnd - $boardStart) / (24 * 60 * 60);
+                
+                $sprintDuration = floor($totalDays / count($sprints));
+                
+                foreach ($sprints as $index => &$sprint) {
+                    $sprintStartDate = date('Y-m-d', $boardStart + ($index * $sprintDuration * 24 * 60 * 60));
+                    $sprintEndDate = date('Y-m-d', $boardStart + (($index + 1) * $sprintDuration * 24 * 60 * 60) - (24 * 60 * 60));
+                    
+                    if ($index === count($sprints) - 1) {
+                        $sprintEndDate = date('Y-m-d', $boardEnd);
+                    }
+                    
+                    $sprint['start_date'] = $sprintStartDate;
+                    $sprint['end_date'] = $sprintEndDate;
+                }
+                
+                $board->sprints = json_encode($sprints);
+            }
+        }
+        
         $board->save();
 
         return response()->json([

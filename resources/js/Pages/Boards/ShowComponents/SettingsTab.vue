@@ -175,6 +175,7 @@ const submit = async () => {
             boardId: props.board.id,
             title: title.value,
             description: description.value,
+            endDate: endDate.value ? formatDateForSubmit(endDate.value) : null,
             non_working_days: JSON.stringify(nonWorkingDays.value), 
             weekdays: JSON.stringify(weekdaysState.value), 
             status: status.value,
@@ -260,6 +261,22 @@ const submit = async () => {
                         :class="{ 'bg-gray-100 cursor-not-allowed': !isOwner }"
                     ></textarea>
                     <InputError class="mt-2" :message="errors.description ? errors.description[0] : ''" />
+                </div>
+                
+                <!-- End Date Picker -->
+                <div class="mb-6">
+                    <InputLabel for="end-date" value="End Date" />
+                    <p class="text-xs text-gray-500 mt-1">You can change the end date of the board. The start date cannot be modified.</p>
+                    <VueDatePicker 
+                        id="end-date"
+                        v-model="endDate" 
+                        :enable-time-picker="false"
+                        placeholder="Select end date"
+                        class="w-full mt-1"
+                        :disabled="!isOwner || loading"
+                        :class="{ 'cursor-not-allowed': !isOwner }"
+                    />
+                    <InputError class="mt-2" :message="errors.endDate ? errors.endDate[0] : ''" />
                 </div>
                 
                 <!-- Weekdays Selection (UI controls weekdaysState) -->

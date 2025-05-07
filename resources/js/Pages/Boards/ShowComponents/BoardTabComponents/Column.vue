@@ -24,7 +24,7 @@ const props = defineProps({
     columns: Array, 
     users: Array,
     isDone: Boolean, // Keep this if it's separate from column.status
-    // isLocked: Boolean, // Remove this prop if status is the source of truth
+    isLocked: Boolean,
     isDragging: Boolean, // Keep this for drag state
     cardEditing: [Number, null], 
     cardOpen: Object, 
