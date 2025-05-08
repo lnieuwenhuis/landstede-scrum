@@ -116,41 +116,44 @@ const performSearch = async () => {
 
                 <div class="bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <!-- Changed title, removed toggle, kept count -->
-                            <h3 class="text-lg font-semibold text-gray-900">Search Boards & Users</h3>
-                            <div class="flex items-center">
-                                <span class="text-sm text-gray-500 mr-4">({{ boardCount }} total boards)</span>
-                                <a
-                                    href="/boards/create"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    Create Board
+                        <div class="mb-4">
+                            <!-- Title with board count underneath -->
+                            <div class="mb-3">
+                                <h3 class="text-lg font-semibold text-gray-900">Search Boards & Users</h3>
+                                <span class="text-sm text-gray-500">({{ boardCount }} total boards)</span>
+                            </div>
+                            
+                            <!-- Search Input with Create Board button positioned absolutely -->
+                            <div class="relative mb-6">
+                                <input 
+                                    v-model="searchInput"
+                                    type="text" 
+                                    placeholder="Search by board title, user name or email..." 
+                                    class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <div v-if="isSearching" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <svg class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Create Board button positioned to the right -->
+                                <a href="/boards/create"
+                                   class="absolute right-0 top-0 -mt-14 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:hidden" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="hidden sm:inline">Create Board</span>
                                 </a>
                             </div>
                         </div>
                         
-                        <!-- Search Input -->
-                        <div class="relative mb-6">
-                            <input 
-                                v-model="searchInput"
-                                type="text" 
-                                placeholder="Search by board title, user name or email..." 
-                                class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <div v-if="isSearching" class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                <svg class="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </div>
-                        </div>
-
                         <!-- Search Results Area -->
                         <div v-if="!isSearching && searchInput.trim() && !searchResults.boards.length && !searchResults.users.length" class="text-center text-gray-500 py-4">
                             No results found for "{{ searchInput }}".
                         </div>
-
+                        
                         <div v-if="searchResults.boards.length > 0 || searchResults.users.length > 0">
                             <!-- Board Results -->
                             <div v-if="searchResults.boards.length > 0" class="mb-6">
@@ -163,16 +166,21 @@ const performSearch = async () => {
                                                 <h5 class="font-medium text-gray-900 truncate">{{ board.title }}</h5>
                                                 <p class="text-sm text-gray-500 mt-1 truncate">{{ board.description }}</p>
                                             </div>
-                                            <div class="flex space-x-2 flex-shrink-0">
+                                            <div class="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0 flex-shrink-0">
                                                 <a :href="`/boards/${board.id}`" 
-                                                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-center">
-                                                    View
+                                                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm text-center flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:hidden" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    <span class="hidden sm:inline">View</span>
                                                 </a>
                                                 <button @click="toggleDeleteConfirmation(board.id)" 
-                                                        class="px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-700 shadow-sm text-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        class="px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-700 shadow-sm text-center flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:hidden" viewBox="0 0 20 20" fill="currentColor">
                                                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                                     </svg>
+                                                    <span class="hidden sm:inline">Delete</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -187,13 +195,17 @@ const performSearch = async () => {
                                     <div v-for="user in searchResults.users" :key="'user-' + user.id" 
                                         class="border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors">
                                         <div class="flex justify-between items-center">
-                                            <div>
+                                            <div class="flex-1 min-w-0 mr-4">
                                                 <h5 class="font-medium text-gray-900 truncate">{{ user.name }}</h5>
-                                                <p class="text-sm text-gray-500 truncate">{{ user.email }}</p>
+                                                <p class="text-sm text-gray-500 mt-1 truncate">{{ user.email }}</p>
                                             </div>
                                             <a :href="`/admin/users/${user.id}/boards`" 
-                                               class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm">
-                                                View Boards
+                                               class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                                </svg>
+                                                <span class="ml-1 hidden sm:inline">View Boards</span>
                                             </a>
                                         </div>
                                     </div>
