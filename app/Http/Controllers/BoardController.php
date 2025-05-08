@@ -79,9 +79,21 @@ class BoardController extends Controller
 
         $user = User::find($userId);
 
+        $boards = $user->boards->map(function($board) {
+            return [
+                'id' => $board->id,
+                'title' => $board->title,
+                'description' => $board->description,
+                'status' => $board->status,
+                'created_at' => $board->created_at,
+                'updated_at' => $board->updated_at,
+                'user_count' => $board->users()->count()
+            ];
+        });
+
         if ($user) {
             return Inertia::render('Admin/UserBoards', [
-                'boards' => $user->boards,
+                'boards' => $boards,
                 'user' => $user,
             ]);
         }
