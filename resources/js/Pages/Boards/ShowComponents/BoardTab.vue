@@ -524,25 +524,35 @@ const handleConfirm = () => {
 <template>
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
-            <!-- Board header -->
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4 min-w-0 flex-1">
-                    <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
-                    <span v-if="currentSprint" class="text-gray-600 truncate flex-shrink-0">
+            <!-- Board header - restructured -->
+            <div class="flex flex-col space-y-4">
+                <!-- Title row with board title and sprint info -->
+                <div class="flex justify-between items-center">
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
+                    </div>
+                    <div v-if="currentSprint" class="text-gray-600 truncate flex-shrink-0 flex items-center">
                         <span>({{ currentSprint.title }})</span>
                         <button 
-                        @click="toggleDescription" 
-                        class="text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 ml-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
-                            <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    </span>
+                            @click="toggleDescription" 
+                            class="text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 ml-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
+                                <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="relative min-w-[200px]">
+                
+                <!-- Board description (shown/hidden based on showDescription) -->
+                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm">
+                    {{ board.description || 'No description available.' }}
+                </div>
+                
+                <!-- User filter row -->
+                <div class="flex items-center">
+                    <div class="relative min-w-[200px] mb-3">
                         <button 
                             @click.stop="toggleUserFilter"
                             class="flex items-center justify-between w-full px-2 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-w-[200px]"
@@ -589,10 +599,6 @@ const handleConfirm = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div v-if="showDescription" class="py-2 rounded-lg">
-                <p class="text-gray-500">{{ board.description }}</p>
             </div>
 
             <!-- Columns container -->
