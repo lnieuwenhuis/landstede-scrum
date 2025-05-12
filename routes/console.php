@@ -2,20 +2,14 @@
 
 use App\Models\Board;
 use App\Models\Log;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
-
-Artisan::command('CheckBoardSprints', function () {
+Schedule::call(function () {
     $boards = Board::all();
-
     $boardResults = [];
     foreach ($boards as $board) {
         $changedSprints = $board->checkSprints();
-        
+
         // Only include boards that had sprint status changes
         if (!empty($changedSprints)) {
             $boardResults[] = [
@@ -25,16 +19,12 @@ Artisan::command('CheckBoardSprints', function () {
             ];
         }
     }
-
-    // Only create a log if there were any changes
-    if (!empty($boardResults)) {
-        Log::create([
-            'name' => 'SprintCheck',
-            'description' => 'Sprint status changes detected and updated',
-            'type' => 'Routine',
-            'data' => json_encode($boardResults)
-        ]);
-    }
-
-    return $this->comment(json_encode($boardResults));
-})->purpose('Check and change board sprint statuses every day');
+    
+    // Create a log entry for the board results
+    Log::create([
+        'name' => "Daily Board Status Check",
+        'description' => "Daily board status check",
+        'type' => 'board',
+        'data' => json_encode($boardResults) || ["No changes"]
+    ]);
+})->daily();
