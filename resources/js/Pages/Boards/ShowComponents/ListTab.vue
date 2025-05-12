@@ -204,16 +204,16 @@ const getInitials = (name) => {
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Assignee
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Title
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 sm:text-left text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Points
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Column
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -225,7 +225,7 @@ const getInitials = (name) => {
                         <!-- Active Cards -->
                         <tr v-for="card in activeCards" :key="card.id" class="hover:bg-gray-50">
                             <!-- Assignee Column -->
-                            <td class="px-4 py-2 whitespace-nowrap">
+                            <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
                                     {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
                                 </div>
@@ -242,20 +242,20 @@ const getInitials = (name) => {
                             </td>
                             
                             <!-- Points Column -->
-                            <td class="px-4 py-2 whitespace-nowrap">
+                            <td class="px-4 py-2 whitespace-nowrap sm:text-left text-center">
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                     {{ card.points || 0 }}
                                 </span>
                             </td>
                             
                             <!-- Column Title -->
-                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                            <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {{ card.columnTitle }}
                             </td>
                             
                             <!-- Actions Column -->
-                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
+                            <td class="px-4 py-2 whitespace-nowrap sm:text-right text-center text-sm font-medium">
+                                <div class="sm:flex sm:justify-end sm:space-x-2 flex justify-center space-x-2">
                                     <button 
                                         @click="openEditModal(card)"
                                         class="text-blue-600 hover:text-blue-900"
@@ -301,7 +301,7 @@ const getInitials = (name) => {
                         <template v-if="showDoneCards">
                             <tr v-for="card in doneCards" :key="'done-' + card.id" class="hover:bg-gray-50 bg-gray-100">
                                 <!-- Assignee Column -->
-                                <td class="px-4 py-2 whitespace-nowrap">
+                                <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
                                     </div>
@@ -318,20 +318,20 @@ const getInitials = (name) => {
                                 </td>
                                 
                                 <!-- Points Column -->
-                                <td class="px-4 py-2 whitespace-nowrap">
+                                <td class="px-4 py-2 whitespace-nowrap sm:text-left text-center">
                                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                         {{ card.points || 0 }}
                                     </span>
                                 </td>
                                 
                                 <!-- Column Title -->
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                     {{ card.columnTitle }}
                                 </td>
                                 
                                 <!-- Actions Column -->
-                                <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex justify-end space-x-2">
+                                <td class="px-4 py-2 whitespace-nowrap sm:text-right text-center text-sm font-medium">
+                                    <div class="sm:flex sm:justify-end sm:space-x-2 flex justify-center space-x-2">
                                         <button 
                                             @click="openEditModal(card)"
                                             class="text-blue-600 hover:text-blue-900"
