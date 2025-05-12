@@ -605,7 +605,6 @@ const handleConfirm = () => {
             <div class="flex justify-center">
                 <div 
                     class="flex space-x-4 overflow-x-auto pb-4 w-full"
-                    :class="{ '': showDescription, 'mt-6': !showDescription }"
                 >
                     <!-- Regular columns are rendered first using v-for -->
                     <Column 
