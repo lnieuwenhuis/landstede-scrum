@@ -4,6 +4,7 @@ import { Head, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref } from 'vue';
 import { useToast } from 'vue-toastification';
+import ConfirmModal from './Boards/ShowComponents/ConfirmModal.vue';
 
 const toast = useToast();
 const page = usePage();
