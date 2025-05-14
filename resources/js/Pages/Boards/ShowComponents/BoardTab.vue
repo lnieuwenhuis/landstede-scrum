@@ -553,11 +553,20 @@ const handleTouchDragEnd = () => {
 };
 
 const handleTouchDrop = async (targetColumnId) => {
-    // Find the target column directly from props.columns
-    const targetColumn = props.columns.find(col => col.id === targetColumnId);
-    // Check the status property directly on the column object
-    if (!targetColumn || targetColumn.status === 'locked') { 
-        toast.error('Cannot move cards to a locked column.');
+    // Use the same column finding logic as in handleDrop
+    const targetColumn = props.columns.find(col => col.id === parseInt(targetColumnId) || col.id === targetColumnId);
+    
+    if (!targetColumn) {
+        toast.error('Target column not found');
+        touchDragCardId.value = null;
+        touchDragSourceColumnId.value = null;
+        touchDragColumnId.value = null;
+        return;
+    }
+    
+    // Check if the column is locked
+    if (targetColumn.status === 'locked') {
+        toast.error('Cannot move cards to a locked column');
         touchDragCardId.value = null;
         touchDragSourceColumnId.value = null;
         touchDragColumnId.value = null;

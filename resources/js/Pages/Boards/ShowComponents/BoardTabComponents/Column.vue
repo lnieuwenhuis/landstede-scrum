@@ -40,6 +40,10 @@ const emit = defineEmits([
     'card-editing-changed',
     // Remove 'delete-card' emit, handle update via 'columns-updated'
     'add-card-toggle', 
+    'touch-drag-start',
+    'touch-drag-over',
+    'touch-drag-end',
+    'touch-drop',
 ]);
 
 // Internal state
@@ -217,11 +221,17 @@ const handleTouchMove = (event) => {
     if (!touchDragging.value && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
         touchDragging.value = true;
         
-        // Add visual feedback
-        touchCardElement.value.style.opacity = '0.5';
-        touchCardElement.value.style.position = 'absolute';
+        // Add visual feedback - just reduce opacity instead of making it absolute positioned
+        touchCardElement.value.style.opacity = '0.7';
+        touchCardElement.value.style.position = 'fixed';
         touchCardElement.value.style.zIndex = '1000';
         touchCardElement.value.style.width = `${touchCardElement.value.offsetWidth}px`;
+        touchCardElement.value.style.pointerEvents = 'none';
+        
+        // Get initial position
+        const rect = touchCardElement.value.getBoundingClientRect();
+        touchCardElement.value.style.top = `${rect.top}px`;
+        touchCardElement.value.style.left = `${rect.left}px`;
         
         // Create a placeholder to maintain layout
         const placeholder = document.createElement('div');
@@ -235,8 +245,9 @@ const handleTouchMove = (event) => {
     }
     
     if (touchDragging.value) {
-        // Move the card with the touch
-        touchCardElement.value.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        // Move the card with the touch - use absolute positioning to follow finger
+        touchCardElement.value.style.top = `${touchStartY.value + deltaY}px`;
+        touchCardElement.value.style.left = `${touchStartX.value + deltaX}px`;
         
         // Find the column under the touch point
         const elementsUnderTouch = document.elementsFromPoint(touchX, touchY);
@@ -256,7 +267,7 @@ const handleTouchEnd = (event) => {
     const touchX = event.changedTouches[0].clientX;
     const touchY = event.changedTouches[0].clientY;
     
-    // Find the column under the touch point
+    // Find the column under the touch point - use the same approach as desktop
     const elementsUnderTouch = document.elementsFromPoint(touchX, touchY);
     const columnElement = elementsUnderTouch.find(el => el.classList.contains('column-container'));
     
@@ -265,11 +276,12 @@ const handleTouchEnd = (event) => {
         touchCardElement.value.style.opacity = '';
         touchCardElement.value.style.position = '';
         touchCardElement.value.style.zIndex = '';
-        touchCardElement.value.style.transform = '';
         touchCardElement.value.style.width = '';
+        touchCardElement.value.style.top = '';
+        touchCardElement.value.style.left = '';
         
         // Remove the placeholder
-        const placeholder = touchCardElement.value.parentNode.querySelector('.card-placeholder');
+        const placeholder = document.querySelector('.card-placeholder');
         if (placeholder) {
             placeholder.parentNode.removeChild(placeholder);
         }
@@ -279,15 +291,15 @@ const handleTouchEnd = (event) => {
     if (columnElement) {
         const columnId = columnElement.dataset.columnId;
         emit('touch-drop', columnId);
+    } else {
+        // If no column found, just emit the end event
+        emit('touch-drag-end');
     }
     
     // Reset touch state
     touchDragging.value = false;
     touchCard.value = null;
     touchCardElement.value = null;
-    
-    // Emit touch drag end event
-    emit('touch-drag-end');
 };
 </script>
 
