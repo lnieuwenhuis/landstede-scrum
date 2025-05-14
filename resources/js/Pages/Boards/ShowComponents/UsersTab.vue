@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import ConfirmModal from './ConfirmModal.vue';
 
 const toast = useToast();
 
@@ -153,6 +154,14 @@ const saveUsers = async () => {
     }
 };
 
+const showDeleteConfirmation = ref(false);
+const userToDelete = ref(null);
+
+const toggleDeleteConfirmation = (userId = null) => {
+    showDeleteConfirmation.value = !showDeleteConfirmation.value;
+    userToDelete.value = userId;
+};
+
 const handleDeleteUser = async (userId) => {
     try {
         const response = await axios.post('/api/users/removeUserFromBoard', {
@@ -171,6 +180,11 @@ const handleDeleteUser = async (userId) => {
         console.error('Error removing user:', error);
         toast.error(error.message || 'Failed to remove user');
     }
+};
+
+const confirmDeleteUser = () => {
+    handleDeleteUser(userToDelete.value);
+    toggleDeleteConfirmation();
 };
 </script>
 
@@ -219,7 +233,7 @@ const handleDeleteUser = async (userId) => {
                         </div>
                         <!-- Delete button for users -->
                         <button 
-                            @click="handleDeleteUser(user.id)"
+                            @click="toggleDeleteConfirmation(user.id)"
                             class="p-2 rounded-lg focus:outline-none focus:ring-2 bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 flex-shrink-0"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -344,4 +358,14 @@ const handleDeleteUser = async (userId) => {
         </div>
     </div>
 
+    <!-- Add Delete Confirmation Modal -->
+    <!-- Add this at the end of your template -->
+    <ConfirmModal
+        :show="showDeleteConfirmation"
+        title="Remove Team Member"
+        message="Are you sure you want to remove this user from the board? This action cannot be undone."
+        confirm-text="Remove"
+        @confirm="confirmDeleteUser"
+        @cancel="toggleDeleteConfirmation"
+    />
 </template>

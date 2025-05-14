@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import ConfirmModal from './ConfirmModal.vue';  // Add this import
 
 const toast = useToast();
 
@@ -54,7 +55,7 @@ const getStatusStyles = (status) => {
             text: 'text-purple-600',
             icon: 'text-purple-600',
             description: 'Completed and verified',
-            iconPath: '<path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />'
+            iconPath: '<path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />'
         }
     };
     
@@ -340,27 +341,17 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                 </div>
         </div>
 
-        <!-- Delete Sprint Confirmation Modal -->
-        <div v-if="showDeleteSprintConfirmation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Sprint</h3>
-                <p class="text-gray-600 mb-6">Are you sure you want to delete this sprint? This action cannot be undone.</p>
-                <div class="flex justify-end space-x-3">
-                    <button 
-                        @click="toggleDeleteSprint()" 
-                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        @click="handleDeleteSprint" 
-                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Replace the existing delete confirmation modal with this -->
+        <ConfirmModal
+            v-if="showDeleteSprintConfirmation"
+            :show="showDeleteSprintConfirmation"
+            title="Delete Sprint"
+            message="Are you sure you want to delete this sprint? This action cannot be undone."
+            confirm-text="Delete"
+            cancel-text="Cancel"
+            @cancel="toggleDeleteSprint()"
+            @confirm="handleDeleteSprint"
+        />
 
         <!-- Sprint Edit Modal -->
         <div v-if="showSprintEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
