@@ -4,6 +4,7 @@ import { Head, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
+import ConfirmModal from '../Boards/ShowComponents/ConfirmModal.vue';
 
 const toast = useToast();
 const page = usePage();
@@ -30,10 +31,11 @@ const toggleDeleteConfirmation = (boardId = null) => {
 };
 
 const handleDelete = () => {
-    axios.post(`/api/boards/deleteBoard`, { board_id: boardToDelete.value })
+    axios.post(`/api/boards/deleteBoard`, { boardId: boardToDelete.value })
         .then(response => {
             if (response.data.message) {
                 boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
+                searchResults.value.boards = searchResults.value.boards.filter(board => board.id!== boardToDelete.value);
                 toggleDeleteConfirmation();
                 toast.success(response.data.message);
             } else {
@@ -239,20 +241,16 @@ const performSearch = async () => {
         </div>
     </AuthenticatedLayout>
 
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg">
-            <p class="text-gray-800 mb-4">Are you sure you want to delete this board?</p>
-            <div class="flex justify-between">
-                <button @click="handleDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Delete
-                </button>
-                <button @click="toggleDeleteConfirmation()" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
+    <ConfirmModal
+        v-if="showDeleteConfirmation"
+        :show="showDeleteConfirmation"
+        title="Delete Board"
+        message="Are you sure you want to delete this board? This action cannot be undone."
+        confirm-text="Delete"
+        cancel-text="Cancel"
+        @cancel="toggleDeleteConfirmation()"
+        @confirm="handleDelete"
+    />
 </template>
 
 <style scoped>
