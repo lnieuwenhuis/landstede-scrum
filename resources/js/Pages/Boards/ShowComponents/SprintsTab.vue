@@ -341,7 +341,6 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                 </div>
         </div>
 
-        <!-- Replace the existing delete confirmation modal with this -->
         <ConfirmModal
             v-if="showDeleteSprintConfirmation"
             :show="showDeleteSprintConfirmation"

@@ -358,8 +358,6 @@ const confirmDeleteUser = () => {
         </div>
     </div>
 
-    <!-- Add Delete Confirmation Modal -->
-    <!-- Add this at the end of your template -->
     <ConfirmModal
         :show="showDeleteConfirmation"
         title="Remove Team Member"
