@@ -120,7 +120,6 @@ const updateBurndownChart = () => {
 const showDescription = ref(false);
 
 const handleSprintUpdated = (payload) => {
-    console.log(payload);
     // Check if the payload contains the expected arrays
     if (payload && payload.sprints && payload.columns) {
         // Directly replace the local columns state with the array from the backend
