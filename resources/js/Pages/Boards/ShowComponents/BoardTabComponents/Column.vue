@@ -176,16 +176,130 @@ const toggleUserDropdown = (cardId, event) => {
 
 // Remove the console.log
 // console.log("hmm", props.column.status)
+
+// Add these new refs for touch handling
+const touchDragging = ref(false);
+const touchCard = ref(null);
+const touchCardElement = ref(null);
+const touchStartY = ref(0);
+const touchStartX = ref(0);
+
+// Add touch event handlers
+const handleTouchStart = (event, card) => {
+    // Don't allow dragging from locked columns
+    if (props.column.status === 'locked') {
+        return;
+    }
+    
+    touchCard.value = card;
+    touchCardElement.value = event.target.closest('.card-element');
+    touchStartX.value = event.touches[0].clientX;
+    touchStartY.value = event.touches[0].clientY;
+    
+    // Emit the drag start event to the parent
+    emit('touch-drag-start', card.id, props.column.id);
+};
+
+const handleTouchMove = (event) => {
+    if (!touchCard.value || !touchCardElement.value) return;
+    
+    // Prevent scrolling while dragging
+    event.preventDefault();
+    
+    const touchX = event.touches[0].clientX;
+    const touchY = event.touches[0].clientY;
+    
+    // Calculate distance moved
+    const deltaX = touchX - touchStartX.value;
+    const deltaY = touchY - touchStartY.value;
+    
+    // Only start dragging if moved more than 10px to prevent accidental drags
+    if (!touchDragging.value && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+        touchDragging.value = true;
+        
+        // Add visual feedback
+        touchCardElement.value.style.opacity = '0.5';
+        touchCardElement.value.style.position = 'absolute';
+        touchCardElement.value.style.zIndex = '1000';
+        touchCardElement.value.style.width = `${touchCardElement.value.offsetWidth}px`;
+        
+        // Create a placeholder to maintain layout
+        const placeholder = document.createElement('div');
+        placeholder.className = 'card-placeholder';
+        placeholder.style.height = `${touchCardElement.value.offsetHeight}px`;
+        placeholder.style.margin = '0.5rem 0';
+        placeholder.style.backgroundColor = '#f3f4f6';
+        placeholder.style.borderRadius = '0.375rem';
+        placeholder.style.border = '2px dashed #d1d5db';
+        touchCardElement.value.parentNode.insertBefore(placeholder, touchCardElement.value);
+    }
+    
+    if (touchDragging.value) {
+        // Move the card with the touch
+        touchCardElement.value.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        
+        // Find the column under the touch point
+        const elementsUnderTouch = document.elementsFromPoint(touchX, touchY);
+        const columnElement = elementsUnderTouch.find(el => el.classList.contains('column-container'));
+        
+        if (columnElement) {
+            const columnId = columnElement.dataset.columnId;
+            emit('touch-drag-over', columnId);
+        }
+    }
+};
+
+const handleTouchEnd = (event) => {
+    if (!touchCard.value || !touchDragging.value) return;
+    
+    // Get the final touch position
+    const touchX = event.changedTouches[0].clientX;
+    const touchY = event.changedTouches[0].clientY;
+    
+    // Find the column under the touch point
+    const elementsUnderTouch = document.elementsFromPoint(touchX, touchY);
+    const columnElement = elementsUnderTouch.find(el => el.classList.contains('column-container'));
+    
+    // Reset the card style
+    if (touchCardElement.value) {
+        touchCardElement.value.style.opacity = '';
+        touchCardElement.value.style.position = '';
+        touchCardElement.value.style.zIndex = '';
+        touchCardElement.value.style.transform = '';
+        touchCardElement.value.style.width = '';
+        
+        // Remove the placeholder
+        const placeholder = touchCardElement.value.parentNode.querySelector('.card-placeholder');
+        if (placeholder) {
+            placeholder.parentNode.removeChild(placeholder);
+        }
+    }
+    
+    // If we found a column, emit the drop event
+    if (columnElement) {
+        const columnId = columnElement.dataset.columnId;
+        emit('touch-drop', columnId);
+    }
+    
+    // Reset touch state
+    touchDragging.value = false;
+    touchCard.value = null;
+    touchCardElement.value = null;
+    
+    // Emit touch drag end event
+    emit('touch-drag-end');
+};
 </script>
 
 <template>
     <div 
-        class="flex flex-col flex-shrink-0 w-72 bg-gray-100 p-3 rounded-lg shadow max-h-[82vh]" 
+        class="flex flex-col flex-shrink-0 w-72 bg-gray-100 p-3 rounded-lg shadow max-h-[82vh] column-container" 
         :class="{ 
             'border-2 border-blue-500': isDragging, 
             'bg-green-50': isDone,
             'opacity-70': column.status === 'locked'
         }"
+        :data-column-id="column.id"
         @dragover.prevent="handleDragOver"
         @dragleave.prevent="handleDragLeave"
         @drop.prevent="handleDrop"
@@ -271,7 +385,11 @@ const toggleUserDropdown = (cardId, event) => {
                                 :key="card.id"
                                 :draggable="props.column.status !== 'locked'"
                                 @dragstart="handleDragStart($event, card.id)"
-                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200"
+                                @touchstart="handleTouchStart($event, card)"
+                                @touchmove="handleTouchMove"
+                                @touchend="handleTouchEnd"
+                                @touchcancel="handleTouchEnd"
+                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200 card-element"
                                 :class="{ 'opacity-75': cardEditing === card.id }"
                             >
                         <!-- Card Edit Form Slot -->
@@ -356,3 +474,23 @@ const toggleUserDropdown = (cardId, event) => {
         />
     </div>
 </template>
+
+<style>
+@media (pointer: coarse) {
+  .card-element {
+    touch-action: none; /* Prevents browser handling of touch events */
+  }
+  
+  .card-element.dragging {
+    opacity: 0.5;
+    position: absolute;
+    z-index: 1000;
+  }
+  
+  .card-placeholder {
+    background-color: #f3f4f6;
+    border-radius: 0.375rem;
+    border: 2px dashed #d1d5db;
+  }
+}
+</style>

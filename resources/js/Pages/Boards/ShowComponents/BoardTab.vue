@@ -519,6 +519,82 @@ const handleConfirm = () => {
     }
     showConfirmModal.value = false;
 };
+// Add touch-specific state variables
+const touchDragCardId = ref(null);
+const touchDragSourceColumnId = ref(null);
+const touchDragColumnId = ref(null);
+
+// Touch event handlers
+const handleTouchDragStart = (cardId, columnId) => {
+    // Find the source column directly from props.columns
+    const sourceColumn = props.columns.find(col => col.id === columnId);
+    // Check the status property directly on the column object
+    if (!sourceColumn || sourceColumn.status === 'locked') { 
+        toast.warning('Cannot move cards from a locked column.');
+        return;
+    }
+    
+    touchDragCardId.value = cardId;
+    touchDragSourceColumnId.value = columnId;
+};
+
+const handleTouchDragOver = (columnId) => {
+    // Check if the target column is locked before allowing drop indication
+    const targetColumn = props.columns.find(col => col.id === columnId);
+    if (targetColumn && targetColumn.status === 'locked') {
+        return;
+    }
+    
+    touchDragColumnId.value = columnId;
+};
+
+const handleTouchDragEnd = () => {
+    touchDragColumnId.value = null;
+};
+
+const handleTouchDrop = async (targetColumnId) => {
+    // Find the target column directly from props.columns
+    const targetColumn = props.columns.find(col => col.id === targetColumnId);
+    // Check the status property directly on the column object
+    if (!targetColumn || targetColumn.status === 'locked') { 
+        toast.error('Cannot move cards to a locked column.');
+        touchDragCardId.value = null;
+        touchDragSourceColumnId.value = null;
+        touchDragColumnId.value = null;
+        return;
+    }
+    
+    if (touchDragCardId.value && touchDragSourceColumnId.value && targetColumnId && touchDragSourceColumnId.value !== targetColumnId) {
+        loading.value = true;
+        try {
+            const updatedColumns = await tryMoveCard({
+                cardId: touchDragCardId.value,
+                sourceColumnId: touchDragSourceColumnId.value,
+                targetColumnId: targetColumnId,
+                columns: props.columns
+            });
+            
+            // Emit the updated columns array received from the helper
+            emit('columns-updated', updatedColumns); 
+            emit('burndown-update');
+            
+        } catch (error) {
+            console.error("Error moving card:", error);
+            toast.error('Failed to move card.'); 
+        } finally {
+            loading.value = false;
+            // Reset drag state regardless of success/failure
+            touchDragCardId.value = null;
+            touchDragSourceColumnId.value = null;
+            touchDragColumnId.value = null;
+        }
+    } else {
+        // Reset drag state if dropped on the same column or invalid drop
+        touchDragCardId.value = null;
+        touchDragSourceColumnId.value = null;
+        touchDragColumnId.value = null;
+    }
+};
 </script>
 
 <template>
@@ -625,6 +701,10 @@ const handleConfirm = () => {
                         @drag-over="handleDragOver"
                         @drag-leave="handleDragLeave"
                         @drop="handleDrop"
+                        @touch-drag-start="handleTouchDragStart"
+                        @touch-drag-over="handleTouchDragOver"
+                        @touch-drag-end="handleTouchDragEnd"
+                        @touch-drop="handleTouchDrop"
                         @toggle-user-dropdown="toggleUserDropdown"
                         @columns-updated="emit('columns-updated', $event)"
                     >
@@ -676,6 +756,10 @@ const handleConfirm = () => {
                         @drag-over="handleDragOver"
                         @drag-leave="handleDragLeave"
                         @drop="handleDrop"
+                        @touch-drag-start="handleTouchDragStart"
+                        @touch-drag-over="handleTouchDragOver"
+                        @touch-drag-end="handleTouchDragEnd"
+                        @touch-drop="handleTouchDrop"
                         @toggle-user-dropdown="toggleUserDropdown"
                     >
                         <template #card-edit-form="{ card }">
