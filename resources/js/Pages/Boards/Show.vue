@@ -50,7 +50,7 @@ const startDate = ref(board.start_date);
 const endDate = ref(board.end_date);
 
 let { chartData, chartOptions } = buildChart(
-    board,
+    board.value,
     currentSprint.value || null, // Handle undefined currentSprint
     columns,
     startDate.value,
@@ -79,7 +79,7 @@ const handlePeriodChange = (periodValue) => {
     
     // Regenerate chart with new date range
     const chartResult = buildChart(
-        board, 
+        board.value, 
         selectedSprint.value, 
         columns, 
         startDate.value, 
@@ -104,7 +104,7 @@ watch(columns, (newColumns) => {
 const updateBurndownChart = () => {
     // Force fresh calculation with current columns value
     const result = buildChart(
-        board,
+        board.value,
         selectedSprint.value,
         columns, 
         startDate.value,

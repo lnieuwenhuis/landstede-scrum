@@ -212,7 +212,7 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
             : totalPoints / (board.sprints?.length || 1);
 
         // Find sprint index
-        const sprintIndex = sprintsArray.findIndex(s => s?.id === selectedSprint?.id) ?? 0;  
+        const sprintIndex = sprintsArray.findIndex(s => s?.id === selectedSprint['id']) ?? 0;  
               
         // Calculate cumulative points burned from previous sprints
         const previousPoints = sprintsArray.slice(0, sprintIndex).reduce((sum, s) => {
