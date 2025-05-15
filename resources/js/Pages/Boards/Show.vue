@@ -24,7 +24,7 @@ const { props } = usePage();
 const board = ref(props.board); 
 const columns = ref(props.columns);
 const users = ref(props.users);
-const activeTab = ref('board');
+const activeTab = ref('Kanban Board');
 const isAdmin = props.currentUser.role === 'admin';
 const currentUser = ref(props.currentUser);
 const currentSprint = ref(props.currentSprint);
@@ -189,27 +189,47 @@ const handleBoardUpdated = (updatedBoardData) => {
         <div class="container mx-auto px-6 py-3">
             <!-- Tab Navigation -->
                 <div class="border-b border-gray-200 mb-4">
-                    <nav class="flex flex-wrap space-x-2 sm:space-x-4 md:space-x-6" aria-label="Tabs">
-                        <button
-                            v-for="tab in ['board', 'list', 'burndown', 'users', 'sprints', 'settings']" 
-                            :key="tab"
-                            @click="activeTab = tab"
-                            :class="[
-                                'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
-                                activeTab === tab
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            ]"
-                        >
-                            {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
-                        </button>
+                    <nav class="flex flex-wrap justify-between" aria-label="Tabs">
+                        <!-- Main tabs on the left -->
+                        <div class="flex space-x-2 sm:space-x-4 md:space-x-6">
+                            <button
+                                v-for="tab in ['Kanban Board', 'list', 'burndown', 'sprints']" 
+                                :key="tab"
+                                @click="activeTab = tab"
+                                :class="[
+                                    'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+                                    activeTab === tab
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ]"
+                            >
+                                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                            </button>
+                        </div>
+                        
+                        <!-- User and Settings tabs on the right -->
+                        <div class="flex space-x-2 sm:space-x-4 md:space-x-6">
+                            <button
+                                v-for="tab in ['users', 'settings']" 
+                                :key="tab"
+                                @click="activeTab = tab"
+                                :class="[
+                                    'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+                                    activeTab === tab
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ]"
+                            >
+                                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                            </button>
+                        </div>
                     </nav>
                 </div>
 
             <!-- Tab Content -->
-            <div v-if="activeTab === 'board'">
+            <div v-if="activeTab === 'Kanban Board'">
                 <BoardTab
-                    v-if="activeTab === 'board'"
+                    v-if="activeTab === 'Kanban Board'"
                     :columns="columns"
                     :board="board" 
                     :users="users"
