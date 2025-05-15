@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import ConfirmModal from './ConfirmModal.vue';
+import { getInitials } from '../ShowHelpers/BoardTabHelper';
 
 const toast = useToast();
 
@@ -215,7 +216,7 @@ const confirmDeleteUser = () => {
                     >
                         <div class="flex-shrink-0">
                             <div class="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                                {{ user.name.charAt(0).toUpperCase() }}
+                                {{ getInitials(user.name)  }}
                             </div>
                         </div>
                         <div class="ml-4 flex-1 min-w-0">
