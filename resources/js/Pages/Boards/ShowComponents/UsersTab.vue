@@ -187,6 +187,38 @@ const confirmDeleteUser = () => {
     handleDeleteUser(userToDelete.value);
     toggleDeleteConfirmation();
 };
+
+// Helper function to validate hex color
+const isValidHexColor = (color) => {
+    return color && /^#([0-9A-F]{3}){1,2}$/i.test(color);
+};
+
+// Helper function to determine if a color is light or dark
+const isLightColor = (hexColor) => {
+    // Default to false if color is invalid
+    if (!isValidHexColor(hexColor)) return false;
+    
+    // Convert hex to RGB
+    let r, g, b;
+    if (hexColor.length === 4) {
+        // For 3-digit hex codes (#RGB)
+        r = parseInt(hexColor[1] + hexColor[1], 16);
+        g = parseInt(hexColor[2] + hexColor[2], 16);
+        b = parseInt(hexColor[3] + hexColor[3], 16);
+    } else {
+        // For 6-digit hex codes (#RRGGBB)
+        r = parseInt(hexColor.substring(1, 3), 16);
+        g = parseInt(hexColor.substring(3, 5), 16);
+        b = parseInt(hexColor.substring(5, 7), 16);
+    }
+    
+    // Calculate perceived brightness using the formula:
+    // (0.299*R + 0.587*G + 0.114*B)
+    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return true if the color is light (brightness > 0.5)
+    return brightness > 0.5;
+};
 </script>
 
 <template>
@@ -215,8 +247,14 @@ const confirmDeleteUser = () => {
                         class="bg-gray-50 p-4 rounded-lg shadow-sm transition-colors duration-200 hover:bg-gray-100 flex items-center space-x-4"
                     >
                         <div class="flex-shrink-0">
-                            <div class="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                                {{ getInitials(user.name)  }}
+                            <div 
+                                class="h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg"
+                                :style="{ 
+                                    backgroundColor: isValidHexColor(user.color) ? user.color : '#3b82f6',
+                                    color: isLightColor(user.color) ? '#000000' : '#ffffff'
+                                }"
+                            >
+                                {{ getInitials(user.name) }}
                             </div>
                         </div>
                         <div class="ml-4 flex-1 min-w-0">

@@ -256,3 +256,35 @@ export async function tryDeleteColumn(columnId) {
         throw error;
     }
 }
+
+// Helper function to validate hex color
+export const isValidHexColor = (color) => {
+    return color && /^#([0-9A-F]{3}){1,2}$/i.test(color);
+};
+
+// Helper function to determine if a color is light or dark
+export const isLightColor = (hexColor) => {
+    // Default to false if color is invalid
+    if (!isValidHexColor(hexColor)) return false;
+    
+    // Convert hex to RGB
+    let r, g, b;
+    if (hexColor.length === 4) {
+        // For 3-digit hex codes (#RGB)
+        r = parseInt(hexColor[1] + hexColor[1], 16);
+        g = parseInt(hexColor[2] + hexColor[2], 16);
+        b = parseInt(hexColor[3] + hexColor[3], 16);
+    } else {
+        // For 6-digit hex codes (#RRGGBB)
+        r = parseInt(hexColor.substring(1, 3), 16);
+        g = parseInt(hexColor.substring(3, 5), 16);
+        b = parseInt(hexColor.substring(5, 7), 16);
+    }
+    
+    // Calculate perceived brightness using the formula:
+    // (0.299*R + 0.587*G + 0.114*B)
+    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return true if the color is light (brightness > 0.5)
+    return brightness > 0.5;
+};

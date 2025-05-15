@@ -35,6 +35,7 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::post('/users/searchUsers', [UserController::class,'searchUsers']);
     Route::post('/users/addUsersToBoard', [UserController::class,'addUsersToBoard']);
     Route::post('/users/removeUserFromBoard', [UserController::class, 'removeUser']);
+    Route::post('/users/changeUserColor', [UserController::class,'changeUserColor']);
 
     //Vacation API Routes
     Route::post('/vacations/getVacation', [VacationController::class,'getVacation']);

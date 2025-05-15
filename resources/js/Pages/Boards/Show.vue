@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { buildChart, generateBurndownData } from '@/Helpers/BurndownHelper';
+import { buildChart } from '@/Helpers/BurndownHelper';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();
@@ -233,6 +233,7 @@ const handleBoardUpdated = (updatedBoardData) => {
                     :columns="columns"
                     :board="board" 
                     :users="users"
+                    :user="currentUser"
                     :show-description="showDescription"
                     :current-sprint="currentSprint"
                     @columns-updated="columns = $event"

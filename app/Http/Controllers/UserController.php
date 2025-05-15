@@ -91,4 +91,14 @@ class UserController extends Controller
             return response()->json(['message' => 'Succesfully removed user']);
         }
     }
+
+    public function changeUserColor(Request $request)
+    {
+        $user = parent::checkUserLogin();
+
+        $user->color = $request->color;
+        $user->save();
+
+        return response()->json(['message' => 'Color changed']);
+    }
 }
