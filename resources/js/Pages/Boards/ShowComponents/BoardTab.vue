@@ -770,6 +770,7 @@ const handleTouchDrop = async (targetColumnId) => {
                         :card-open="cardOpen"
                         :columns="props.columns"
                         :cardEditing="cardEditing"
+                        :categories="props.categories"
                         @add-card-toggle="toggleAddCard"
                         @card-editing-changed="toggleEditCard"
                         @delete-card="handleDeleteCard"
@@ -791,6 +792,7 @@ const handleTouchDrop = async (targetColumnId) => {
                                 :initial-description="cardDesc"
                                 :initial-points="cardPoints"
                                 :is-editing="true"
+                                :categories="props.categories"
                                 @save="(data) => handleUpdateCard({
                                     cardId: card.id,
                                     columnId: card.column_id,
