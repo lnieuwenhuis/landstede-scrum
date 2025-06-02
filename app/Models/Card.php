@@ -16,6 +16,7 @@ class Card extends Model
         'description', 
         'status',
         'points',
+        'category_id',
         'status_updated_at',
     ];
 
@@ -41,5 +42,18 @@ class Card extends Model
             $last_updated_at = $this->status_updated_at;
         }
         return $last_updated_at;
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function getColor()
+    {
+        if ($this->category) {
+            return $this->category->color ?? null;
+        }
+        return null;
     }
 }

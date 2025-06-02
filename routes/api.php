@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\ColumnController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VacationController;
 use App\Http\Controllers\BoardController;
@@ -43,6 +44,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::post('/vacations/deleteVacation', [VacationController::class,'deleteVacation']);
     Route::post('/vacations/editVacation', [VacationController::class,'editVacation']);
     Route::post('/vacations/setActiveVacation', [VacationController::class,'setActiveVacation']);
+
+    //Category API Routes
+    Route::post('/categories/createCategory', [CategoryController::class,'createCategory']);
+    Route::post('/categories/deleteCategory', [CategoryController::class,'deleteCategory']);
+    Route::post('/categories/updateCategory', [CategoryController::class,'updateCategory']);
 
     //Other API Routes
     Route::post('/disableLoginMessage', [AuthenticatedSessionController::class,'disableLoginMessage']);

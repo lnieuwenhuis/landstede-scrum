@@ -3,6 +3,7 @@
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VacationController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -25,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('boards', BoardController::class);
 
     Route::get('/admin/vacations', [VacationController::class, 'index'])->name('admin.vacations');
+    Route::get('/admin/categories', [CategoryController::class,'index'])->name('admin.categories');
 
     Route::get('/admin/users/{userId}/boards', [BoardController::class, 'showUserBoards'])->name('admin.users.showBoards');
 });

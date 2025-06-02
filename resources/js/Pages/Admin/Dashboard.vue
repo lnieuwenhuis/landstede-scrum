@@ -218,11 +218,11 @@ const performSearch = async () => {
                     </div>
                 </div>
                 
-                <!-- Vacation Management Section -->
+                <!-- Administration Management Section -->
                 <div class="bg-white shadow-sm sm:rounded-lg mt-6">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Administration</h3>
-                        <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <a href="/admin/vacations" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                                 <div class="mr-4 bg-blue-100 p-3 rounded-lg">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -232,6 +232,17 @@ const performSearch = async () => {
                                 <div>
                                     <h4 class="font-medium text-gray-900">Manage Vacations</h4>
                                     <p class="text-gray-500 mt-1">Create vacations for the new school year</p>
+                                </div>
+                            </a>
+                            <a href="/admin/categories" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                <div class="mr-4 bg-blue-100 p-3 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Manage Categories</h4>
+                                    <p class="text-gray-500 mt-1">Create Categories for Students</p>
                                 </div>
                             </a>
                         </div>
