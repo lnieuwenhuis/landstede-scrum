@@ -487,6 +487,12 @@ class BoardController extends Controller
         $sprintIndex = array_search($request->sprint_id, array_column($sprints, 'id'));
         
         if ($sprintIndex !== false) {
+            // Store the original statuses before removing the sprint
+            $originalStatuses = [];
+            foreach ($sprints as $sprint) {
+                $originalStatuses[$sprint['id']] = $sprint['status'];
+            }
+            
             // Remove the sprint from the array
             array_splice($sprints, $sprintIndex, 1);
     
@@ -512,12 +518,17 @@ class BoardController extends Controller
                     $sprint['start_date'] = $sprintStartDate;
                     $sprint['end_date'] = $sprintEndDate;
                     
-                    // Update sprint status based on current date
-                    $currentDate = time();
-                    $sprint['status'] = ($currentDate >= strtotime($sprintStartDate) && 
-                    $currentDate <= strtotime($sprintEndDate)) 
-                        ? 'active' 
-                        : 'inactive';
+                    // Preserve the original status if it exists, otherwise determine based on date
+                    if (isset($originalStatuses[$sprint['id']])) {
+                        $sprint['status'] = $originalStatuses[$sprint['id']];
+                    } else {
+                        // Fallback to date-based status only if we don't have the original status
+                        $currentDate = time();
+                        $sprint['status'] = ($currentDate >= strtotime($sprintStartDate) && 
+                        $currentDate <= strtotime($sprintEndDate)) 
+                            ? 'active' 
+                            : 'inactive';
+                    }
                 }
             }
     
