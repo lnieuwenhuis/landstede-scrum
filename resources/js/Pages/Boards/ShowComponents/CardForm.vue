@@ -36,7 +36,7 @@ const props = defineProps({
     },
     categories: {
         type: Array,
-        default: () => []
+        default: []
     }
 });
 
@@ -46,7 +46,13 @@ const emit = defineEmits(['save', 'cancel']);
 const title = ref(props.card ? props.card.title : props.initialTitle);
 const description = ref(props.card ? props.card.description : props.initialDescription);
 const points = ref(props.card ? props.card.points : props.initialPoints);
-const category = ref(props.card ? props.categories.find(cat => cat.id === props.card.category_id) : props.categories.find(cat => cat.id === props.initialCategoryId));
+const category = ref(props.card && props.card.category_id
+    ? props.categories.find(cat => cat.id === props.card.category_id)
+    : (props.initialCategoryId
+        ? props.categories.find(cat => cat.id === props.initialCategoryId)
+        : null
+    )
+);
 
 // Use either card or isEditing prop
 const isEditingCard = ref(!!props.card || props.isEditing);

@@ -751,6 +751,7 @@ const handleTouchDrop = async (targetColumnId) => {
                                 :loading="loading"
                                 :column-id="column.id"
                                 :key="`form-${column.id}-${Date.now()}`"
+                                :categories="props.categories"
                                 @save="handleAddCard"
                                 @cancel="toggleAddCard(column.id)"
                             />
