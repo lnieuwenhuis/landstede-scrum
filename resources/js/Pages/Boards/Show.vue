@@ -204,7 +204,7 @@ const selectTab = (tab) => {
                         <div class="mobile-dropdown w-full sm:hidden border-b border-gray-200">
                             <details ref="dropdownRef" class="dropdown w-full relative">
                                 <summary class="py-2 px-1 font-medium text-sm flex items-center justify-between w-full cursor-pointer focus:outline-none transition-all duration-200 border-b-2" :class="dropdownOpen ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-700'">
-                                    {{ activeTab }}
+                                    {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }}
                                     <svg class="h-5 w-5 ml-2 transition-transform duration-200" :class="{'rotate-180': dropdownOpen}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
