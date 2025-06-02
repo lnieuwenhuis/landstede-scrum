@@ -24,21 +24,25 @@ const toggleDeleteConfirmation = (boardId = null) => {
     boardToDelete.value = boardId;
 };
 
-const handleDelete = () => {
-    axios.post(`/api/boards/deleteBoard`, { boardId: boardToDelete.value })
-        .then(response => {
-            if (response.data.message) {
-                boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
-                toggleDeleteConfirmation();
-                toast.success(response.data.message);
-            } else {
-                toast.error(response.data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error deleting board:', error);
+const handleDelete = async () => {
+    try {
+        const response = await axios.post('/api/users/removeUserFromBoard', {
+            board_id: boardToDelete.value,
+            user_id: page.props.auth.user.id
         });
-}
+
+        if (response.data.message) {
+            boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
+            toggleDeleteConfirmation();
+            toast.success('You have been removed from the board');
+        } else {
+            throw new Error(response.data.error || 'Failed to leave board');
+        }
+    } catch (error) {
+        console.error('Error leaving board:', error);
+        toast.error(error.message || 'Failed to leave board');
+    }
+};
 </script>
 
 <template>
@@ -112,9 +116,9 @@ const handleDelete = () => {
     <ConfirmModal
         v-if="showDeleteConfirmation"
         :show="showDeleteConfirmation"
-        title="Delete Board"
-        message="Are you sure you want to delete this board? This action cannot be undone."
-        confirm-text="Delete"
+        title="Leave Board"
+        message="Are you sure you want to leave this board? You will no longer have access to it."
+        confirm-text="Leave"
         cancel-text="Cancel"
         @cancel="toggleDeleteConfirmation()"
         @confirm="handleDelete"
