@@ -9,6 +9,7 @@ const toast = useToast();
 const props = defineProps({
     columns: Array,
     board: Object,
+    categories: Array,
     showDescription: {
         type: Boolean,
         default: false
@@ -205,6 +206,9 @@ const getInitials = (name) => {
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Assignee
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -230,11 +234,11 @@ const getInitials = (name) => {
                                         v-if="card.category_id"
                                         class="w-3 h-3 rounded-full mr-2"
                                         :style="{ 
-                                            backgroundColor: categories.find(c => c.id === card.category_id)?.color,
+                                            backgroundColor: props.categories.find(c => c.id === card.category_id)?.color,
                                             border: '1px solid #d1d5db'
                                         }"
                                     ></div>
-                                    {{ categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
+                                    {{ props.categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
                                 </div>
                             </td>
                             
