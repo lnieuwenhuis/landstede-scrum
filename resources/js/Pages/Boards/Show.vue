@@ -25,6 +25,7 @@ const board = ref(props.board);
 const columns = ref(props.columns);
 const users = ref(props.users);
 const activeTab = ref('Kanban Board');
+const categories = ref(props.categories);
 const isAdmin = props.currentUser.role === 'admin';
 const currentUser = ref(props.currentUser);
 const currentSprint = ref(props.currentSprint);
@@ -268,6 +269,7 @@ const selectTab = (tab) => {
                     :user="currentUser"
                     :show-description="showDescription"
                     :current-sprint="currentSprint"
+                    :categories="categories"
                     @columns-updated="columns = $event"
                     @burndown-update="updateBurndownChart"
                     @toggle-description="showDescription = !showDescription"
@@ -295,6 +297,7 @@ const selectTab = (tab) => {
                     :columns="columns"
                     :board="board" 
                     :show-description="showDescription"
+                    :categories="categories"
                     @toggle-description="showDescription = !showDescription"
                 />
             </div>

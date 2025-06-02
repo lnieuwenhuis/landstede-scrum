@@ -127,10 +127,10 @@ export async function tryMoveCard({ cardId, sourceColumnId, targetColumnId, colu
     }
 }
 
-export async function tryAddCard({ columnId, title, description, points, columns }) {
+export async function tryAddCard({ columnId, title, description, points, categoryId, columns }) {
     try {
         const response = await axios.post(`/api/addCardToColumn/${columnId}`, {
-            title, description, points
+            title, description, points, categoryId
         });
 
         if (response.data.card) {
@@ -151,12 +151,13 @@ export async function tryAddCard({ columnId, title, description, points, columns
     }
 }
 
-export async function tryUpdateCard({ cardId, title, description, points, columns }) {
+export async function tryUpdateCard({ cardId, title, description, points, categoryId, columns }) {
     try {
         const response = await axios.post(`/api/updateCard/${cardId}`, {
             title,
             description,
-            points
+            points,
+            categoryId
         });
 
         if (!response.data.card) {

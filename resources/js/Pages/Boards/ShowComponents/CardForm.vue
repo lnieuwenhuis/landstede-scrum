@@ -26,9 +26,17 @@ const props = defineProps({
         type: Number,
         default: 0
     },
+    initialCategoryId: {
+        type: Object,
+        default: null
+    },
     isEditing: {
         type: Boolean,
         default: false
+    },
+    categories: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -38,6 +46,7 @@ const emit = defineEmits(['save', 'cancel']);
 const title = ref(props.card ? props.card.title : props.initialTitle);
 const description = ref(props.card ? props.card.description : props.initialDescription);
 const points = ref(props.card ? props.card.points : props.initialPoints);
+const category = ref(props.card ? props.categories.find(cat => cat.id === props.card.category_id) : props.categories.find(cat => cat.id === props.initialCategoryId));
 
 // Use either card or isEditing prop
 const isEditingCard = ref(!!props.card || props.isEditing);
@@ -51,7 +60,8 @@ const handleSubmit = () => {
         columnId: props.columnId,
         title: title.value,
         description: description.value,
-        points: points.value
+        points: points.value,
+        categoryId: category.value ? category.value.id : null
     };
     
     if (isEditingCard.value && props.card) {
@@ -110,6 +120,18 @@ const handleCancel = () => {
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Story points"
                 />
+            </div>
+
+            <div class="mb-4">
+                <label for="card-category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select
+                    id="card-category"
+                    v-model="category"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                    <option :value="null">Choose a category</option>
+                    <option v-for="cat in categories" :key="cat.id" :value="cat">{{ cat.name }}</option>
+                </select>
             </div>
             
             <div class="flex justify-end space-x-2">

@@ -28,6 +28,7 @@ const props = defineProps({
         default: false
     },
     currentSprint: Object,
+    categories: Array,
 });
 
 const userDropdownOpen = ref(null);
@@ -333,7 +334,7 @@ const handleMoveCard = async ({ cardId, sourceColumnId, targetColumnId }) => {
 };
 
 // API handlers
-const handleUpdateCard = async ({ cardId, title, description, points }) => {
+const handleUpdateCard = async ({ cardId, title, description, points, categoryId }) => {
     loading.value = true;
     try {
         const updatedColumns = await tryUpdateCard({ 
@@ -341,6 +342,7 @@ const handleUpdateCard = async ({ cardId, title, description, points }) => {
             title, 
             description, 
             points, 
+            categoryId,
             columns: props.columns 
         });
         
@@ -707,6 +709,7 @@ const handleTouchDrop = async (targetColumnId) => {
                         :card-open="cardOpen"
                         :columns="props.columns"
                         :cardEditing="cardEditing"
+                        :categories="props.categories"
                         @add-card-toggle="toggleAddCard"
                         @card-editing-changed="toggleEditCard"
                         @delete-card="handleDeleteCard"
@@ -725,16 +728,20 @@ const handleTouchDrop = async (targetColumnId) => {
                             <CardForm 
                                 :loading="loading"
                                 :column-id="card.column_id"
+                                :card="card"
                                 :initial-title="cardTitle"
                                 :initial-description="cardDesc"
                                 :initial-points="cardPoints"
+                                :initial-category-id="card.category_id"
                                 :is-editing="true"
+                                :categories="props.categories"
                                 @save="(data) => handleUpdateCard({
                                     cardId: card.id,
                                     columnId: card.column_id,
                                     title: data.title,
                                     description: data.description,
-                                    points: data.points
+                                    points: data.points,
+                                    categoryId: data.categoryId,
                                 })"
                                 @cancel="resetForm"
                             />
@@ -788,7 +795,8 @@ const handleTouchDrop = async (targetColumnId) => {
                                     columnId: card.column_id,
                                     title: data.title,
                                     description: data.description,
-                                    points: data.points
+                                    points: data.points,
+                                    categoryId: data.categoryId,
                                 })"
                                 @cancel="resetForm"
                             />

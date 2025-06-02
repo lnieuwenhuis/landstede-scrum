@@ -20,6 +20,7 @@ class CardController extends Controller
         $title = $request->input('title');
         $description = $request->input('description');
         $points = $request->input('points');
+        $categoryId = $request->input('categoryId');
 
         if (!$column) {
             return response()->json(['error' => 'Column not found']);
@@ -32,6 +33,7 @@ class CardController extends Controller
             'title' => $title,
             'description' => $description,
             'points' => $points,
+            'category_id' => $categoryId,
             'user_id' => $user->id,
             'column_id' => $column->id,
         ]);
@@ -59,6 +61,7 @@ class CardController extends Controller
         $card->title = $request->input('title');
         $card->description = $request->input('description');
         $card->points = $request->input('points');
+        $card->category_id = $request->input('categoryId');
         $card->save();
 
         // Return fresh instance from database

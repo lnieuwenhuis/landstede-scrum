@@ -29,7 +29,8 @@ const props = defineProps({
     isLocked: Boolean,
     isDragging: Boolean,
     cardEditing: [Number, null], 
-    cardOpen: Object, 
+    cardOpen: Object,
+    categories: Array, 
 });
 
 const emit = defineEmits([
@@ -398,7 +399,8 @@ const handleTouchEnd = (event) => {
                                 @touchmove="handleTouchMove"
                                 @touchend="handleTouchEnd"
                                 @touchcancel="handleTouchEnd"
-                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200 card-element"
+                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200 card-element border-l-4"
+                                :style="{ borderLeftColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6' }"
                                 :class="{ 'opacity-75': cardEditing === card.id }"
                             >
                         <!-- Card Edit Form Slot -->
@@ -407,8 +409,10 @@ const handleTouchEnd = (event) => {
                         </div>
                         <!-- Card Display -->
                         <div v-else>
-                            <div class="flex justify-between items-start mb-1"> <!-- Added margin-bottom -->
-                                <span class="font-medium text-gray-800 break-words">{{ card.title }}</span> <!-- Added break-words -->
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="flex items-center">
+                                    <span class="font-medium text-gray-800 break-words">{{ card.title }}</span>
+                                </div>
                                 <!-- Card Actions (Edit/Delete) -->
                                 <div v-if="!isLocked" class="flex space-x-1 flex-shrink-0 ml-2"> <!-- Added margin-left -->
                                     <!-- Edit Card Button -->

@@ -224,6 +224,20 @@ const getInitials = (name) => {
                     <tbody class="bg-white divide-y divide-gray-200">
                         <!-- Active Cards -->
                         <tr v-for="card in activeCards" :key="card.id" class="hover:bg-gray-50">
+                            <td class="px-4 py-2 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div 
+                                        v-if="card.category_id"
+                                        class="w-3 h-3 rounded-full mr-2"
+                                        :style="{ 
+                                            backgroundColor: categories.find(c => c.id === card.category_id)?.color,
+                                            border: '1px solid #d1d5db'
+                                        }"
+                                    ></div>
+                                    {{ categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
+                                </div>
+                            </td>
+                            
                             <!-- Assignee Column -->
                             <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">

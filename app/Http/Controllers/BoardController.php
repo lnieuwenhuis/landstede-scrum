@@ -9,6 +9,7 @@ use App\Models\Board;
 use App\Models\Column;
 use App\Models\Card;
 use App\Models\User;
+use App\Models\Category;
 
 class BoardController extends Controller
 {
@@ -50,13 +51,25 @@ class BoardController extends Controller
                     return [
                         'id' => $column->id,
                         'title' => $column->title,
-                        'cards' => $column->cards,
+                        'cards' => $column->cards->map(function ($card) {
+                            return [
+                                'id' => $card->id,
+                                'title' => $card->title,
+                                'description' => $card->description,
+                                'points' => $card->points,
+                                'status' => $card->status,
+                                'user_id' => $card->user_id,
+                                'status_updated_at' => $card->status_updated_at,
+                                'category_id' => $card->category_id,
+                            ];
+                        }),
                         'is_done_column' => $column->is_done_column,
                         'status' => $column->status,
                         'user_created' => $column->user_created,
                         'sprint_checked' => $column->sprint_checked,
                     ];
                 }),
+                'categories' => Category::all(),
                 'users' => $board->users,
                 'freeDates' => json_encode($board->nonWorkingDays()),
                 'weekdays' => json_encode($board->weekdays),
