@@ -180,6 +180,16 @@ const handleBoardUpdated = (updatedBoardData) => {
     board.value = { ...board.value, ...updatedBoardData }; // Merge updates into the local board ref
 };
 
+const dropdownRef = ref(null);
+const dropdownOpen = ref(false);
+
+const selectTab = (tab) => {
+    activeTab.value = tab;
+    if (dropdownRef.value) {
+        dropdownRef.value.open = false;
+    }
+};
+
 </script>
 
 <template>
@@ -190,8 +200,30 @@ const handleBoardUpdated = (updatedBoardData) => {
             <!-- Tab Navigation -->
                 <div class="border-b border-gray-200 mb-4">
                     <nav class="flex flex-wrap justify-between" aria-label="Tabs">
+                        <!-- Mobile dropdown menu -->
+                        <div class="mobile-dropdown w-full sm:hidden border-b border-gray-200">
+                            <details ref="dropdownRef" class="dropdown w-full relative">
+                                <summary class="py-2 px-1 font-medium text-sm flex items-center justify-between w-full cursor-pointer focus:outline-none transition-all duration-200 border-b-2" :class="dropdownOpen ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-700'">
+                                    {{ activeTab }}
+                                    <svg class="h-5 w-5 ml-2 transition-transform duration-200" :class="{'rotate-180': dropdownOpen}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </summary>
+                                <div class="dropdown-menu absolute z-10 mt-1 w-full bg-white shadow-lg py-1 text-base overflow-auto max-h-60 transition-all duration-200">
+                                    <button
+                                        v-for="tab in ['Kanban Board', 'list', 'burndown', 'sprints', 'users', 'settings']" 
+                                        :key="tab"
+                                        @click="selectTab(tab)"
+                                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150"
+                                        :class="activeTab === tab ? 'text-blue-600' : 'text-gray-700'"
+                                    >
+                                        {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                                    </button>
+                                </div>
+                            </details>
+                        </div>
                         <!-- Main tabs on the left -->
-                        <div class="flex space-x-2 sm:space-x-4 md:space-x-6">
+                        <div class="hidden sm:flex space-x-2 sm:space-x-4 md:space-x-6">
                             <button
                                 v-for="tab in ['Kanban Board', 'list', 'burndown', 'sprints']" 
                                 :key="tab"
@@ -208,7 +240,7 @@ const handleBoardUpdated = (updatedBoardData) => {
                         </div>
                         
                         <!-- User and Settings tabs on the right -->
-                        <div class="flex space-x-2 sm:space-x-4 md:space-x-6">
+                        <div class="hidden sm:flex space-x-2 sm:space-x-4 md:space-x-6">
                             <button
                                 v-for="tab in ['users', 'settings']" 
                                 :key="tab"
