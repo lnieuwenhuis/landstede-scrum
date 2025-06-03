@@ -399,10 +399,14 @@ const handleTouchEnd = (event) => {
                                 @touchmove="handleTouchMove"
                                 @touchend="handleTouchEnd"
                                 @touchcancel="handleTouchEnd"
-                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing border border-gray-200 card-element border-l-4"
-                                :style="{ borderLeftColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6' }"
+                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing relative card-element"
                                 :class="{ 'opacity-75': cardEditing === card.id }"
                             >
+                                <div 
+                                    class="absolute bottom-0 left-0 right-0 h-1 rounded-b"
+                                    :style="{ backgroundColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6' }"
+                                    :title="props.categories.find(c => c.id === card.category_id)?.name || 'No category'"
+                                ></div>
                         <!-- Card Edit Form Slot -->
                         <div v-if="cardEditing === card.id">
                             <slot name="card-edit-form" :card="card"></slot>
