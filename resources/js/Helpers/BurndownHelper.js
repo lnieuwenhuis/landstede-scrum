@@ -7,10 +7,9 @@ export const generateDateLabels = (startDate, endDate) => {
     const end = new Date(endDate);
     
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        labels.push(date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
-        }));
+        const dayStr = date.toLocaleDateString('nl-NL', { weekday: 'short' });
+        const dateStr = date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
+        labels.push(`${dayStr} ${dateStr}`);
     }
     return labels;
 };
