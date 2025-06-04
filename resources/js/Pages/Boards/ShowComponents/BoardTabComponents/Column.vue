@@ -399,14 +399,19 @@ const handleTouchEnd = (event) => {
                                 @touchmove="handleTouchMove"
                                 @touchend="handleTouchEnd"
                                 @touchcancel="handleTouchEnd"
-                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing relative card-element"
+                                class="bg-white p-3 rounded shadow-sm cursor-grab active:cursor-grabbing relative card-element pb-6"
                                 :class="{ 'opacity-75': cardEditing === card.id }"
                             >
                                 <div 
-                                    class="absolute bottom-0 left-0 right-0 h-1 rounded-b"
+                                    class="absolute bottom-0 left-0 right-0 h-5 rounded-b flex items-center justify-between"
                                     :style="{ backgroundColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6' }"
-                                    :title="props.categories.find(c => c.id === card.category_id)?.name || 'No category'"
-                                ></div>
+                                >
+                                    <span class="text-xs text-white px-2 py-1">Points: {{ card.points || 0 }}</span>
+
+                                    <h2 class="text-xs text-white px-2 py-1 leading-none">
+                                        {{ props.categories.find(c => c.id === card.category_id)?.name || 'No category' }}
+                                    </h2>
+                                </div>
                         <!-- Card Edit Form Slot -->
                         <div v-if="cardEditing === card.id">
                             <slot name="card-edit-form" :card="card"></slot>
@@ -420,6 +425,24 @@ const handleTouchEnd = (event) => {
                                 <!-- Card Actions (Edit/Delete) -->
                                 <div v-if="!isLocked" class="flex space-x-1 flex-shrink-0 ml-2"> <!-- Added margin-left -->
                                     <!-- Edit Card Button -->
+                                    <div class="relative user-assign-trigger-class"> <!-- Added trigger class -->
+                                        <button 
+                                            @click.stop="toggleUserDropdown(card.id, $event)" 
+                                            class="w-7 h-6 rounded-full flex items-center justify-center font-medium text-xs border-2 border-gray-300"
+                                            :style="{ 
+                                                backgroundColor: card.user_id && isValidHexColor(users.find(u => u.id === card.user_id)?.color) 
+                                                    ? users.find(u => u.id === card.user_id)?.color 
+                                                    : (card.user_id ? '#3b82f6' : '#9ca3af'),
+                                                color: card.user_id && isLightColor(users.find(u => u.id === card.user_id)?.color) 
+                                                    ? '#000000' 
+                                                    : '#ffffff'
+                                            }"
+                                            :title="users.find(u => u.id === card.user_id)?.name || 'Assign user'"
+                                        >
+                                            {{ card.user_id ? getInitials(users.find(u => u.id === card.user_id)?.name || '?') : '+' }}
+                                        </button>
+                                    </div>
+
                                     <button @click="toggleEditCard(card)" class="p-0.5 text-xs text-gray-400 hover:text-blue-500 rounded hover:bg-gray-100" title="Edit card">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -433,28 +456,7 @@ const handleTouchEnd = (event) => {
                                     </button>
                                 </div>
                             </div>
-                            <p v-if="card.description" class="text-sm text-gray-600 mt-1 break-words">{{ card.description }}</p> <!-- Added break-words -->
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="text-xs text-gray-500">Points: {{ card.points || 0 }}</span>
-                                <!-- User Avatar/Assignment -->
-                                <div class="relative user-assign-trigger-class"> <!-- Added trigger class -->
-                                    <button 
-                                        @click.stop="toggleUserDropdown(card.id, $event)" 
-                                        class="w-7 h-6 rounded-full flex items-center justify-center font-medium text-xs border-2 border-gray-300"
-                                        :style="{ 
-                                            backgroundColor: card.user_id && isValidHexColor(users.find(u => u.id === card.user_id)?.color) 
-                                                ? users.find(u => u.id === card.user_id)?.color 
-                                                : (card.user_id ? '#3b82f6' : '#9ca3af'),
-                                            color: card.user_id && isLightColor(users.find(u => u.id === card.user_id)?.color) 
-                                                ? '#000000' 
-                                                : '#ffffff'
-                                        }"
-                                        :title="users.find(u => u.id === card.user_id)?.name || 'Assign user'"
-                                    >
-                                        {{ card.user_id ? getInitials(users.find(u => u.id === card.user_id)?.name || '?') : '+' }}
-                                    </button>
-                                </div>
-                            </div>
+                            <p v-if="card.description" class="text-sm text-gray-600 my-1 break-words">{{ card.description }}</p> <!-- Added break-words -->
                         </div>
                     </div>
                 </div>
