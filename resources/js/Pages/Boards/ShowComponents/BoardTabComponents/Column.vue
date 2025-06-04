@@ -404,11 +404,23 @@ const handleTouchEnd = (event) => {
                             >
                                 <div 
                                     class="absolute bottom-0 left-0 right-0 h-5 rounded-b flex items-center justify-between"
-                                    :style="{ backgroundColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6' }"
+                                    :style="{
+                                        backgroundColor: props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6'
+                                    }"
                                 >
-                                    <span class="text-xs text-white px-2 py-1">Points: {{ card.points || 0 }}</span>
+                                    <span 
+                                        class="text-xs px-2 py-1"
+                                        :style="{
+                                            color: isLightColor(props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6') ? '#000000' : '#ffffff'
+                                        }"
+                                    >Points: {{ card.points || 0 }}</span>
 
-                                    <h2 class="text-xs text-white px-2 py-1 leading-none">
+                                    <h2 
+                                        class="text-xs px-2 py-1 leading-none"
+                                        :style="{
+                                            color: isLightColor(props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6') ? '#000000' : '#ffffff'
+                                        }"
+                                    >
                                         {{ props.categories.find(c => c.id === card.category_id)?.name || 'No category' }}
                                     </h2>
                                 </div>
