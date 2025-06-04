@@ -649,7 +649,14 @@ const handleTouchDrop = async (targetColumnId) => {
                             class="flex items-center justify-between w-full px-2 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-w-[200px]"
                         >
                             <div class="flex items-center space-x-2 flex-1 min-w-0">
-                                <div v-if="selectedUserId" class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                                <div 
+                                    v-if="selectedUserId" 
+                                    class="w-6 h-6 rounded-full flex items-center justify-center font-medium flex-shrink-0"
+                                    :style="{ 
+                                        backgroundColor: isValidHexColor(users.find(u => u.id === selectedUserId)?.color) ? users.find(u => u.id === selectedUserId)?.color : '#3b82f6',
+                                        color: isLightColor(users.find(u => u.id === selectedUserId)?.color) ? '#000000' : '#ffffff'
+                                    }"
+                                >
                                     {{ getInitials(users.find(u => u.id === selectedUserId)?.name || '') }}
                                 </div>
                                 <span class="truncate">{{ selectedUserId ? users.find(u => u.id === selectedUserId)?.name : 'All Users' }}</span>
@@ -670,6 +677,10 @@ const handleTouchDrop = async (targetColumnId) => {
                                     @click="selectedUserId = null; showUserFilter = false"
                                     class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
                                     :class="{ 'bg-blue-50': !selectedUserId }"
+                                    :style="{ 
+                                        backgroundColor: isValidHexColor(users.find(u => u.id === selectedUserId)?.color) ? users.find(u => u.id === selectedUserId)?.color : '#3b82f6',
+                                        color: isLightColor(users.find(u => u.id === selectedUserId)?.color) ? '#000000' : '#ffffff'
+                                    }"
                                 >
                                     <span class="w-6"></span>
                                     <span class="truncate">All Users</span>
@@ -681,7 +692,13 @@ const handleTouchDrop = async (targetColumnId) => {
                                     class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
                                     :class="{ 'bg-blue-50': selectedUserId === user.id }"
                                 >
-                                    <div class="w-6 h-5 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                                    <div 
+                                        class="w-6 h-5 rounded-full flex items-center justify-center font-medium flex-shrink-0"
+                                            :style="{ 
+                                            backgroundColor: isValidHexColor(user.color) ? user.color : '#3b82f6',
+                                            color: isLightColor(user.color) ? '#000000' : '#ffffff'
+                                        }"
+                                    >
                                         {{ getInitials(user.name) }}
                                     </div>
                                     <span class="truncate">{{ user.name }}</span>
