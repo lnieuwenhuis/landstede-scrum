@@ -9,7 +9,10 @@ export const generateDateLabels = (startDate, endDate) => {
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
         const dayStr = date.toLocaleDateString('nl-NL', { weekday: 'short' });
         const dateStr = date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
-        labels.push(`${dayStr} ${dateStr}`);
+
+        const parts = dateStr.split(' ');
+        const formattedDateStr = `${parts[0]} ${parts[1].charAt(0).toUpperCase() + parts[1].slice(1)}`;
+        labels.push(`${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)} ${formattedDateStr}`);
     }
     return labels;
 };
