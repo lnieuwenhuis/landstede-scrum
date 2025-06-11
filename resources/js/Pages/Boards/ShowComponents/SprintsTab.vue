@@ -74,58 +74,6 @@ const editedSprintData = ref({
     status: ''
 });
 
-const handleCreateSprint = async () => {
-    if (sprints.value.length >= 10) {
-        toast.error('Maximum number of sprints reached');
-        return;
-    }
-    
-    loading.value = true;
-    try {
-        // Calculate the next sprint number based on existing sprints
-        const nextSprintNumber = sprints.value.length + 1;
-        
-        const response = await axios.post('/api/createSprint', {
-            board_id: props.board.id,
-            title: `Sprint ${nextSprintNumber}`,
-        });
-        
-        if (response.data.sprints) {
-            sprints.value = response.data.sprints;
-            toast.success('Sprint created successfully');
-        }
-    } catch (error) {
-        console.error('Error creating sprint:', error);
-        toast.error(error.message || 'Failed to create sprint');
-    } finally {
-        loading.value = false;
-    }
-};
-
-const handleDeleteSprint = async () => {
-    try {
-        const response = await axios.post('/api/deleteSprint', {
-            board_id: props.board.id,
-            sprint_id: sprintToDelete.value
-        });
-
-        if (response.data.message) {
-            sprints.value = sprints.value.filter(sprint => sprint.id !== sprintToDelete.value);
-            
-            renumberSprints();
-            
-            emit('sprint-deleted', sprintToDelete.value);
-            toast.success('Sprint deleted successfully');
-            toggleDeleteSprint();
-        } else {
-            throw new Error(response.data.error || 'Failed to delete sprint');
-        }
-    } catch (error) {
-        console.error('Error deleting sprint:', error);
-        toast.error(error.message || 'Failed to delete sprint');
-    }
-};
-
 const renumberSprints = async () => {
     const sortedSprints = [...sprints.value].sort((a, b) => 
         new Date(a.start_date) - new Date(b.start_date)
@@ -252,17 +200,6 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
         <div class="bg-white p-4 rounded-lg shadow w-full">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-2xl font-semibold text-gray-800 m-2">Sprints</h2>
-                    <button 
-                        @click="handleCreateSprint"
-                        class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 h-10 w-[135px]"
-                        :disabled="loading"
-                        :class="{ 'opacity-50 cursor-not-allowed': loading }"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        {{ loading ? 'Creating...' : 'New Sprint' }}
-                    </button>
                 </div>                        
                 <div class="space-y-4">
                     <div 
@@ -320,17 +257,7 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                                     @click="openSprintEditModal(sprint)"
                                     class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                    </svg>
-                                </button>
-                                <button 
-                                    @click="toggleDeleteSprint(sprint.id)"
-                                    class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
+                                    <h1>Edit</h1>
                                 </button>
                             </div>
                         </div>
@@ -339,18 +266,7 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                         No sprints created yet
                     </div>
                 </div>
-        </div>
-
-        <ConfirmModal
-            v-if="showDeleteSprintConfirmation"
-            :show="showDeleteSprintConfirmation"
-            title="Delete Sprint"
-            message="Are you sure you want to delete this sprint? This action cannot be undone."
-            confirm-text="Delete"
-            cancel-text="Cancel"
-            @cancel="toggleDeleteSprint()"
-            @confirm="handleDeleteSprint"
-        />
+            </div>
 
         <!-- Sprint Edit Modal -->
         <div v-if="showSprintEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -374,9 +290,10 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                         <label for="sprint-start-date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                         <input 
                             id="sprint-start-date" 
+                            disabled
                             v-model="editedSprintData.start_date" 
                             type="date" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-200"
                         />
                     </div>
                     
@@ -385,9 +302,10 @@ const emit = defineEmits(['sprint-deleted', 'sprint-updated']);
                         <label for="sprint-end-date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                         <input 
                             id="sprint-end-date" 
+                            disabled
                             v-model="editedSprintData.end_date" 
                             type="date" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-200"
                         />
                     </div>
                     

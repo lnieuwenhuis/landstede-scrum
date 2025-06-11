@@ -47,13 +47,7 @@ const totalDays = computed(() => {
     return Math.ceil((dateRange.value.end - dateRange.value.start) / (1000 * 60 * 60 * 24)) + 1;
 });
 
-const sprintCount = ref(4);
-const sprintLength = computed(() => {
-    if (totalDays.value === 0) return 0;
-    return Math.ceil(totalDays.value / sprintCount.value);
-});
-
-// Generate sprints based on date range and sprint count
+// Generate sprints based on date range with 14-day standard duration
 const generateSprints = () => {
     if (!dateRange.value) {
         toast.warning('Please select start and end dates first');
@@ -62,29 +56,45 @@ const generateSprints = () => {
 
     const sprints = [];
     const startDate = new Date(board.value.startDate);
-    const sprintDuration = sprintLength.value;
-
-    for (let i = 0; i < sprintCount.value; i++) {
-        const sprintStart = new Date(startDate);
-        sprintStart.setDate(sprintStart.getDate() + (i * sprintDuration));
+    const endDate = new Date(board.value.endDate);
+    const standardSprintDuration = 14;
+    
+    let currentSprintStart = new Date(startDate);
+    let sprintNumber = 1;
+    
+    while (currentSprintStart <= endDate) {
+        const sprintEnd = new Date(currentSprintStart);
+        sprintEnd.setDate(sprintEnd.getDate() + standardSprintDuration - 1);
         
-        const sprintEnd = new Date(sprintStart);
-        sprintEnd.setDate(sprintEnd.getDate() + sprintDuration - 1);
+        // Calculate remaining days after this sprint
+        const remainingDays = Math.ceil((endDate - sprintEnd) / (1000 * 60 * 60 * 24));
         
-        // Ensure the last sprint doesn't exceed end date
-        if (i === sprintCount.value - 1) {
-            const endDate = new Date(board.value.endDate);
-            if (sprintEnd > endDate) {
-                sprintEnd.setTime(endDate.getTime());
-            }
+        // If this sprint exceeds the end date, adjust to end date
+        if (sprintEnd > endDate) {
+            sprintEnd.setTime(endDate.getTime());
+        }
+        // If there are less than 3 days remaining after this sprint,
+        // extend this sprint to include those remaining days
+        else if (remainingDays > 0 && remainingDays < 3) {
+            sprintEnd.setTime(endDate.getTime());
         }
         
         sprints.push({
-            name: `Sprint ${i + 1}`,
-            start_date: formatDate(sprintStart),
+            name: `Sprint ${sprintNumber}`,
+            start_date: formatDate(currentSprintStart),
             end_date: formatDate(sprintEnd),
             status: 'inactive'
         });
+        
+        // Move to next sprint start date
+        currentSprintStart = new Date(sprintEnd);
+        currentSprintStart.setDate(currentSprintStart.getDate() + 1);
+        sprintNumber++;
+        
+        // Break if we've reached or exceeded the end date
+        if (currentSprintStart > endDate) {
+            break;
+        }
     }
     
     board.value.sprints = sprints;
@@ -280,7 +290,7 @@ const submitForm = async () => {
                             <!-- Sprints -->
                             <div class="mb-6">
                                 <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900">Sprints (Optional)</h3>
+                                    <h3 class="text-lg font-semibold text-gray-900">Sprints</h3>
                                     <button 
                                         type="button"
                                         @click="generateSprints"
@@ -296,22 +306,6 @@ const submitForm = async () => {
                                 </div>
                                 
                                 <div v-if="showSprintEditor" class="mt-4">
-                                    <div class="mb-4">
-                                        <label for="sprint-count" class="block text-sm font-medium text-gray-700">Number of Sprints</label>
-                                        <div class="flex items-center mt-1">
-                                            <input 
-                                                type="range" 
-                                                id="sprint-count" 
-                                                v-model.number="sprintCount" 
-                                                min="1" 
-                                                max="10"
-                                                class="w-full mr-4"
-                                                @change="generateSprints"
-                                            >
-                                            <span class="text-gray-700">{{ sprintCount }}</span>
-                                        </div>
-                                    </div>
-                                    
                                     <div class="space-y-3">
                                         <div v-for="(sprint, index) in board.sprints" :key="index" 
                                             class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
