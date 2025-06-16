@@ -61,6 +61,8 @@ class BoardController extends Controller
                                 'user_id' => $card->user_id,
                                 'status_updated_at' => $card->status_updated_at,
                                 'category_id' => $card->category_id,
+                                'created_at' => $card->created_at,
+                                'updated_at' => $card->updated_at,
                             ];
                         }),
                         'is_done_column' => $column->is_done_column,

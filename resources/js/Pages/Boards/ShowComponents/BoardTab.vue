@@ -142,8 +142,18 @@ onMounted(() => {
         }
         
         // Close user filter dropdown
-        if (showUserFilter.value && !e.target.closest('.relative')) {
+        if (showUserFilter.value && !e.target.closest('.user-filter-dropdown')) {
             showUserFilter.value = false;
+        }
+        
+        // Close category filter dropdown
+        if (showCategoryFilter.value && !e.target.closest('.category-filter-dropdown')) {
+            showCategoryFilter.value = false;
+        }
+        
+        // Close sort options dropdown
+        if (showSortOptions.value && !e.target.closest('.sort-options-dropdown')) {
+            showSortOptions.value = false;
         }
     });
 });
@@ -421,14 +431,27 @@ const regularColumns = computed(() => {
     const filteredColumns = props.columns.filter(column => !column.is_done_column);
     
     return filteredColumns.map(column => {
-        // Apply user filter *before* grouping if a user is selected
-        const cardsToGroup = selectedUserId.value
-            ? column.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null) // Show selected user + unassigned
+        // Apply user filter first
+        let cardsToProcess = selectedUserId.value
+            ? column.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null)
             : column.cards;
             
-        const swimlanes = createSwimlanes(cardsToGroup, props.users);
+        // Apply category filter
+        if (selectedCategoryId.value !== null) {
+            cardsToProcess = cardsToProcess.filter(card => {
+                if (selectedCategoryId.value === 'uncategorized') {
+                    return !card.category_id;
+                }
+                return card.category_id === selectedCategoryId.value;
+            });
+        }
         
-        // If filtering, only keep relevant swimlanes
+        // Sort cards
+        const sortedCards = sortCards(cardsToProcess);
+        
+        const swimlanes = createSwimlanes(sortedCards, props.users);
+        
+        // If filtering by user, only keep relevant swimlanes
         const finalSwimlanes = selectedUserId.value
             ? swimlanes.filter(lane => lane.userId === selectedUserId.value || lane.userId === null)
             : swimlanes;
@@ -444,14 +467,27 @@ const doneColumn = computed(() => {
     const found = props.columns.find(column => column.is_done_column);
     if (!found) return null;
 
-    // Apply user filter *before* grouping if a user is selected
-    const cardsToGroup = selectedUserId.value
-        ? found.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null) // Show selected user + unassigned
+    // Apply user filter first
+    let cardsToProcess = selectedUserId.value
+        ? found.cards.filter(card => card.user_id === selectedUserId.value || card.user_id === null)
         : found.cards;
+        
+    // Apply category filter
+    if (selectedCategoryId.value !== null) {
+        cardsToProcess = cardsToProcess.filter(card => {
+            if (selectedCategoryId.value === 'uncategorized') {
+                return !card.category_id;
+            }
+            return card.category_id === selectedCategoryId.value;
+        });
+    }
+    
+    // Sort cards
+    const sortedCards = sortCards(cardsToProcess);
 
-    const swimlanes = createSwimlanes(cardsToGroup, props.users);
+    const swimlanes = createSwimlanes(sortedCards, props.users);
 
-    // If filtering, only keep relevant swimlanes
+    // If filtering by user, only keep relevant swimlanes
     const finalSwimlanes = selectedUserId.value
         ? swimlanes.filter(lane => lane.userId === selectedUserId.value || lane.userId === null)
         : swimlanes;
@@ -611,6 +647,109 @@ const handleTouchDrop = async (targetColumnId) => {
         touchDragColumnId.value = null;
     }
 };
+
+// Add new reactive state after existing refs
+const selectedCategoryId = ref(null);
+const sortBy = ref('date-old'); // 'date-old', 'date-new', 'category', 'points-high', 'points-low'
+const showCategoryFilter = ref(false);
+const categoryFilterPosition = ref({ right: 'auto' });
+const showSortOptions = ref(false);
+const sortOptionsPosition = ref({ right: 'auto' });
+
+// Add category filter toggle function after toggleUserFilter
+const toggleCategoryFilter = (event) => {
+    showCategoryFilter.value = !showCategoryFilter.value;
+    
+    if (showCategoryFilter.value) {
+        nextTick(() => {
+            const buttonElement = event.target.closest('button');
+            if (buttonElement) {
+                const rect = buttonElement.getBoundingClientRect();
+                const dropdownWidth = 200;
+                const viewportWidth = window.innerWidth;
+                
+                if (rect.right + dropdownWidth > viewportWidth) {
+                    categoryFilterPosition.value = { right: '0px', left: 'auto' };
+                } else {
+                    categoryFilterPosition.value = { right: 'auto', left: '0px' };
+                }
+            }
+        });
+    }
+    
+    if (userDropdownOpen.value) {
+        userDropdownOpen.value = null;
+    }
+    if (showUserFilter.value) {
+        showUserFilter.value = false;
+    }
+};
+
+// Add sort options toggle function
+const toggleSortOptions = (event) => {
+    showSortOptions.value = !showSortOptions.value;
+    
+    if (showSortOptions.value) {
+        nextTick(() => {
+            const buttonElement = event.target.closest('button');
+            if (buttonElement) {
+                const rect = buttonElement.getBoundingClientRect();
+                const dropdownWidth = 200;
+                const viewportWidth = window.innerWidth;
+                
+                if (rect.right + dropdownWidth > viewportWidth) {
+                    sortOptionsPosition.value = { right: '0px', left: 'auto' };
+                } else {
+                    sortOptionsPosition.value = { right: 'auto', left: '0px' };
+                }
+            }
+        });
+    }
+    
+    if (userDropdownOpen.value) {
+        userDropdownOpen.value = null;
+    }
+    if (showUserFilter.value) {
+        showUserFilter.value = false;
+    }
+    if (showCategoryFilter.value) {
+        showCategoryFilter.value = false;
+    }
+};
+
+// Add sorting function
+const sortCards = (cards) => {
+    const sortedCards = [...cards];
+    
+    switch (sortBy.value) {
+        case 'category':
+            return sortedCards.sort((a, b) => {
+                const categoryA = props.categories.find(cat => cat.id === a.category_id);
+                const categoryB = props.categories.find(cat => cat.id === b.category_id);
+                const nameA = categoryA ? categoryA.name : 'Uncategorized';
+                const nameB = categoryB ? categoryB.name : 'Uncategorized';
+                return nameA.localeCompare(nameB);
+            });
+        case 'points-high':
+            return sortedCards.sort((a, b) => (b.points || 0) - (a.points || 0));
+        case 'points-low':
+            return sortedCards.sort((a, b) => (a.points || 0) - (b.points || 0));
+        case 'date-new':
+            return sortedCards.sort((a, b) => {
+                console.log(a, b)
+                const dateA = new Date(a.created_at);
+                const dateB = new Date(b.created_at);
+                return dateB.getTime() - dateA.getTime();
+            });
+        case 'date-old':
+        default:
+            return sortedCards.sort((a, b) => {
+                const dateA = new Date(a.created_at);
+                const dateB = new Date(b.created_at);
+                return dateA.getTime() - dateB.getTime();
+            });
+    }
+};
 </script>
 
 <template>
@@ -642,67 +781,211 @@ const handleTouchDrop = async (targetColumnId) => {
                     {{ board.description || 'No description available.' }}
                 </div>
                 
-                <!-- User filter row -->
-                <div class="flex items-center">
-                    <div class="relative min-w-[200px] mb-3">
+                <!-- Filter and sort controls row -->
+                <div class="flex items-center space-x-4">
+                    <!-- User Filter -->
+                    <div class="relative user-filter-dropdown mb-3">
                         <button 
-                            @click.stop="toggleUserFilter"
-                            class="flex items-center justify-between w-full px-2 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors min-w-[200px]"
+                            @click="toggleUserFilter"
+                            class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                            <div class="flex items-center space-x-2 flex-1 min-w-0">
-                                <div 
-                                    v-if="selectedUserId" 
-                                    class="w-6 h-6 rounded-full flex items-center justify-center font-medium flex-shrink-0"
-                                    :style="{ 
-                                        backgroundColor: isValidHexColor(users.find(u => u.id === selectedUserId)?.color) ? users.find(u => u.id === selectedUserId)?.color : '#3b82f6',
-                                        color: isLightColor(users.find(u => u.id === selectedUserId)?.color) ? '#000000' : '#ffffff'
-                                    }"
-                                >
-                                    {{ getInitials(users.find(u => u.id === selectedUserId)?.name || '') }}
-                                </div>
-                                <span class="truncate">{{ selectedUserId ? users.find(u => u.id === selectedUserId)?.name : 'All Users' }}</span>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 flex-shrink-0 ml-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path v-if="!showUserFilter" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                             </svg>
+                            User
+                            <span v-if="selectedUserId" class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                {{ users.find(u => u.id === selectedUserId)?.name || 'Unknown' }}
+                            </span>
                         </button>
                         
-                        <div 
-                            v-if="showUserFilter"
-                            class="absolute z-50 mt-1 min-w-[200px] max-w-[325px] bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden"
-                            :style="userFilterPosition"
-                        >
-                            <div class="py-1 max-h-60 overflow-auto">
-                                <div 
-                                    @click="selectedUserId = null; showUserFilter = false"
-                                    class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
-                                    :class="{ 'bg-blue-50': !selectedUserId }"
-                                    :style="{ 
-                                        backgroundColor: isValidHexColor(users.find(u => u.id === selectedUserId)?.color) ? users.find(u => u.id === selectedUserId)?.color : '#3b82f6',
-                                        color: isLightColor(users.find(u => u.id === selectedUserId)?.color) ? '#000000' : '#ffffff'
-                                    }"
-                                >
-                                    <span class="w-6"></span>
-                                    <span class="truncate">All Users</span>
-                                </div>
-                                <div 
-                                    v-for="user in users" 
-                                    :key="user.id" 
-                                    @click="selectedUserId = user.id; showUserFilter = false"
-                                    class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center space-x-2"
-                                    :class="{ 'bg-blue-50': selectedUserId === user.id }"
-                                >
-                                    <div 
-                                        class="w-6 h-5 rounded-full flex items-center justify-center font-medium flex-shrink-0"
-                                            :style="{ 
-                                            backgroundColor: isValidHexColor(user.color) ? user.color : '#3b82f6',
-                                            color: isLightColor(user.color) ? '#000000' : '#ffffff'
-                                        }"
+                        <!-- User Filter Dropdown -->
+                        <div v-if="showUserFilter" 
+                            class="absolute z-50 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg"
+                            :style="userFilterPosition">
+                            <div class="p-2">
+                                <div class="space-y-1">
+                                    <button 
+                                        @click="selectedUserId = null; showUserFilter = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            selectedUserId === null 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
                                     >
-                                        {{ getInitials(user.name) }}
-                                    </div>
-                                    <span class="truncate">{{ user.name }}</span>
+                                        All Users
+                                    </button>
+                                    <button 
+                                        v-for="user in users" 
+                                        :key="user.id"
+                                        @click="selectedUserId = user.id; showUserFilter = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center',
+                                            selectedUserId === user.id 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        <div 
+                                            class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0"
+                                            :style="{ 
+                                                backgroundColor: isValidHexColor(user.color) ? user.color : '#3b82f6',
+                                                color: isLightColor(user.color) ? '#000000' : '#ffffff'
+                                            }"
+                                        >
+                                            {{ getInitials(user.name) }}
+                                        </div>
+                                        {{ user.name }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="relative category-filter-dropdown mb-3">
+                        <button 
+                            @click="toggleCategoryFilter"
+                            class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.023.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                            Category
+                            <span v-if="selectedCategoryId !== null" class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                {{ selectedCategoryId === 'uncategorized' ? 'Uncategorized' : (categories.find(c => c.id === selectedCategoryId)?.name || 'Unknown') }}
+                            </span>
+                        </button>
+                        
+                        <!-- Category Filter Dropdown -->
+                        <div v-if="showCategoryFilter" 
+                             class="absolute z-50 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg"
+                             :style="categoryFilterPosition">
+                            <div class="p-2">
+                                <div class="space-y-1">
+                                    <button 
+                                        @click="selectedCategoryId = null; showCategoryFilter = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            selectedCategoryId === null 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        All Categories
+                                    </button>
+                                    <button 
+                                        @click="selectedCategoryId = 'uncategorized'; showCategoryFilter = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            selectedCategoryId === 'uncategorized' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Uncategorized
+                                    </button>
+                                    <button 
+                                        v-for="category in categories" 
+                                        :key="category.id"
+                                        @click="selectedCategoryId = category.id; showCategoryFilter = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center',
+                                            selectedCategoryId === category.id 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        <div 
+                                            class="w-3 h-3 rounded-full mr-2 flex-shrink-0"
+                                            :style="{ backgroundColor: category.color }"
+                                        ></div>
+                                        {{ category.name }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sort Options -->
+                    <div class="relative sort-options-dropdown mb-3">
+                        <button 
+                            @click="toggleSortOptions"
+                            class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
+                            </svg>
+                            Sort: {{ 
+                                sortBy === 'date-old' ? 'Date (Old to New)' : 
+                                sortBy === 'date-new' ? 'Date (New to Old)' : 
+                                sortBy === 'category' ? 'Category' : 
+                                sortBy === 'points-high' ? 'Points (High to Low)' : 
+                                'Points (Low to High)' 
+                            }}
+                        </button>
+                        
+                        <!-- Sort Options Dropdown -->
+                        <div v-if="showSortOptions" 
+                             class="absolute z-50 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg"
+                             :style="sortOptionsPosition">
+                            <div class="p-2">
+                                <div class="space-y-1">
+                                    <button 
+                                        @click="sortBy = 'date-old'; showSortOptions = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            sortBy === 'date-old' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Date (Old to New)
+                                    </button>
+                                    <button 
+                                        @click="sortBy = 'date-new'; showSortOptions = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            sortBy === 'date-new' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Date (New to Old)
+                                    </button>
+                                    <button 
+                                        @click="sortBy = 'category'; showSortOptions = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            sortBy === 'category' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Category
+                                    </button>
+                                    <button 
+                                        @click="sortBy = 'points-high'; showSortOptions = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            sortBy === 'points-high' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Points (High to Low)
+                                    </button>
+                                    <button 
+                                        @click="sortBy = 'points-low'; showSortOptions = false"
+                                        :class="[
+                                            'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+                                            sortBy === 'points-low' 
+                                                ? 'bg-blue-100 text-blue-900 font-medium' 
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                        ]"
+                                    >
+                                        Points (Low to High)
+                                    </button>
                                 </div>
                             </div>
                         </div>

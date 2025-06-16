@@ -266,7 +266,6 @@ const selectTab = (tab) => {
                     :columns="columns"
                     :board="board" 
                     :users="users"
-                    :user="currentUser"
                     :show-description="showDescription"
                     :current-sprint="currentSprint"
                     :categories="categories"
