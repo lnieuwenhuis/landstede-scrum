@@ -47,7 +47,7 @@ const totalDays = computed(() => {
     return Math.ceil((dateRange.value.end - dateRange.value.start) / (1000 * 60 * 60 * 24)) + 1;
 });
 
-// Generate sprints based on date range with 14-day standard duration
+// Generate sprints based on date range with warming-up and cooling-down weeks
 const generateSprints = () => {
     if (!dateRange.value) {
         toast.warning('Please select start and end dates first');
@@ -55,47 +55,102 @@ const generateSprints = () => {
     }
 
     const sprints = [];
-    const startDate = new Date(board.value.startDate);
-    const endDate = new Date(board.value.endDate);
-    const standardSprintDuration = 14;
+    const originalStartDate = new Date(board.value.startDate);
+    const originalEndDate = new Date(board.value.endDate);
     
-    let currentSprintStart = new Date(startDate);
+    // Helper function to get Monday of the week containing the given date
+    const getMondayOfWeek = (date) => {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        return new Date(d.setDate(diff));
+    };
+    
+    // Helper function to get Sunday of the week containing the given date
+    const getSundayOfWeek = (date) => {
+        const monday = getMondayOfWeek(date);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return sunday;
+    };
+    
+    // Align start date to Monday of the week and end date to Sunday of the week
+    const alignedStartDate = getMondayOfWeek(originalStartDate);
+    const alignedEndDate = getSundayOfWeek(originalEndDate);
+    
+    // Update the board's end date to the aligned end date
+    board.value.endDate = alignedEndDate;
+    
+    let currentSprintStart = new Date(alignedStartDate);
     let sprintNumber = 1;
     
-    while (currentSprintStart <= endDate) {
+    // Add warming-up week (1 week)
+    const warmupEnd = new Date(currentSprintStart);
+    warmupEnd.setDate(warmupEnd.getDate() + 6); // 7 days - 1
+    
+    sprints.push({
+        name: 'Warming-up',
+        start_date: formatDate(currentSprintStart),
+        end_date: formatDate(warmupEnd),
+        status: 'inactive'
+    });
+    
+    // Move to next sprint start date
+    currentSprintStart = new Date(warmupEnd);
+    currentSprintStart.setDate(currentSprintStart.getDate() + 1);
+    
+    // Calculate remaining days for regular sprints (excluding cooling-down week)
+    const coolingDownStart = new Date(alignedEndDate);
+    coolingDownStart.setDate(coolingDownStart.getDate() - 6); // Start of last week
+    
+    // Generate regular 14-day sprints
+    const standardSprintDuration = 14;
+    
+    while (currentSprintStart < coolingDownStart) {
         const sprintEnd = new Date(currentSprintStart);
         sprintEnd.setDate(sprintEnd.getDate() + standardSprintDuration - 1);
         
-        // Calculate remaining days after this sprint
-        const remainingDays = Math.ceil((endDate - sprintEnd) / (1000 * 60 * 60 * 24));
+        // Calculate remaining days after this sprint (before cooling-down)
+        const remainingDays = Math.ceil((coolingDownStart - sprintEnd) / (1000 * 60 * 60 * 24)) - 1;
         
-        // If this sprint exceeds the end date, adjust to end date
-        if (sprintEnd > endDate) {
-            sprintEnd.setTime(endDate.getTime());
+        // If this sprint exceeds the cooling-down start, adjust to end before cooling-down
+        if (sprintEnd >= coolingDownStart) {
+            sprintEnd.setTime(coolingDownStart.getTime() - 1); // End day before cooling-down
         }
         // If there are less than 3 days remaining after this sprint,
         // extend this sprint to include those remaining days
         else if (remainingDays > 0 && remainingDays < 3) {
-            sprintEnd.setTime(endDate.getTime());
+            sprintEnd.setTime(coolingDownStart.getTime() - 1);
         }
         
-        sprints.push({
-            name: `Sprint ${sprintNumber}`,
-            start_date: formatDate(currentSprintStart),
-            end_date: formatDate(sprintEnd),
-            status: 'inactive'
-        });
+        // Only add sprint if it has at least 1 day
+        if (currentSprintStart <= sprintEnd) {
+            sprints.push({
+                name: `Sprint ${sprintNumber}`,
+                start_date: formatDate(currentSprintStart),
+                end_date: formatDate(sprintEnd),
+                status: 'inactive'
+            });
+            sprintNumber++;
+        }
         
         // Move to next sprint start date
         currentSprintStart = new Date(sprintEnd);
         currentSprintStart.setDate(currentSprintStart.getDate() + 1);
-        sprintNumber++;
         
-        // Break if we've reached or exceeded the end date
-        if (currentSprintStart > endDate) {
+        // Break if we've reached the cooling-down period
+        if (currentSprintStart >= coolingDownStart) {
             break;
         }
     }
+    
+    // Add cooling-down week (1 week)
+    sprints.push({
+        name: 'Cooling-down',
+        start_date: formatDate(coolingDownStart),
+        end_date: formatDate(alignedEndDate),
+        status: 'inactive'
+    });
     
     board.value.sprints = sprints;
     showSprintEditor.value = true;
