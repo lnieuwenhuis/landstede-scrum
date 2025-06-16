@@ -358,7 +358,7 @@ const handleUpdateCard = async ({ cardId, title, description, points, categoryId
     }
 };
 
-const handleAddCard = async ({ columnId, title, description, points }) => {
+const handleAddCard = async ({ columnId, title, description, points, categoryId }) => {
     loading.value = true;
     try {
         const updatedColumns = await tryAddCard({ 
@@ -366,6 +366,7 @@ const handleAddCard = async ({ columnId, title, description, points }) => {
             title, 
             description, 
             points, 
+            categoryId,
             columns: props.columns 
         });
         
