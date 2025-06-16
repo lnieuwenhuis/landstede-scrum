@@ -34,6 +34,33 @@ const props = defineProps({
 const userDropdownOpen = ref(null);
 const userDropdownPosition = ref({ top: '0px', left: '0px' });
 
+const getStatusStyles = (status) => {
+    const styles = {
+        active: {
+            border: 'border-green-500 bg-green-50',
+            text: 'text-green-600',
+        },
+        planning: {
+            border: 'border-blue-500 bg-blue-50',
+            text: 'text-blue-600',
+        },
+        inactive: {
+            border: 'border-gray-500 bg-gray-50',
+            text: 'text-gray-600',
+        },
+        locked: {
+            border: 'border-yellow-500 bg-yellow-50',
+            text: 'text-yellow-600',
+        },
+        checked: {
+            border: 'border-purple-500 bg-purple-50',
+            text: 'text-purple-600',
+        }
+    };
+    
+    return styles[status] || styles.inactive;
+};
+
 // User assignment modal
 const toggleUserDropdown = (cardId, event) => {
     // Check if the sprint is locked
@@ -758,21 +785,30 @@ const sortCards = (cards) => {
             <!-- Board header - restructured -->
             <div class="flex flex-col space-y-4">
                 <!-- Title row with board title and sprint info -->
-                <div class="flex justify-between items-center">
-                    <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
                         <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
-                    </div>
-                    <div v-if="currentSprint" class="text-gray-600 truncate flex-shrink-0 flex items-center">
-                        <span>({{ currentSprint.title }})</span>
-                        <button 
-                            @click="toggleDescription" 
-                            class="text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 ml-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
-                                <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
+                        <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
+                            <span>({{ currentSprint.title }})</span>
+                            <span
+                                :class="[
+                                    getStatusStyles(currentSprint.status).border,
+                                    getStatusStyles(currentSprint.status).text,
+                                    'text-sm px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ml-2'
+                                ]"
+                            >
+                                {{ currentSprint.status }}
+                            </span>
+                            <button 
+                                @click="toggleDescription" 
+                                class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
+                                    <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
