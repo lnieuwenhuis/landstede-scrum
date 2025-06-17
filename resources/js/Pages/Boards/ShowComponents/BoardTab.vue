@@ -783,10 +783,10 @@ const sortCards = (cards) => {
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
             <!-- Board header - restructured -->
-            <div class="flex flex-col space-y-4">
+            <div class="flex flex-col mb-3">
                 <!-- Title row with board title and sprint info -->
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center">
+                    <div class="flex items-center mb-3">
                         <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
                         <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
                             <span>({{ currentSprint.title }})</span>
@@ -810,13 +810,6 @@ const sortCards = (cards) => {
                             </button>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Board description (shown/hidden based on showDescription) -->
-                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm">
-                    {{ board.description || 'No description available.' }}
-                </div>
-                
                 <!-- Filter and sort controls row -->
                 <div class="flex items-center space-x-4">
                     <!-- User Filter -->
@@ -1027,8 +1020,13 @@ const sortCards = (cards) => {
                         </div>
                     </div>
                 </div>
+                </div>
+                
+                <!-- Board description (shown/hidden based on showDescription) -->
+                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm">
+                    {{ board.description || 'No description available.' }}
+                </div>  
             </div>
-
             <!-- Columns container -->
             <div class="flex justify-center">
                 <div 
