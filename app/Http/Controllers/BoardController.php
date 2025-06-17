@@ -407,9 +407,9 @@ class BoardController extends Controller
 
             $columns = $board->columns;
             foreach ($columns as $column) {
-                if ($board->currentSprint()['status'] === 'locked') {
+                if ($board->currentSprint() && $board->currentSprint()['status'] === 'locked') {
                     $column->status = 'locked';
-                } else if ($board->currentSprint()['status'] === 'planning') {
+                } else if ($board->currentSprint() && $board->currentSprint()['status'] === 'planning') {
                     if ($column->title === 'Sprint Backlog' || $column->title === 'Project Backlog') {
                         $column->status = 'active';
                     } else {
