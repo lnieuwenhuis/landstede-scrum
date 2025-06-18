@@ -746,6 +746,7 @@ const toggleSortOptions = (event) => {
 
 // Add sorting function
 const sortCards = (cards) => {
+    if (! cards) return;
     const sortedCards = [...cards];
     
     switch (sortBy.value) {
@@ -782,36 +783,38 @@ const sortCards = (cards) => {
 <template>
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
-            <!-- Board header - restructured -->
-            <div class="flex flex-col mb-3">
-                <!-- Title row with board title and sprint info -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center mb-3">
-                        <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
-                        <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
-                            <span>({{ currentSprint.title }})</span>
-                            <span
-                                :class="[
-                                    getStatusStyles(currentSprint.status).border,
-                                    getStatusStyles(currentSprint.status).text,
-                                    'text-sm px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ml-2'
-                                ]"
-                            >
-                                {{ currentSprint.status }}
-                            </span>
-                            <button 
-                                @click="toggleDescription" 
-                                class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
-                                    <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
+            <!-- Board header - responsive layout -->
+            <div class="w-full">
+            <div class="w-full flex flex-col md:flex-row md:items-center md:justify-between">
+                <!-- Left side: Title and sprint info -->
+                <div class="flex items-center flex-wrap gap-2 mb-3 md:mb-0">
+                    <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
+                    <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
+                        <span>({{ currentSprint.title }})</span>
+                        <span
+                            :class="[ 
+                                getStatusStyles(currentSprint.status).border,
+                                getStatusStyles(currentSprint.status).text,
+                                'text-sm px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ml-2'
+                            ]"
+                        >
+                            {{ currentSprint.status }}
+                        </span>
+                        <button 
+                            @click="toggleDescription" 
+                            class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
+                                <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
                     </div>
-                <!-- Filter and sort controls row -->
-                <div class="flex items-center space-x-4">
+                </div>
+                
+                <!-- Right side: Filter and sort controls row -->
+                <div class="w-full md:w-auto flex flex-col md:flex-row md:justify-end md:gap-3">
+                    <div class="flex items-center space-x-4">
                     <!-- User Filter -->
                     <div class="relative user-filter-dropdown mb-3">
                         <button 
@@ -935,7 +938,7 @@ const sortCards = (cards) => {
                             </div>
                         </div>
                     </div>
-                    
+                    </div>
                     <!-- Sort Options -->
                     <div class="relative sort-options-dropdown mb-3">
                         <button 
@@ -1023,7 +1026,7 @@ const sortCards = (cards) => {
                 </div>
                 
                 <!-- Board description (shown/hidden based on showDescription) -->
-                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm">
+                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm mb-3">
                     {{ board.description || 'No description available.' }}
                 </div>  
             </div>
@@ -1161,18 +1164,6 @@ const sortCards = (cards) => {
                                 :disabled="loading"
                             />
                             <span v-if="loading" class="absolute right-3 top-3">⏳</span>
-                        </div>
-                        <div class="flex items-center mb-3">
-                            <input 
-                                id="done-column" 
-                                type="checkbox" 
-                                v-model="newColumnDone" 
-                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                :disabled="loading"
-                            />
-                            <label for="done-column" class="ml-2 block text-sm text-gray-900">
-                                This is a "Done" column
-                            </label>
                         </div>
                         <div class="flex justify-end space-x-2">
                             <button 
