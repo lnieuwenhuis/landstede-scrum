@@ -6,7 +6,9 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
 import { ref, watch } from 'vue';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations.js';
 
+const { __ } = useTranslations();
 const toast = useToast();
 const page = usePage();
 
@@ -66,7 +68,6 @@ const toggleNewVacationForm = () => {
     }
 };
 const createVacation = () => {
-    // Ensure vacation_dates is properly formatted as JSON string
     newVacation.value.vacation_dates = JSON.stringify(vacationDates.value);
     
     axios.post('/api/vacations/createVacation', newVacation.value)
@@ -75,14 +76,14 @@ const createVacation = () => {
                 vacations.value.push(response.data.vacation);
                 selectedVacationId.value = response.data.vacation.id;
                 toggleNewVacationForm();
-                toast.success('Vacation created successfully');
+                toast.success(__('Vacation created successfully'));
             } else {
-                toast.error(response.data.error || 'Failed to create vacation');
+                toast.error(response.data.error || __('Failed to create vacation'));
             }
         })
         .catch(error => {
             console.error('Error creating vacation:', error);
-            toast.error('Failed to create vacation');
+            toast.error(__('Failed to create vacation'));
         });
 };
 
@@ -98,7 +99,7 @@ watch(selectedVacationId, async (newId) => {
             };
         } catch (error) {
             console.error('Error fetching vacation:', error);
-            toast.error('Failed to load vacation details');
+            toast.error(__('Failed to load vacation details'));
             selectedVacation.value = null;
         }
     } else {
@@ -168,11 +169,11 @@ const handleUpdateDates = async () => {
             showEditDates.value = false;
             selectedDates.value = [];
             vacationDates.value = [];
-            toast.success('Vacation dates updated successfully');
+            toast.success(__('Vacation dates updated successfully'));
         }
     } catch (error) {
         console.error('Error updating vacation dates:', error);
-        toast.error('Failed to update vacation dates');
+        toast.error(__('Failed to update vacation dates'));
     }
 };
 
@@ -203,7 +204,21 @@ const groupDatesByMonth = (dates) => {
 };
 
 const getMonthName = (month) => {
-    return new Date(2000, month, 1).toLocaleString('default', { month: 'long' });
+    const monthNames = [
+        __('January'),
+        __('February'),
+        __('March'),
+        __('April'),
+        __('May'),
+        __('June'),
+        __('July'),
+        __('August'),
+        __('September'),
+        __('October'),
+        __('November'),
+        __('December')
+    ];
+    return monthNames[month];
 };
 
 const getDaysInMonth = (year, month) => {
@@ -237,18 +252,18 @@ const handleSetActiveVacation = (selectedVacationId) => {
        })
        .catch(error => {
            console.error('Error setting active vacation:', error);
-           toast.error('Failed to update vacation status');
+           toast.error(__('Failed to update vacation status'));
        });
 }
 </script>
 
 <template>
-    <Head title="Manage Vacations" />
+    <Head :title="__('Manage Vacations')" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Manage Vacations
+                {{ __('Manage Vacations') }}
             </h2>
         </template>
 
@@ -258,7 +273,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                     <div class="p-6">
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <h3 class="text-lg font-semibold text-gray-900">School Vacations</h3>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ __('School Vacations') }}</h3>
                                 <select 
                                     v-if="vacations"
                                     v-model="selectedVacationId"
@@ -266,7 +281,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                 >
                                     <option v-for="vacation in vacations" :key="vacation.id" :value="vacation.id">
                                         {{ vacation.schoolyear }}
-                                        {{ vacation.status === 'active' ? '(Active)' : '' }}
+                                        {{ vacation.status === 'active' ? `(${__('Active')})` : '' }}
                                     </option>
                                 </select>
                                 <button
@@ -274,7 +289,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                     @click="handleSetActiveVacation(selectedVacationId)"
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                 >
-                                    Activate
+                                    {{ __('Activate') }}
                                 </button>
                             </div>
                             <div class="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
@@ -283,55 +298,55 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                     @click="toggleDeleteConfirmation(selectedVacation.id)"
                                     class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                                 >
-                                    Delete Vacation
+                                    {{ __('Delete Vacation') }}
                                 </button>
                                 <button
                                     @click="toggleNewVacationForm"
                                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
-                                    {{ (!vacations || vacations.length === 0) ? 'Save Vacation' : (showNewVacationForm ? 'Cancel' : 'Add Vacation') }}
+                                    {{ (!vacations || vacations.length === 0) ? __('Save Vacation') : (showNewVacationForm ? __('Cancel') : __('Add Vacation')) }}
                                 </button>
                             </div>
                         </div>
                         <!-- New Vacation Form -->
                         <div v-if="showNewVacationForm || (!vacations || vacations.length === 0)" class="mt-6 p-4 border border-gray-200 rounded-lg">
                             <h4 class="font-medium text-gray-900 mb-4">
-                                {{ (!vacations || vacations.length === 0) ? 'Create First Vacation' : 'Create New Vacation' }}
+                                {{ (!vacations || vacations.length === 0) ? __('Create First Vacation') : __('Create New Vacation') }}
                             </h4>
                             <div class="space-y-4">
                                 <div>
-                                    <label for="schoolyear" class="block text-sm font-medium text-gray-700">School Year</label>
+                                    <label for="schoolyear" class="block text-sm font-medium text-gray-700">{{ __('School Year') }}</label>
                                     <input 
                                         type="text" 
                                         id="schoolyear" 
                                         v-model="newVacation.schoolyear" 
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="e.g. 2023-2024"
+                                        :placeholder="__('e.g. 2023-2024')"
                                     >
                                 </div>
                                 <!-- Date Picker -->
                                 <div>
-                                    <label for="vacation-date" class="block text-sm font-medium text-gray-700">Select Vacation Dates</label>
+                                    <label for="vacation-date" class="block text-sm font-medium text-gray-700">{{ __('Select Vacation Dates') }}</label>
                                     <div class="mt-1">
                                         <VueDatePicker 
                                             v-model="selectedDates" 
                                             multi-dates 
                                             :enable-time-picker="false"
-                                            placeholder="Select vacation dates"
+                                            :placeholder="__('Select vacation dates')"
                                             class="w-full"
                                         />
                                     </div>
                                 </div>
                                 <!-- Selected Dates Calendar View -->
                                 <div v-if="vacationDates.length > 0" class="mt-4">
-                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Dates:</h5>
+                                    <h5 class="text-sm font-medium text-gray-700 mb-2">{{ __('Selected Dates:') }}</h5>
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                         <div v-for="(monthData, key) in groupDatesByMonth(vacationDates)" :key="key" 
                                             class="border border-gray-200 rounded-lg p-3 bg-white">
                                             <h3 class="font-medium text-gray-800 mb-2">{{ getMonthName(monthData.month) }} {{ monthData.year }}</h3>
                                             <div class="grid grid-cols-7 gap-1 text-center">
                                                 <!-- Day headers - Monday to Sunday -->
-                                                <div v-for="day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']" :key="day" class="text-xs font-medium text-gray-500">
+                                                <div v-for="day in [__('Mo'), __('Tu'), __('We'), __('Th'), __('Fr'), __('Sa'), __('Su')]" :key="day" class="text-xs font-medium text-gray-500">
                                                     {{ day }}
                                                 </div>
                                                 
@@ -365,7 +380,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                         class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                         :disabled="!newVacation.schoolyear"
                                     >
-                                        {{ (!vacations || vacations.length === 0) ? 'Save Vacation' : 'Create Vacation' }}
+                                        {{ (!vacations || vacations.length === 0) ? __('Save Vacation') : __('Create Vacation') }}
                                     </button>
                                 </div>
                             </div>
@@ -373,34 +388,34 @@ const handleSetActiveVacation = (selectedVacationId) => {
                         <!-- Selected Vacation Details -->
                         <div v-if="selectedVacation" class="mt-6">
                             <div class="flex justify-between items-center mb-4">
-                                <h4 class="font-medium text-gray-900">Vacation Dates for {{ selectedVacation.schoolyear }}</h4>
+                                <h4 class="font-medium text-gray-900">{{ __('Vacation Dates for') }} {{ selectedVacation.schoolyear }}</h4>
                                 <button 
                                     @click="openEditDates"
                                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
-                                    Edit Dates
+                                    {{ __('Edit Dates') }}
                                 </button>
                             </div>
                             
                             <!-- Edit Dates Form -->
                             <div v-if="showEditDates" class="mt-6 p-4 border border-gray-200 rounded-lg">
-                                <h4 class="font-medium text-gray-900 mb-4">Edit Vacation Dates</h4>
+                                <h4 class="font-medium text-gray-900 mb-4">{{ __('Edit Vacation Dates') }}</h4>
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Select Vacation Dates</label>
+                                        <label class="block text-sm font-medium text-gray-700">{{ __('Select Vacation Dates') }}</label>
                                         <div class="mt-1">
                                             <VueDatePicker 
                                                 v-model="selectedDates" 
                                                 multi-dates 
                                                 :enable-time-picker="false"
-                                                placeholder="Select vacation dates"
+                                                :placeholder="__('Select vacation dates')"
                                                 class="w-full"
                                             />
                                         </div>
                                     </div>
                                     <!-- Selected Dates List -->
                                     <div v-if="vacationDates.length > 0 && !showEditDates" class="mt-4">
-                                        <h5 class="text-sm font-medium text-gray-700 mb-2">Selected Dates:</h5>
+                                        <h5 class="text-sm font-medium text-gray-700 mb-2">{{ __('Selected Dates:') }}</h5>
                                         <div class="space-y-2">
                                             <div v-for="date in vacationDates" :key="date" 
                                                 class="border border-gray-200 rounded-lg p-2 hover:bg-gray-50 flex justify-between items-center">
@@ -420,13 +435,13 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                             @click="showEditDates = false; selectedDates.value = []; vacationDates.value = []" 
                                             class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                                         >
-                                            Cancel
+                                            {{ __('Cancel') }}
                                         </button>
                                         <button 
                                             @click="handleUpdateDates" 
                                             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                         >
-                                            Save Changes
+                                            {{ __('Save Changes') }}
                                         </button>
                                     </div>
                                 </div>
@@ -435,7 +450,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                             <!-- Vacation Dates List -->
                             <div :class="{ 'mt-2': showEditDates }">
                                 <div v-if="!selectedVacation.vacation_dates.length" class="text-center py-4 text-gray-500">
-                                    No dates have been added to this vacation.
+                                    {{ __('No dates have been added to this vacation.') }}
                                 </div>
                                 <div v-else>
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -444,7 +459,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                                             <h3 class="font-medium text-gray-800 mb-2">{{ getMonthName(monthData.month) }} {{ monthData.year }}</h3>
                                             <div class="grid grid-cols-7 gap-1 text-center">
                                                 <!-- Day headers - Monday to Sunday -->
-                                                <div v-for="day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']" :key="day" class="text-xs font-medium text-gray-500">
+                                                <div v-for="day in [__('Mo'), __('Tu'), __('We'), __('Th'), __('Fr'), __('Sa'), __('Su')]" :key="day" class="text-xs font-medium text-gray-500">
                                                     {{ day }}
                                                 </div>
                                                 
@@ -468,7 +483,7 @@ const handleSetActiveVacation = (selectedVacationId) => {
                         </div>
                         <!-- No Vacations Message -->
                         <div v-if="(!vacations || vacations.length === 0) && !showNewVacationForm" class="text-center py-8 text-gray-500">
-                            No vacations have been created yet.
+                            {{ __('No vacations have been created yet.') }}
                         </div>
                     </div>
                 </div>
@@ -479,13 +494,13 @@ const handleSetActiveVacation = (selectedVacationId) => {
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirmation" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
         <div class="bg-white p-6 rounded-lg shadow-lg">
-            <p class="text-gray-800 mb-4">Are you sure you want to delete this vacation?</p>
+            <p class="text-gray-800 mb-4">{{ __('Are you sure you want to delete this vacation?') }}</p>
             <div class="flex justify-between">
                 <button @click="handleDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Delete
+                    {{ __('Delete') }}
                 </button>
                 <button @click="toggleDeleteConfirmation()" class="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
             </div>
         </div>

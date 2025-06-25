@@ -6,7 +6,9 @@ import ConfirmModal from '../../Pages/Boards/ShowComponents/ConfirmModal.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ChromePicker } from 'vue-color';
+import { useTranslations } from '../../translations';
 
+const { __ } = useTranslations();
 const toast = useToast();
 
 const props = defineProps({
@@ -69,12 +71,12 @@ const handleCreateCategory = async () => {
         if (response.data) {
             // Add the new category to the list
             categories.value.push(response.data);
-            toast.success('Category created successfully');
+            toast.success(__('Category created successfully'));
             closeCategoryModal();
         }
     } catch (error) {
         console.error('Error creating category:', error);
-        toast.error(error.response?.data?.message || 'Failed to create category');
+        toast.error(error.response?.data?.message || __('Failed to create category'));
     } finally {
         loading.value = false;
     }
@@ -94,12 +96,12 @@ const handleUpdateCategory = async () => {
                     ...categoryData.value
                 };
             }
-            toast.success('Category updated successfully');
+            toast.success(__('Category updated successfully'));
             closeCategoryModal();
         }
     } catch (error) {
         console.error('Error updating category:', error);
-        toast.error(error.response?.data?.message || 'Failed to update category');
+        toast.error(error.response?.data?.message || __('Failed to update category'));
     } finally {
         loading.value = false;
     }
@@ -119,12 +121,12 @@ const handleDeleteCategory = async () => {
 
         if (response.data) {
             categories.value = categories.value.filter(category => category.id !== categoryToDelete.value);
-            toast.success('Category deleted successfully');
+            toast.success(__('Category deleted successfully'));
             toggleDeleteCategory();
         }
     } catch (error) {
         console.error('Error deleting category:', error);
-        toast.error(error.response?.data?.message || 'Failed to delete category');
+        toast.error(error.response?.data?.message || __('Failed to delete category'));
     }
 };
 
@@ -138,12 +140,12 @@ const handleSaveCategory = () => {
 </script>
 
 <template>
-    <Head title="Manage Categories" />
+    <Head :title="__('Manage Categories')" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Manage Categories
+                {{ __('Manage Categories') }}
             </h2>
         </template>
 
@@ -152,7 +154,7 @@ const handleSaveCategory = () => {
                 <div class="bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Categories</h3>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ __('Categories') }}</h3>
                             <button 
                                 @click="openCategoryModal()"
                                 class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 h-10"
@@ -162,7 +164,7 @@ const handleSaveCategory = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                                 </svg>
-                                {{ loading ? 'Creating...' : 'New Category' }}
+                                {{ loading ? __('Creating...') : __('New Category') }}
                             </button>
                         </div>                        
                         <div class="space-y-4">
@@ -183,7 +185,7 @@ const handleSaveCategory = () => {
                                         </h3>
                                         <div class="mt-2 space-y-1">
                                             <p class="text-sm text-gray-600">
-                                                {{ category.description || 'No description provided' }}
+                                                {{ category.description || __('No description provided') }}
                                             </p>
                                         </div>
                                     </div>
@@ -208,7 +210,7 @@ const handleSaveCategory = () => {
                                 </div>
                             </div>
                             <div v-if="categories.length === 0" class="py-4 text-center text-gray-500 italic">
-                                No categories created yet
+                                {{ __('No categories created yet') }}
                             </div>
                         </div>
                     </div>
@@ -220,37 +222,37 @@ const handleSaveCategory = () => {
         <div v-if="showCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">
-                    {{ isEditMode ? 'Edit Category' : 'Create Category' }}
+                    {{ isEditMode ? __('Edit Category') : __('Create Category') }}
                 </h3>
                 
                 <div class="space-y-4">
                     <!-- Category Name -->
                     <div>
-                        <label for="category-name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <label for="category-name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Name') }}</label>
                         <input 
                             id="category-name" 
                             v-model="categoryData.name" 
                             type="text" 
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter category name"
+                            :placeholder="__('Enter category name')"
                         />
                     </div>
                     
                     <!-- Category Description -->
                     <div>
-                        <label for="category-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label for="category-description" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Description') }}</label>
                         <textarea 
                             id="category-description" 
                             v-model="categoryData.description" 
                             rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter category description"
+                            :placeholder="__('Enter category description')"
                         ></textarea>
                     </div>
                     
                     <!-- Category Color -->
                     <div>
-                        <label for="category-color" class="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                        <label for="category-color" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Color') }}</label>
                         <div class="flex flex-col space-y-2">
                             <ChromePicker 
                                 v-model="categoryData.color"
@@ -277,7 +279,7 @@ const handleSaveCategory = () => {
                         @click="closeCategoryModal" 
                         class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
                     >
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button 
                         @click="handleSaveCategory" 
@@ -285,7 +287,7 @@ const handleSaveCategory = () => {
                         :disabled="loading"
                         :class="{ 'opacity-50 cursor-not-allowed': loading }"
                     >
-                        {{ loading ? 'Saving...' : (isEditMode ? 'Update' : 'Create') }}
+                        {{ loading ? __('Saving...') : (isEditMode ? __('Update') : __('Create')) }}
                     </button>
                 </div>
             </div>
@@ -295,10 +297,10 @@ const handleSaveCategory = () => {
         <ConfirmModal
             v-if="showDeleteCategoryConfirmation"
             :show="showDeleteCategoryConfirmation"
-            title="Delete Category"
-            message="Are you sure you want to delete this category? This action cannot be undone."
-            confirm-text="Delete"
-            cancel-text="Cancel"
+            :title="__('Delete Category')"
+            :message="__('Are you sure you want to delete this category? This action cannot be undone.')"
+            :confirm-text="__('Delete')"
+            :cancel-text="__('Cancel')"
             @cancel="toggleDeleteCategory()"
             @confirm="handleDeleteCategory"
         />

@@ -2,7 +2,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useTranslations } from '@/translations.js';
 
+const { __ } = useTranslations();
 const page = usePage();
 
 const boards = ref(page.props.boards);
@@ -30,7 +32,7 @@ const goBack = () => {
 </script>
 
 <template>
-    <Head :title="`Boards for ${user.name}`" />
+    <Head :title="`${__('Boards for')} ${user.name}`" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -39,14 +41,14 @@ const goBack = () => {
                     href="#"
                     @click.prevent="goBack"
                     class="mr-4 text-gray-600 hover:text-gray-800"
-                    aria-label="Go back"
+                    :aria-label="__('Go back')"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
                 </Link>
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    Boards for {{ user.name }}
+                    {{ __('Boards for') }} {{ user.name }}
                 </h2>
             </div>
         </template>
@@ -71,7 +73,7 @@ const goBack = () => {
                                         </p>
                                         <p class="text-xs text-gray-500 mt-1">
                                             <span v-if="typeof board.user_count !== 'undefined'">
-                                                {{ board.user_count }} user(s)
+                                                {{ board.user_count }} {{ __('user(s)') }}
                                             </span>
                                         </p>
                                     </div>
@@ -80,20 +82,20 @@ const goBack = () => {
                                             v-if="isOwner(board)"
                                             class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full"
                                         >
-                                            Owner
+                                            {{ __('Owner') }}
                                         </span>
                                         <Link
                                             :href="`/boards/${board.id}`"
                                             class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap"
                                         >
-                                            View Board
+                                            {{ __('View Board') }}
                                         </Link>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div v-else class="text-center text-gray-500 py-8">
-                            <p>{{ user.name }} is not part of any boards yet.</p>
+                            <p>{{ user.name }} {{ __('is not part of any boards yet.') }}</p>
                         </div>
                     </div>
                 </div>
