@@ -784,20 +784,20 @@ const sortCards = (cards) => {
 
 <template>
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="p-6">
-            <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
+        <div class="p-6 pb-0">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start">
                 <!-- Left side: Board info and description toggle -->
                 <div class="w-full md:w-auto mb-4 md:mb-0">
                     <div class="flex items-center">
-                        <span 
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2"
-                            :class="getStatusStyles(currentSprint?.status || 'inactive')"
-                        >
-                            {{ __(currentSprint?.status) || __("inactive") }}
-                        </span>
                         <h1 class="text-2xl font-semibold text-gray-800 truncate ml-3">{{ board.title }}</h1>
                         <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
                             <span>({{ currentSprint.title }})</span>
+                        <span 
+                            class="text-sm px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ml-2"
+                            :class="[getStatusStyles(currentSprint?.status || 'inactive').text, getStatusStyles(currentSprint?.status || 'inactive').border]"
+                        >
+                            {{ __(currentSprint?.status) || __("inactive") }}
+                        </span>
                             <button 
                                 @click="toggleDescription" 
                                 class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
@@ -1025,14 +1025,14 @@ const sortCards = (cards) => {
                 </div>
                 
                 <!-- Board description (shown/hidden based on showDescription) -->
-                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm mb-3">
+                <div v-if="showDescription" class="rounded-md text-gray-700 text-sm mb-3 ml-3">
                     {{ board.description || __("No description available") }}
                 </div>  
             </div>
             <!-- Columns container -->
             <div class="flex justify-center">
                 <div 
-                    class="flex space-x-4 overflow-x-auto pb-4 w-full"
+                    class="flex ml-8 space-x-4 overflow-x-auto pb-4 w-full"
                 >
                     <!-- Regular columns are rendered first using v-for -->
                     <Column 
@@ -1206,7 +1206,7 @@ const sortCards = (cards) => {
         </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="fixed inset-0 z-50">
+    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="absolute inset-0 z-50">
         <div 
             class="bg-white rounded-md shadow-lg w-64 absolute overflow-hidden user-dropdown"
             :style="userDropdownPosition"
