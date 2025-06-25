@@ -4,8 +4,10 @@ import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import ConfirmModal from './ConfirmModal.vue';
 import { getInitials } from '../ShowHelpers/BoardTabHelper';
+import { useTranslations } from '../../../translations';
 
 const toast = useToast();
+const { __ } = useTranslations();
 
 const props = defineProps({
     users: Array,
@@ -89,7 +91,7 @@ const searchUsers = async () => {
         }
     } catch (error) {
         console.error('Error searching users:', error);
-        toast.error('Failed to search users');
+        toast.error(__('Failed to search users'));
     } finally {
         isSearching.value = false;
     }
@@ -141,15 +143,15 @@ const saveUsers = async () => {
         if (response.data.message) {
             // Add the new users to the users list
             users.value = [...users.value, ...usersToAdd.value];
-            toast.success('Users added successfully');
+            toast.success(__('Users added successfully'));
             emit('users-updated', users.value);
             toggleAddUserModal();
         } else {
-            throw new Error(response.data.error || 'Failed to add users');
+            throw new Error(response.data.error || __('Failed to add users'));
         }
     } catch (error) {
         console.error('Error adding users:', error);
-        toast.error(error.message || 'Failed to add users');
+        toast.error(error.message || __('Failed to add users'));
     } finally {
         isSaving.value = false;
     }
@@ -172,14 +174,14 @@ const handleDeleteUser = async (userId) => {
 
         if (response.data.message) {
             users.value = users.value.filter(user => user.id !== userId);
-            toast.success('User removed successfully');
+            toast.success(__('User removed successfully'));
             emit('users-updated', users.value);
         } else {
-            throw new Error(response.data.error || 'Failed to remove user');
+            throw new Error(response.data.error || __('Failed to remove user'));
         }
     } catch (error) {
         console.error('Error removing user:', error);
-        toast.error(error.message || 'Failed to remove user');
+        toast.error(error.message || __('Failed to remove user'));
     }
 };
 
@@ -225,7 +227,7 @@ const isLightColor = (hexColor) => {
     <div class="flex-1">
         <div class="bg-white p-4 shadow-md rounded-lg overflow-hidden">
             <div class="flex flex-row justify-between items-center">
-                <h2 class="text-2xl font-semibold text-gray-800 m-2">Team Members</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 m-2">{{ __('Team Members') }}</h2>
             <button 
                 @click="toggleAddUserModal"
                 class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 h-10 w-[135px]"
@@ -233,7 +235,7 @@ const isLightColor = (hexColor) => {
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                 </svg>
-                Add User
+                {{ __('Add User') }}
             </button>
             </div>
             <div class="p-2 pt-0">
@@ -265,7 +267,7 @@ const isLightColor = (hexColor) => {
                                     v-if="user.id === ownerId" 
                                     class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 flex-shrink-0"
                                 >
-                                    Owner
+                                    {{ __('Owner') }}
                                 </span>
                             </div>
                             <p class="text-gray-500 text-sm truncate max-w-xs">{{ user.email }}</p>
@@ -281,7 +283,7 @@ const isLightColor = (hexColor) => {
                         </button>
                     </div>
                     <div v-if="users.length === 0" class="py-4 text-center text-gray-500 italic">
-                        No team members yet
+                        {{ __('No team members yet') }}
                     </div>
                 </div>
             </div>
@@ -291,7 +293,7 @@ const isLightColor = (hexColor) => {
     <!-- Add User Modal -->
     <div v-if="showAddUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Add Team Members</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Add Team Members') }}</h3>
             
             <div class="space-y-4">
                 <!-- Search input - removed button -->
@@ -299,7 +301,7 @@ const isLightColor = (hexColor) => {
                     <input 
                         v-model="userSearchInput" 
                         type="text" 
-                        placeholder="Search by username or email" 
+                        :placeholder="__('Search by username or email')" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                     <div v-if="isSearching" class="absolute right-3 top-2.5">
@@ -313,7 +315,7 @@ const isLightColor = (hexColor) => {
                 <!-- Search results -->
                 <div v-if="searchResults.length > 0" class="border border-gray-200 rounded-md overflow-hidden">
                     <div class="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-2">
-                        Search Results
+                        {{ __('Search Results') }}
                     </div>
                     <div class="divide-y divide-gray-200 max-h-40 overflow-y-auto">
                         <div 
@@ -339,13 +341,13 @@ const isLightColor = (hexColor) => {
                 
                 <!-- No results message -->
                 <div v-else-if="userSearchInput && !isSearching" class="text-center py-2 text-gray-500">
-                    No users found
+                    {{ __('No users found') }}
                 </div>
                 
                 <!-- Users to add list -->
                 <div v-if="usersToAdd.length > 0" class="border border-gray-200 rounded-md overflow-hidden">
                     <div class="text-sm font-medium text-gray-700 bg-gray-50 px-4 py-2">
-                        Users to Add ({{ usersToAdd.length }})
+                        {{ __('Users to Add') }} ({{ usersToAdd.length }})
                     </div>
                     <div class="divide-y divide-gray-200 max-h-40 overflow-y-auto">
                         <div 
@@ -376,7 +378,7 @@ const isLightColor = (hexColor) => {
                     class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
                     :disabled="isSaving"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
                 <button 
                     @click="saveUsers" 
@@ -389,9 +391,9 @@ const isLightColor = (hexColor) => {
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Adding...
+                        {{ __('Adding...') }}
                     </span>
-                    <span v-else>Add Users</span>
+                    <span v-else>{{ __('Add Users') }}</span>
                 </button>
             </div>
         </div>
@@ -399,9 +401,9 @@ const isLightColor = (hexColor) => {
 
     <ConfirmModal
         :show="showDeleteConfirmation"
-        title="Remove Team Member"
-        message="Are you sure you want to remove this user from the board? This action cannot be undone."
-        confirm-text="Remove"
+        :title="__('Remove Team Member')"
+        :message="__('Are you sure you want to remove this user from the board? This action cannot be undone.')"
+        :confirm-text="__('Remove')"
         @confirm="confirmDeleteUser"
         @cancel="toggleDeleteConfirmation"
     />

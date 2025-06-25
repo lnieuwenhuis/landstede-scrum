@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import Chart from 'chart.js/auto';
+import { useTranslations } from '@/translations';
 
 export const generateDateLabels = (startDate, endDate) => {
     const labels = [];
@@ -150,6 +151,8 @@ export const generateIdealBurndown = (totalPoints, totalDays, freeDates, startDa
 };
 
 export const buildChart = (board, selectedSprint, columns, startDate, endDate, freeDates) => {
+    const { __ } = useTranslations();
+    
     if (!startDate || startDate === 'Invalid Date') startDate = board.start_date;
     if (!endDate || endDate === 'Invalid Date') endDate = board.end_date;
     
@@ -251,9 +254,10 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
     }
     
     // Create chart title based on selected period
-    let chartTitle = 'Burndown Chart: Entire Board';
+    let chartTitle = __('Burndown Chart: Entire Board');
     if (selectedSprint) {
-        chartTitle = `Burndown Chart: ${selectedSprint.title}`;
+        const chartPrefix = __('Burndown Chart:');
+        chartTitle = `${chartPrefix} ${selectedSprint.title}`;
     }
     
     // Create an array to track which dates are free days
@@ -282,7 +286,7 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
         chartData: ref({
             labels: dateLabels,
             datasets: [{
-                label: 'Remaining Points',
+                label: __('Remaining Points'),
                 data: actualBurndownData,
                 borderColor: '#3b82f6',
                 backgroundColor: '#3b82f6',
@@ -291,7 +295,7 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                 pointRadius: 0,
                 borderWidth: 3
             }, {
-                label: 'Ideal Burndown',
+                label: __('Ideal Burndown'),
                 data: idealBurndownData,
                 borderColor: '#dc2626',
                 backgroundColor: '#dc2626',
@@ -312,13 +316,13 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Story Points'
+                        text: __('Story Points')
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Days'
+                        text: __('Days')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.1)',
@@ -340,8 +344,9 @@ export const buildChart = (board, selectedSprint, columns, startDate, endDate, f
                         title: (tooltipItems) => {
                             const index = tooltipItems[0].dataIndex;
                             const label = dateLabels[index];
+                            const nonWorkingDayText = __('Non-working day');
                             return freeDateIndices.includes(index) ? 
-                                `${label} (Non-working day)` : 
+                                `${label} (${nonWorkingDayText})` : 
                                 label;
                         }
                     }

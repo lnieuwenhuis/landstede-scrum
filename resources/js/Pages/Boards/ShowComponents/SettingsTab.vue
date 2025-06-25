@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'; // Added watch and onMounted
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations.js';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -17,6 +18,7 @@ const props = defineProps({
 
 const emit = defineEmits(['board-updated']);
 const toast = useToast();
+const { __ } = useTranslations();
 
 const isOwner = computed(() => props.board.creator_id === props.currentUser.id);
 
@@ -39,7 +41,7 @@ const initializeWeekdays = (boardWeekdaysInput) => {
         try {
             boardWeekdays = JSON.parse(JSON.parse(boardWeekdaysInput));
         } catch (e) {
-            console.error("Failed to parse board weekdays JSON string:", e);
+            console.error(__("Failed to parse board weekdays JSON string:"), e);
             boardWeekdays = null;
         }
     }
@@ -51,7 +53,7 @@ const initializeWeekdays = (boardWeekdaysInput) => {
     } else {
         // It's invalid or null/undefined after parsing attempt
         if (boardWeekdays !== null && boardWeekdays !== undefined && typeof boardWeekdays !== 'string') { // Avoid logging for initial undefined/null or strings that failed parse
-            console.warn("Board weekdays data received but was invalid or empty, using default.", boardWeekdaysInput);
+            console.warn(__("Board weekdays data received but was invalid or empty, using default."), boardWeekdaysInput);
         }
         // Return a deep copy of the default to prevent accidental mutation if needed elsewhere
         return JSON.parse(JSON.stringify(defaultWeekdays));
@@ -71,13 +73,13 @@ const errors = ref({});
 
 // Keep options for Monday-Sunday order and string values for weekdaysState UI
 const daysOfWeekOptions = [
-    { label: 'Monday', value: 'monday' },
-    { label: 'Tuesday', value: 'tuesday' },
-    { label: 'Wednesday', value: 'wednesday' },
-    { label: 'Thursday', value: 'thursday' },
-    { label: 'Friday', value: 'friday' },
-    { label: 'Saturday', value: 'saturday' },
-    { label: 'Sunday', value: 'sunday' },
+    { label: __('Monday'), value: 'monday' },
+    { label: __('Tuesday'), value: 'tuesday' },
+    { label: __('Wednesday'), value: 'wednesday' },
+    { label: __('Thursday'), value: 'thursday' },
+    { label: __('Friday'), value: 'friday' },
+    { label: __('Saturday'), value: 'saturday' },
+    { label: __('Sunday'), value: 'sunday' },
 ];
 
 // Keep helper function to get status for weekdaysState
@@ -162,7 +164,7 @@ const formatDateForSubmit = formatDate;
 
 const submit = async () => {
     if (!isOwner.value) {
-        toast.warning("Only the board owner can update settings.");
+        toast.warning(__("Only the board owner can update settings."));
         return;
     }
 
@@ -193,33 +195,33 @@ const submit = async () => {
             // Recalculate nonWorkingDays based on updated weekdays from response
             recalculateNonWorkingDays();
 
-            toast.success(response.data.message || 'Board updated successfully!');
+            toast.success(response.data.message || __("Board updated successfully!"));
         } else {
             const fallbackPayload = { ...props.board, ...payload };
             emit('board-updated', fallbackPayload);
-            toast.success('Board updated successfully (fallback)!');
+            toast.success(__("Board updated successfully (fallback)!"));
         }
 
     } catch (error) {
-        console.error("Error updating board settings:", error);
-        if (error.response && error.response.data && error.response.data.errors) {
+        console.error(__("Error updating board settings:"), error);
+        if (error.response && error.response.data && error.response.data.data.errors) {
             errors.value = error.response.data.errors;
             if (errors.value.non_working_days && !Array.isArray(errors.value.non_working_days)) {
-                errors.value.non_working_days = ['Invalid selection for non-working days (numeric).'];
+                errors.value.non_working_days = [__("Invalid selection for non-working days (numeric).")];
             } else if (Array.isArray(errors.value.non_working_days)) {
                 errors.value.non_working_days = [errors.value.non_working_days.join(' ')];
             }
 
             if (errors.value.weekdays && !Array.isArray(errors.value.weekdays)) {
-                errors.value.weekdays = ['Invalid selection or format for weekdays (object).'];
+                errors.value.weekdays = [__("Invalid selection or format for weekdays (object).")];
             } else if (Array.isArray(errors.value.weekdays)) {
                 errors.value.weekdays = [errors.value.weekdays.join(' ')];
             }
-            toast.error(error.response.data.message || 'Validation failed. Please check the form.');
+            toast.error(error.response.data.message || __("Validation failed. Please check the form."));
         } else if (error.response && error.response.data && error.response.data.message) {
-            toast.error(`Error: ${error.response.data.message}`);
+            toast.error(`${__("Error:")}: ${error.response.data.message}`);
         } else {
-            toast.error(error.message || 'An unexpected error occurred while updating the board.');
+            toast.error(error.message || __("An unexpected error occurred while updating the board."));
         }
     } finally {
         loading.value = false;
@@ -230,12 +232,12 @@ const submit = async () => {
 <template>
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full max-w-2xl">
-            <h2 class="text-xl font-semibold text-gray-800 mb-6">Board Settings</h2>
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">{{ __("Board Settings") }}</h2>
 
             <form @submit.prevent="submit">
                 <!-- Board Title -->
                 <div class="mb-4">
-                    <InputLabel for="title" value="Board Title" />
+                    <InputLabel for="title" :value="__('Board Title')" />
                     <TextInput
                         id="title"
                         type="text"
@@ -251,7 +253,7 @@ const submit = async () => {
 
                 <!-- Board Description -->
                 <div class="mb-6">
-                    <InputLabel for="description" value="Description" />
+                    <InputLabel for="description" :value="__('Description')" />
                     <textarea
                         id="description"
                         class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
@@ -265,13 +267,13 @@ const submit = async () => {
                 
                 <!-- End Date Picker -->
                 <div class="mb-6">
-                    <InputLabel for="end-date" value="End Date" />
-                    <p class="text-xs text-gray-500 mt-1">You can change the end date of the board. The start date cannot be modified.</p>
+                    <InputLabel for="end-date" :value="__('End Date')" />
+                    <p class="text-xs text-gray-500 mt-1">{{ __("You can change the end date of the board. The start date cannot be modified.") }}</p>
                     <VueDatePicker 
                         id="end-date"
                         v-model="endDate" 
                         :enable-time-picker="false"
-                        placeholder="Select end date"
+                        :placeholder="__('Select end date')"
                         class="w-full mt-1"
                         :disabled="!isOwner || loading"
                         :class="{ 'cursor-not-allowed': !isOwner }"
@@ -281,8 +283,8 @@ const submit = async () => {
                 
                 <!-- Weekdays Selection (UI controls weekdaysState) -->
                 <div class="mb-6">
-                    <InputLabel value="Working Days (Click to toggle)" /> <!-- Updated label slightly -->
-                    <p class="text-xs text-gray-500 mt-1">Define the standard working (white) and non-working (blue) days for this board.</p> <!-- Updated explanation -->
+                    <InputLabel :value="__('Working Days (Click to toggle)')" />
+                    <p class="text-xs text-gray-500 mt-1">{{ __("Define the standard working (white) and non-working (blue) days for this board.") }}</p>
                     <div class="mt-2 flex flex-wrap gap-2">
                         <button
                             v-for="day in daysOfWeekOptions"
@@ -307,12 +309,12 @@ const submit = async () => {
                     <!-- Display errors for weekdaysState -->
                     <InputError class="mt-2" :message="errors.weekdays ? errors.weekdays[0] : ''" />
                     <!-- Optionally display non_working_days errors if needed, though not directly editable here -->
-                    <InputError v-if="errors.non_working_days" class="mt-2 text-red-600 text-xs" :message="`Non-working days (numeric) error: ${errors.non_working_days[0]}`" />
+                    <InputError v-if="errors.non_working_days" class="mt-2 text-red-600 text-xs" :message="`${__('Non-working days (numeric) error:')}: ${errors.non_working_days[0]}`" />
                 </div>
 
                 <!-- Status -->
                 <div class="mb-6">
-                    <InputLabel for="status" value="Board Status" />
+                    <InputLabel for="status" :value="__('Board Status')" />
                     <select
                         id="status"
                         class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
@@ -321,8 +323,8 @@ const submit = async () => {
                         :disabled="!isOwner || loading"
                         :class="{ 'bg-gray-100 cursor-not-allowed': !isOwner }"
                     >
-                        <option value="active">Active</option>
-                        <option value="archived">Archived</option>
+                        <option value="active">{{ __("Active") }}</option>
+                        <option value="archived">{{ __("Archived") }}</option>
                     </select>
                     <InputError class="mt-2" :message="errors.status ? errors.status[0] : ''" />
                 </div>
@@ -330,10 +332,10 @@ const submit = async () => {
                 <!-- Submit Button -->
                 <div class="flex items-center justify-end">
                     <p v-if="!isOwner" class="text-sm text-gray-500 mr-4">
-                        Only the board owner can change these settings.
+                        {{ __("Only the board owner can change these settings.") }}
                     </p>
                     <PrimaryButton :class="{ 'opacity-25': loading }" :disabled="!isOwner || loading">
-                        {{ loading ? 'Saving...' : 'Save Changes' }}
+                        {{ loading ? __("Saving...") : __("Save Changes") }}
                     </PrimaryButton>
                 </div>
             </form>
