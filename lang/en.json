@@ -265,5 +265,14 @@
     "Failed to parse board weekdays JSON string:": "Failed to parse board weekdays JSON string:",
     "Board weekdays data received but was invalid or empty, using default.": "Board weekdays data received but was invalid or empty, using default.",
     "Non-working days (numeric) error:": "Non-working days (numeric) error:",
-    "Only the board owner can change these settings.": "Only the board owner can change these settings."
+    "Only the board owner can change these settings.": "Only the board owner can change these settings.",
+    "Confirm Action": "Confirm Action",
+    "Confirm": "Confirm",
+    "Color saved successfully!": "Color saved successfully!",
+    "Failed to save color. Please try again.": "Failed to save color. Please try again.",
+    "Save Color": "Save Color",
+    "An error occurred while saving your color.": "An error occurred while saving your color.",
+    "Select Color": "Select Color",
+    "Profile Colour": "Profile Colour",
+    "Choose a color to personalize your profile.": "Choose a color to personalize your profile."
 }

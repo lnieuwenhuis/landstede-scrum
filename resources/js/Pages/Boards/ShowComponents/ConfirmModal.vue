@@ -1,5 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useTranslations } from '@/translations'
+
+const { __ } = useTranslations();
 
 const props = defineProps({
     show: {
@@ -8,7 +11,7 @@ const props = defineProps({
     },
     title: {
         type: String,
-        default: 'Confirm Action'
+        default: null
     },
     message: {
         type: String,
@@ -16,17 +19,22 @@ const props = defineProps({
     },
     confirmText: {
         type: String,
-        default: 'Confirm'
+        default: null
     },
     cancelText: {
         type: String,
-        default: 'Cancel'
+        default: null
     },
     confirmButtonClass: {
         type: String,
         default: 'bg-red-600 hover:bg-red-700'
     }
 });
+
+// Use computed properties for translated defaults
+const displayTitle = computed(() => props.title || __('Confirm Action'));
+const displayConfirmText = computed(() => props.confirmText || __('Confirm'));
+const displayCancelText = computed(() => props.cancelText || __('Cancel'));
 
 const emit = defineEmits(['confirm', 'cancel']);
 
@@ -65,11 +73,11 @@ const cancel = () => {
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                             <h3 class="text-lg leading-6 font-medium text-gray-900">
-                                {{ title }}
+                                {{ __(displayTitle) }}
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500">
-                                    {{ message }}
+                                    {{ __(message) }}
                                 </p>
                             </div>
                         </div>
@@ -81,14 +89,14 @@ const cancel = () => {
                         :class="`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm ${confirmButtonClass}`"
                         @click="confirm"
                     >
-                        {{ confirmText }}
+                        {{ __(displayConfirmText) }}
                     </button>
                     <button 
                         type="button" 
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                         @click="cancel"
                     >
-                        {{ cancelText }}
+                        {{ __(displayCancelText) }}
                     </button>
                 </div>
             </div>

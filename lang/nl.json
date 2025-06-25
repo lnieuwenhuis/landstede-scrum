@@ -266,5 +266,14 @@
     "Failed to parse board weekdays JSON string:": "Kon bord weekdagen JSON string niet parsen:",
     "Board weekdays data received but was invalid or empty, using default.": "Bord weekdagen data ontvangen maar was ongeldig of leeg, gebruik standaard.",
     "Non-working days (numeric) error:": "Niet-werkdagen (numeriek) fout:",
-    "Only the board owner can change these settings.": "Alleen de eigenaar van het bord kan deze instellingen wijzigen."
+    "Only the board owner can change these settings.": "Alleen de eigenaar van het bord kan deze instellingen wijzigen.",
+    "Confirm Action": "Bevestig Actie",
+    "Confirm": "Bevestigen",
+    "Color saved successfully!": "Kleur succesvol opgeslagen!",
+    "Failed to save color. Please try again.": "Fout bij het opslaan van de kleur. Probeer het opnieuw.",
+    "Save Color": "Kleur Opslaan",
+    "An error occurred while saving your color.": "Er is een fout opgetreden bij het opslaan van je kleur.",
+    "Select Color": "Kleur selecteren",
+    "Profile Colour": "Profiel Kleur",
+    "Choose a color to personalize your profile.": "Kies een kleur om je profiel te personaliseren."
 }

@@ -325,6 +325,17 @@ class HandleInertiaRequests extends Middleware
                     'Only the board owner can change these settings.' => __('Only the board owner can change these settings.'),
                     'User removed successfully' => __('User removed successfully'),
                     'Failed to remove user' => __('Failed to remove user'),
+                    'Confirm Action' => __('Confirm Action'),
+                    'Confirm' => __('Confirm'),
+
+                    'Color saved successfully!' => __('Color saved successfully!'),
+                    'Failed to save color.' => __('Failed to save color.'),
+                    'Color' => __('Color'),
+                    'Save Color' => __('Save Color'),
+                    'An error occurred while saving your color.' => __('An error occurred while saving your color.'),
+                    'Profile Colour' => __('Profile Colour'),
+                    'Choose a color to personalize your profile.' => __('Choose a color to personalize your profile.'),
+                    'Select Color' => __('Select Color'),
                 ];
             },
         ];

@@ -5,9 +5,10 @@ import { ref, onMounted } from 'vue';
 import { ChromePicker } from 'vue-color'; 
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations';
 const toast = useToast();
 const { props } = usePage();
-
+const { __ } = useTranslations();
 const user = ref(props.user); 
 
 // Define color with a static default value
@@ -27,13 +28,13 @@ const handleSaveColor = async (colorValue) => {
         const response = await axios.post('/api/users/changeUserColor', { color: colorValue });
         console.log(response)
         if (response.data.message) {
-            toast.success('Color saved successfully!');
+            toast.success(__('Color saved successfully!'));
         } else {
-            toast.error('Failed to save color.');
+            toast.error(__('Failed to save color.'));
         }
     } catch (error) {
         console.error('Error saving color:', error);
-        toast.error('An error occurred while saving your color.');
+        toast.error(__('An error occurred while saving your color.'));
     }
 };
 </script>
@@ -46,7 +47,7 @@ const handleSaveColor = async (colorValue) => {
             <h2
                 class="text-xl font-semibold leading-tight text-gray-800"
             >
-                Profile
+                {{ __('Profile') }}
             </h2>
         </template>
 
@@ -58,16 +59,16 @@ const handleSaveColor = async (colorValue) => {
                     <div class="max-w-xl">
                         <section>
                             <header>
-                                <h2 class="text-lg font-medium text-gray-900">Profile Colour</h2>
+                                <h2 class="text-lg font-medium text-gray-900">{{__('Profile Colour')}}</h2>
                                 <p class="mt-1 text-sm text-gray-600">
-                                    Choose a color to personalize your profile.
+                                    {{__('Choose a color to personalize your profile.')}}
                                 </p>
                             </header>
 
                             <div class="mt-6 space-y-6">
                                 <div>
                                     <label for="profileColorPicker" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Select Color
+                                        {{__('Select Color')}}
                                     </label>
                                     <div class="flex items-start space-x-4">
                                         <div>
@@ -84,7 +85,7 @@ const handleSaveColor = async (colorValue) => {
                                         @click="handleSaveColor(color)"
                                         class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     >
-                                        Save Color
+                                        {{__('Save Color')}}
                                     </button>
                                 </div>
                             </div>
