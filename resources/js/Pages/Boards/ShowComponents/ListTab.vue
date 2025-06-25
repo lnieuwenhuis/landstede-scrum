@@ -296,7 +296,7 @@ const getInitials = (name) => {
                         
                         <!-- Done Cards Dropdown -->
                         <tr v-if="doneCards.length > 0" class="bg-gray-50">
-                            <td colspan="5" class="px-4 py-2">
+                            <td colspan="6" class="px-4 py-2">
                                 <button 
                                     @click="showDoneCards = !showDoneCards" 
                                     class="flex items-center justify-between w-full text-left font-medium text-gray-700"
@@ -318,6 +318,22 @@ const getInitials = (name) => {
                         <!-- Done Cards (Expandable) -->
                         <template v-if="showDoneCards">
                             <tr v-for="card in doneCards" :key="'done-' + card.id" class="hover:bg-gray-50 bg-gray-100">
+
+    	                        <!-- category Column -->
+                                <td class="px-4 py-2 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div 
+                                            v-if="card.category_id"
+                                            class="w-3 h-3 rounded-full mr-2"
+                                            :style="{ 
+                                                backgroundColor: props.categories.find(c => c.id === card.category_id)?.color,
+                                                border: '1px solid #d1d5db'
+                                            }"
+                                        ></div>
+                                        {{ props.categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
+                                    </div>
+                                </td>
+
                                 <!-- Assignee Column -->
                                 <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">

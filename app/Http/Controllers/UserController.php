@@ -70,7 +70,7 @@ class UserController extends Controller
             if ($request->user_id == $currentUser->id) {
                 $oldestMember = $board->users()
                     ->where('users.id', '!=', $currentUser->id)
-                    ->orderBy('group_user.id')  // Using ID to determine the oldest member
+                    ->orderBy('board_user.id')  // Using ID to determine the oldest member
                     ->first();
 
                 if ($oldestMember) {

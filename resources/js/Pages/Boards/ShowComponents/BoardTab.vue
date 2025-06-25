@@ -1235,7 +1235,6 @@ const sortCards = (cards) => {
         </div>
     </div>
     
-    <!-- Add at the end of the template -->
     <ConfirmModal
         :show="showDeleteCardModal"
         title="Delete Card"
