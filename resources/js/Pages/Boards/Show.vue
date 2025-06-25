@@ -5,8 +5,10 @@ import { onMounted, ref, watch } from 'vue';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { buildChart } from '@/Helpers/BurndownHelper';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations';
 
 const toast = useToast();
+const { __ } = useTranslations();
 
 // Importing all tabs
 import BoardTab from './ShowComponents/BoardTab.vue';
@@ -24,7 +26,7 @@ const { props } = usePage();
 const board = ref(props.board); 
 const columns = ref(props.columns);
 const users = ref(props.users);
-const activeTab = ref('Kanban Board');
+const activeTab = ref(__('Kanban Board'));
 const categories = ref(props.categories);
 const isAdmin = props.currentUser.role === 'admin';
 const currentUser = ref(props.currentUser);
@@ -194,7 +196,7 @@ const selectTab = (tab) => {
 </script>
 
 <template>
-    <Head title="Board" />
+    <Head :title="__('Board')" />
 
     <AuthenticatedLayout>
         <div class="container mx-auto px-6 py-3">
@@ -205,20 +207,20 @@ const selectTab = (tab) => {
                         <div class="mobile-dropdown w-full sm:hidden border-b border-gray-200">
                             <details ref="dropdownRef" class="dropdown w-full relative">
                                 <summary class="py-2 px-1 font-medium text-sm flex items-center justify-between w-full cursor-pointer focus:outline-none transition-all duration-200 border-b-2" :class="dropdownOpen ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-700'">
-                                    {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }}
+                                    {{ __(activeTab) }}
                                     <svg class="h-5 w-5 ml-2 transition-transform duration-200" :class="{'rotate-180': dropdownOpen}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </summary>
                                 <div class="dropdown-menu absolute z-10 mt-1 w-full bg-white shadow-lg py-1 text-base overflow-auto max-h-60 transition-all duration-200">
                                     <button
-                                        v-for="tab in ['Kanban Board', 'list', 'burndown', 'sprints', 'users', 'settings']" 
+                                        v-for="tab in [__('Kanban Board'), __('List'), __('Burndown'), __('Sprints'), __('Users'), __('Settings')]" 
                                         :key="tab"
                                         @click="selectTab(tab)"
                                         class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150"
                                         :class="activeTab === tab ? 'text-blue-600' : 'text-gray-700'"
                                     >
-                                        {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                                        {{ tab }}
                                     </button>
                                 </div>
                             </details>
@@ -226,7 +228,7 @@ const selectTab = (tab) => {
                         <!-- Main tabs on the left -->
                         <div class="hidden sm:flex space-x-2 sm:space-x-4 md:space-x-6">
                             <button
-                                v-for="tab in ['Kanban Board', 'list', 'burndown', 'sprints']" 
+                                v-for="tab in [__('Kanban Board'), __('List'), __('Burndown'), __('Sprints')]" 
                                 :key="tab"
                                 @click="activeTab = tab"
                                 :class="[
@@ -236,14 +238,14 @@ const selectTab = (tab) => {
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 ]"
                             >
-                                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                                {{ tab }}
                             </button>
                         </div>
                         
                         <!-- User and Settings tabs on the right -->
                         <div class="hidden sm:flex space-x-2 sm:space-x-4 md:space-x-6">
                             <button
-                                v-for="tab in ['users', 'settings']" 
+                                v-for="tab in [__('Users'), __('Settings')]" 
                                 :key="tab"
                                 @click="activeTab = tab"
                                 :class="[
@@ -253,16 +255,16 @@ const selectTab = (tab) => {
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                 ]"
                             >
-                                {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+                                {{ tab }}
                             </button>
                         </div>
                     </nav>
                 </div>
 
             <!-- Tab Content -->
-            <div v-if="activeTab === 'Kanban Board'">
+            <div v-if="activeTab === __('Kanban Board')">
                 <BoardTab
-                    v-if="activeTab === 'Kanban Board'"
+                    v-if="activeTab === __('Kanban Board')"
                     :columns="columns"
                     :board="board" 
                     :users="users"
@@ -275,7 +277,7 @@ const selectTab = (tab) => {
                 />
             </div>
 
-            <div v-if="activeTab === 'burndown'">
+            <div v-if="activeTab === __('Burndown')">
                 <BurndownTab
                     :board="board"
                     :columns="columns"
@@ -291,7 +293,7 @@ const selectTab = (tab) => {
             </div>
 
             <!-- List View Tab -->
-            <div v-if="activeTab === 'list'">
+            <div v-if="activeTab === __('List')">
                 <ListTab
                     :columns="columns"
                     :board="board" 
@@ -302,7 +304,7 @@ const selectTab = (tab) => {
             </div>
 
             <!-- Users Tab -->
-            <div v-if="activeTab === 'users'">
+            <div v-if="activeTab === __('Users')">
                 <UsersTab
                     :users="users"
                     :board="board"
@@ -312,7 +314,7 @@ const selectTab = (tab) => {
 
             <!-- Sprints Tab -->
             <SprintsTab
-                v-if="activeTab === 'sprints'"
+                v-if="activeTab === __('Sprints')"
                 :sprints="sprints"
                 :board="board" 
                 :is-admin="isAdmin"
@@ -321,7 +323,7 @@ const selectTab = (tab) => {
             />
 
             <SettingsTab
-                v-if="activeTab === 'settings'"
+                v-if="activeTab === __('Settings')"
                 :board="board"
                 :weekdays="weekdays"
                 :current-user="currentUser"

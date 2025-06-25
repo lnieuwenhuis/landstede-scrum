@@ -4,6 +4,7 @@ import Column from './BoardTabComponents/Column.vue';
 import ConfirmModal from './ConfirmModal.vue';
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations.js';
 import { 
     getInitials,
     tryAssignUserToCard, 
@@ -17,6 +18,7 @@ import {
 } from '../ShowHelpers/BoardTabHelper';
 import { groupBy } from 'lodash-es';
 
+const { __ } = useTranslations();
 const toast = useToast();
 
 const props = defineProps({
@@ -112,7 +114,7 @@ const toggleUserDropdown = (cardId, event) => {
 // assign user to card
 const assignUserToCard = async (cardId, userId) => {
     if (props.currentSprint && (props.currentSprint.status === 'locked' || props.currentSprint.status === 'checked')) {
-        toast.warning("Cannot assign users while sprint is locked");
+        toast.warning(__("Cannot assign users while sprint is locked"));
         userDropdownOpen.value = null;
         return;
     }
@@ -122,9 +124,9 @@ const assignUserToCard = async (cardId, userId) => {
         const updatedColumns = await tryAssignUserToCard(cardId, userId, props);
         
         emit('columns-updated', updatedColumns);
-        toast.success(userId ? 'User assigned successfully' : 'User unassigned successfully');
+        toast.success(userId ? __("User assigned successfully") : __("User unassigned successfully"));
     } catch (error) {
-        toast.error('Failed to assign user to card');
+        toast.error(__("Failed to assign user to card"));
     } finally {
         loading.value = false;
         userDropdownOpen.value = null;
@@ -236,7 +238,7 @@ const handleDragStart = (event, cardId, columnId) => {
     const sourceColumn = props.columns.find(col => col.id === columnId);
     // Check the status property directly on the column object
     if (!sourceColumn || sourceColumn.status === 'locked') { 
-        toast.warning('Cannot move cards from a locked column.'); // Optional: Add feedback
+        toast.warning(__("Cannot move cards from a locked column")); // Optional: Add feedback
         event.preventDefault();
         return;
     }
@@ -269,7 +271,7 @@ const handleDrop = async (event, targetColumnId) => {
     const targetColumn = props.columns.find(col => col.id === targetColumnId);
     // Check the status property directly on the column object
     if (!targetColumn || targetColumn.status === 'locked') { 
-        toast.error('Cannot move cards to a locked column.');
+        toast.error(__("Cannot move cards to a locked column"));
         currentDragCardId.value = null;
         currentDragSourceColumnId.value = null;
         currentDragColumnId.value = null;
@@ -292,7 +294,7 @@ const handleDrop = async (event, targetColumnId) => {
             
         } catch (error) {
             console.error("Error moving card:", error);
-            toast.error('Failed to move card.'); 
+            toast.error(__("Failed to move card")); 
         } finally {
             loading.value = false;
             // Reset drag state regardless of success/failure
@@ -432,7 +434,7 @@ const createSwimlanes = (cards, users) => {
     if (grouped['null'] || grouped['undefined']) {
         swimlanes.push({
             userId: null,
-            userName: 'Unassigned',
+            userName: __("Unassigned"),
             userColor: null,
             cards: grouped['null'] || grouped['undefined'] || []
         });
@@ -535,10 +537,10 @@ const handleDeleteCard = async () => {
         
         if (updatedColumns) {
             emit('columns-updated', updatedColumns);
-            toast.success('Card deleted successfully');
+            toast.success(__("Card deleted successfully"));
         }
     } catch (error) {
-        toast.error('Failed to delete card');
+        toast.error(__("Failed to delete card"));
     } finally {
         loading.value = false;
         showDeleteCardModal.value = false;
@@ -600,7 +602,7 @@ const handleTouchDragStart = (cardId, columnId) => {
     const sourceColumn = props.columns.find(col => col.id === columnId);
     // Check the status property directly on the column object
     if (!sourceColumn || sourceColumn.status === 'locked') { 
-        toast.warning('Cannot move cards from a locked column.');
+        toast.warning(__("Cannot move cards from a locked column"));
         return;
     }
     
@@ -627,7 +629,7 @@ const handleTouchDrop = async (targetColumnId) => {
     const targetColumn = props.columns.find(col => col.id === parseInt(targetColumnId) || col.id === targetColumnId);
     
     if (!targetColumn) {
-        toast.error('Target column not found');
+        toast.error(__("Target column not found"));
         touchDragCardId.value = null;
         touchDragSourceColumnId.value = null;
         touchDragColumnId.value = null;
@@ -636,7 +638,7 @@ const handleTouchDrop = async (targetColumnId) => {
     
     // Check if the column is locked
     if (targetColumn.status === 'locked') {
-        toast.error('Cannot move cards to a locked column');
+        toast.error(__("Cannot move cards to a locked column"));
         touchDragCardId.value = null;
         touchDragSourceColumnId.value = null;
         touchDragColumnId.value = null;
@@ -659,7 +661,7 @@ const handleTouchDrop = async (targetColumnId) => {
             
         } catch (error) {
             console.error("Error moving card:", error);
-            toast.error('Failed to move card.'); 
+            toast.error(__("Failed to move card")); 
         } finally {
             loading.value = false;
             // Reset drag state regardless of success/failure
@@ -781,34 +783,31 @@ const sortCards = (cards) => {
 </script>
 
 <template>
-    <div class="flex justify-center">
-        <div class="bg-white p-6 rounded-lg shadow w-full">
-            <!-- Board header - responsive layout -->
-            <div class="w-full">
-            <div class="w-full flex flex-col md:flex-row md:items-center md:justify-between">
-                <!-- Left side: Title and sprint info -->
-                <div class="flex items-center flex-wrap gap-2 mb-3 md:mb-0">
-                    <h1 class="text-2xl font-semibold text-gray-800 truncate">{{ board.title }}</h1>
-                    <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
-                        <span>({{ currentSprint.title }})</span>
-                        <span
-                            :class="[ 
-                                getStatusStyles(currentSprint.status).border,
-                                getStatusStyles(currentSprint.status).text,
-                                'text-sm px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ml-2'
-                            ]"
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-6">
+                <!-- Left side: Board info and description toggle -->
+                <div class="w-full md:w-auto mb-4 md:mb-0">
+                    <div class="flex items-center">
+                        <span 
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2"
+                            :class="getStatusStyles(currentSprint?.status || 'inactive')"
                         >
-                            {{ currentSprint.status }}
+                            {{ __(currentSprint?.status) || __("inactive") }}
                         </span>
-                        <button 
-                            @click="toggleDescription" 
-                            class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
-                                <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-800 truncate ml-3">{{ board.title }}</h1>
+                        <div v-if="currentSprint" class="text-gray-600 truncate flex items-center ml-4">
+                            <span>({{ currentSprint.title }})</span>
+                            <button 
+                                @click="toggleDescription" 
+                                class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 15 15" fill="currentColor">
+                                    <path v-if="!showDescription" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    <path v-else fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -824,9 +823,9 @@ const sortCards = (cards) => {
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                             </svg>
-                            User
+                            {{ __("User") }}
                             <span v-if="selectedUserId" class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                {{ users.find(u => u.id === selectedUserId)?.name || 'Unknown' }}
+                                {{ users.find(u => u.id === selectedUserId)?.name || __("Unknown") }}
                             </span>
                         </button>
                         
@@ -845,7 +844,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        All Users
+                                        {{ __("All Users") }}
                                     </button>
                                     <button 
                                         v-for="user in users" 
@@ -883,9 +882,9 @@ const sortCards = (cards) => {
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.023.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                             </svg>
-                            Category
+                            {{ __("Category") }}
                             <span v-if="selectedCategoryId !== null" class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                {{ selectedCategoryId === 'uncategorized' ? 'Uncategorized' : (categories.find(c => c.id === selectedCategoryId)?.name || 'Unknown') }}
+                                {{ selectedCategoryId === 'uncategorized' ? __("Uncategorized") : (categories.find(c => c.id === selectedCategoryId)?.name || __("Unknown")) }}
                             </span>
                         </button>
                         
@@ -904,7 +903,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        All Categories
+                                        {{ __("All Categories") }}
                                     </button>
                                     <button 
                                         @click="selectedCategoryId = 'uncategorized'; showCategoryFilter = false"
@@ -915,7 +914,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Uncategorized
+                                        {{ __("Uncategorized") }}
                                     </button>
                                     <button 
                                         v-for="category in categories" 
@@ -948,12 +947,12 @@ const sortCards = (cards) => {
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
                             </svg>
-                            Sort: {{ 
-                                sortBy === 'date-old' ? 'Date (Old to New)' : 
-                                sortBy === 'date-new' ? 'Date (New to Old)' : 
-                                sortBy === 'category' ? 'Category' : 
-                                sortBy === 'points-high' ? 'Points (High to Low)' : 
-                                'Points (Low to High)' 
+                            {{ __("Sort:") }} {{ 
+                                sortBy === 'date-old' ? __("Date (Old to New)") : 
+                                sortBy === 'date-new' ? __("Date (New to Old)") : 
+                                sortBy === 'category' ? __("Category") : 
+                                sortBy === 'points-high' ? __("Points (High to Low)") : 
+                                __("Points (Low to High)") 
                             }}
                         </button>
                         
@@ -972,7 +971,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Date (Old to New)
+                                        {{ __("Date (Old to New)") }}
                                     </button>
                                     <button 
                                         @click="sortBy = 'date-new'; showSortOptions = false"
@@ -983,7 +982,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Date (New to Old)
+                                        {{ __("Date (New to Old)") }}
                                     </button>
                                     <button 
                                         @click="sortBy = 'category'; showSortOptions = false"
@@ -994,7 +993,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Category
+                                        {{ __("Category") }}
                                     </button>
                                     <button 
                                         @click="sortBy = 'points-high'; showSortOptions = false"
@@ -1005,7 +1004,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Points (High to Low)
+                                        {{ __("Points (High to Low)") }}
                                     </button>
                                     <button 
                                         @click="sortBy = 'points-low'; showSortOptions = false"
@@ -1016,7 +1015,7 @@ const sortCards = (cards) => {
                                                 : 'text-gray-700 hover:bg-gray-100'
                                         ]"
                                     >
-                                        Points (Low to High)
+                                        {{ __("Points (Low to High)") }}
                                     </button>
                                 </div>
                             </div>
@@ -1027,7 +1026,7 @@ const sortCards = (cards) => {
                 
                 <!-- Board description (shown/hidden based on showDescription) -->
                 <div v-if="showDescription" class="rounded-md text-gray-700 text-sm mb-3">
-                    {{ board.description || 'No description available.' }}
+                    {{ board.description || __("No description available") }}
                 </div>  
             </div>
             <!-- Columns container -->
@@ -1155,12 +1154,12 @@ const sortCards = (cards) => {
                     
                     <!-- Add column form/button is rendered last -->
                     <div v-if="showNewColumn" class="flex-shrink-0 w-72 bg-white p-3 rounded-lg shadow">
-                        <h3 class="font-medium text-gray-700 mb-2">Add New Column</h3>
+                        <h3 class="font-medium text-gray-700 mb-2">{{ __("Add New Column") }}</h3>
                         <div class="relative">
                             <input 
                                 v-model="newColumnTitle" 
                                 class="w-full px-3 py-2 border border-gray-300 rounded mb-2 pr-8"
-                                placeholder="Column title"
+                                :placeholder="__('Column title')"
                                 :disabled="loading"
                             />
                             <span v-if="loading" class="absolute right-3 top-3">⏳</span>
@@ -1171,7 +1170,7 @@ const sortCards = (cards) => {
                                 class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
                                 :disabled="loading"
                             >
-                                Cancel
+                                {{ __("Cancel") }}
                             </button>
                             <button 
                                 @click="handleAddColumn({
@@ -1184,7 +1183,7 @@ const sortCards = (cards) => {
                                 :disabled="loading"
                             >
                                 <span v-if="loading">⏳</span>
-                                {{ loading ? 'Adding...' : 'Add Column' }}
+                                {{ loading ? __("Adding...") : __("Add Column") }}
                             </button>
                         </div>
                     </div>
@@ -1199,16 +1198,15 @@ const sortCards = (cards) => {
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                             </svg>
-                            <span class="mt-2 block text-sm font-medium text-gray-600">Add Column</span>
+                            <span class="mt-2 block text-sm font-medium text-gray-600">{{ __("Add Column") }}</span>
                         </div>
                     </button>
                 </div>
             </div>
         </div>
-    </div>
     
     <!-- User assignment modal -->
-    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="absolute inset-0 z-50">
+    <div v-if="userDropdownOpen && (!props.currentSprint || (props.currentSprint.status !== 'locked' && props.currentSprint.status !== 'checked'))" class="fixed inset-0 z-50">
         <div 
             class="bg-white rounded-md shadow-lg w-64 absolute overflow-hidden user-dropdown"
             :style="userDropdownPosition"
@@ -1237,9 +1235,9 @@ const sortCards = (cards) => {
     
     <ConfirmModal
         :show="showDeleteCardModal"
-        title="Delete Card"
-        message="Are you sure you want to delete this card?"
-        confirm-text="Delete"
+        :title="__('Delete Card')"
+        :message="__('Are you sure you want to delete this card?')"
+        :confirm-text="__('Delete')"
         @confirm="handleDeleteCard"
         @cancel="showDeleteCardModal = false"
     />
