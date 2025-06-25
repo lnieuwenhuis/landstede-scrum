@@ -32,11 +32,23 @@ class ColumnController extends Controller
             return response()->json(['error' => 'Board not found']);
         }
 
+        $status = "active";
+        if ($board->currentSprint()) {
+            $sprintStatus = $board->currentSprint()['status'];
+            if ($sprintStatus === 'locked' || $sprintStatus === 'checked') {
+                $status = 'locked';
+            } else if ($sprintStatus === 'planning') {
+                if ($title !== 'Project Backlog' && $title !== 'Sprint Backlog') {
+                    $status = 'locked';
+                }
+            }
+        }
+
         $column = Column::factory()->create([
             'title' => $title,
             'is_done_column' => $done,
             'board_id' => $board->id,
-            'status'=> "active"
+            'status'=> $status
         ]);
 
         $column->save();
