@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { useTranslations } from '@/translations';
 import ConfirmModal from './ConfirmModal.vue';
 
 const toast = useToast();
+const { __ } = useTranslations();
 
 const props = defineProps({
     columns: Array,
@@ -115,13 +117,13 @@ const saveEditedCard = async () => {
                 }
             });
             
-            toast.success('Card updated successfully');
+            toast.success(__('Card updated successfully'));
             closeEditModal();
         } else {
-            throw new Error(response.data.error || 'Failed to update card');
+            throw new Error(response.data.error || __('Failed to update card'));
         }
     } catch (error) {
-        toast.error(error.error || 'Failed to update card');
+        toast.error(error.error || __('Failed to update card'));
     }
 };
 
@@ -162,7 +164,7 @@ const confirmDeleteCard = async () => {
     try {
         const response = await axios.post(`/api/deleteCard/${cardId}`);
         if (!response.data.message) {
-            throw new Error('Failed to delete card');
+            throw new Error(__('Failed to delete card'));
         }
         
         toast.success(response.data.message);
@@ -171,7 +173,7 @@ const confirmDeleteCard = async () => {
         if (deletedCard && deletedFromColumn) {
             deletedFromColumn.cards.push(deletedCard);
         }
-        toast.error('Failed to delete card');
+        toast.error(__('Failed to delete card'));
     }
     
     // Close the modal
@@ -198,7 +200,7 @@ const getInitials = (name) => {
 <template>
     <div class="flex-1">
         <div class="bg-white p-4 shadow-md rounded-lg overflow-hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 m-2">Task List</h2>
+            <h2 class="text-2xl font-semibold text-gray-800 m-2">{{ __('Task List') }}</h2>
 
             <!-- Table View of Tasks -->
             <div class="overflow-x-auto">
@@ -206,22 +208,22 @@ const getInitials = (name) => {
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Category
+                                {{ __('Category') }}
                             </th>
                             <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Assignee
+                                {{ __('Assignee') }}
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Title
+                                {{ __('Title') }}
                             </th>
                             <th scope="col" class="px-6 py-3 sm:text-left text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Points
+                                {{ __('Points') }}
                             </th>
                             <th scope="col" class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Column
+                                {{ __('Column') }}
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
+                                {{ __('Actions') }}
                             </th>
                         </tr>
                     </thead>
@@ -238,14 +240,14 @@ const getInitials = (name) => {
                                             border: '1px solid #d1d5db'
                                         }"
                                     ></div>
-                                    {{ props.categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
+                                    {{ props.categories.find(c => c.id === card.category_id)?.name || __('Uncategorized') }}
                                 </div>
                             </td>
                             
                             <!-- Assignee Column -->
                             <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">
-                                    {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
+                                    {{ props.board.users.find(user => user.id === card.user_id)?.name || __('Unassigned') }}
                                 </div>
                             </td>
                             
@@ -301,7 +303,7 @@ const getInitials = (name) => {
                                     @click="showDoneCards = !showDoneCards" 
                                     class="flex items-center justify-between w-full text-left font-medium text-gray-700"
                                 >
-                                    <span>Completed Tasks ({{ doneCards.length }})</span>
+                                    <span>{{ __('Completed Tasks') }} ({{ doneCards.length }})</span>
                                     <svg 
                                         class="h-5 w-5 text-gray-500 transform transition-transform duration-200" 
                                         :class="{ 'rotate-180': showDoneCards }"
@@ -318,8 +320,7 @@ const getInitials = (name) => {
                         <!-- Done Cards (Expandable) -->
                         <template v-if="showDoneCards">
                             <tr v-for="card in doneCards" :key="'done-' + card.id" class="hover:bg-gray-50 bg-gray-100">
-
-    	                        <!-- category Column -->
+                                <!-- category Column -->
                                 <td class="px-4 py-2 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div 
@@ -330,14 +331,14 @@ const getInitials = (name) => {
                                                 border: '1px solid #d1d5db'
                                             }"
                                         ></div>
-                                        {{ props.categories.find(c => c.id === card.category_id)?.name || 'Uncategorized' }}
+                                        {{ props.categories.find(c => c.id === card.category_id)?.name || __('Uncategorized') }}
                                     </div>
                                 </td>
 
                                 <!-- Assignee Column -->
                                 <td class="hidden sm:table-cell px-4 py-2 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ props.board.users.find(user => user.id === card.user_id)?.name || 'Unassigned' }}
+                                        {{ props.board.users.find(user => user.id === card.user_id)?.name || __('Unassigned') }}
                                     </div>
                                 </td>
                                 
@@ -390,7 +391,7 @@ const getInitials = (name) => {
                         <!-- Empty State -->
                         <tr v-if="activeCards.length === 0 && doneCards.length === 0">
                             <td colspan="5" class="px-4 py-10 text-center text-gray-500">
-                                No cards found in any column
+                                {{ __('No cards found in any column') }}
                             </td>
                         </tr>
                     </tbody>
@@ -398,14 +399,14 @@ const getInitials = (name) => {
             </div>
         </div>
         
-        <!-- Edit Card Modal and Delete Confirmation Modal remain unchanged -->
+        <!-- Edit Card Modal -->
         <div v-if="editModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Card</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Edit Card') }}</h3>
                 
                 <div class="space-y-4">
                     <div>
-                        <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                        <label for="title" class="block text-sm font-medium text-gray-700">{{ __('Title') }}</label>
                         <input 
                             type="text" 
                             id="title" 
@@ -415,7 +416,7 @@ const getInitials = (name) => {
                     </div>
                     
                     <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <label for="description" class="block text-sm font-medium text-gray-700">{{ __('Description') }}</label>
                         <textarea 
                             id="description" 
                             v-model="editForm.description" 
@@ -425,7 +426,7 @@ const getInitials = (name) => {
                     </div>
                     
                     <div>
-                        <label for="points" class="block text-sm font-medium text-gray-700">Points</label>
+                        <label for="points" class="block text-sm font-medium text-gray-700">{{ __('Points') }}</label>
                         <input 
                             type="number" 
                             id="points" 
@@ -441,13 +442,13 @@ const getInitials = (name) => {
                         @click="closeEditModal" 
                         class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
-                        Cancel
+                        {{ __('Cancel') }}
                     </button>
                     <button 
                         @click="saveEditedCard" 
                         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        Save Changes
+                        {{ __('Save Changes') }}
                     </button>
                 </div>
             </div>
@@ -456,10 +457,10 @@ const getInitials = (name) => {
         <!-- Add Delete Confirmation Modal -->
         <ConfirmModal
             :show="showDeleteCardModal"
-            title="Delete Card"
-            message="Are you sure you want to delete this card? This action cannot be undone."
-            confirm-text="Delete"
-            cancel-text="Cancel"
+            :title="__('Delete Card')"
+            :message="__('Are you sure you want to delete this card?')"
+            :confirm-text="__('Delete')"
+            :cancel-text="__('Cancel')"
             confirm-button-class="bg-red-600 hover:bg-red-700"
             @confirm="confirmDeleteCard"
             @cancel="closeDeleteModal"

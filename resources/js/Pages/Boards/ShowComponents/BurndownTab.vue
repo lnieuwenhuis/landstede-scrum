@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Line } from 'vue-chartjs';
+import { useTranslations } from '@/translations';
+
+const { __ } = useTranslations();
 
 const props = defineProps({
     board: Object,
@@ -54,7 +57,7 @@ const chartKey = ref(0);
     <div class="flex justify-center">
         <div class="bg-white p-6 rounded-lg shadow w-full">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-2 sm:mb-0">Burndown Chart</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2 sm:mb-0">{{ __('Burndown Chart') }}</h2>
                 <button 
                     @click="toggleDescription" 
                     class="text-gray-500 hover:text-gray-700 focus:outline-none absolute top-0 right-0"
@@ -70,7 +73,7 @@ const chartKey = ref(0);
                         <span>({{ currentSprint.title }})</span>
                     </span>
                     <span v-else class="text-sm text-gray-600 sm:ml-3">
-                        <span class="font-medium">No active sprint</span>
+                        <span class="font-medium">{{ __('No active sprint') }}</span>
                     </span>
                 </div>
             </div>
@@ -81,21 +84,21 @@ const chartKey = ref(0);
             </div>
             
             <div class="mb-6 px-4">
-                <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1" :class="{ '': showDescription, 'mt-6': !showDescription }" >Select Period</label>
+                <label for="period-select" class="block text-sm font-medium text-gray-700 mb-1" :class="{ '': showDescription, 'mt-6': !showDescription }" >{{ __('Select Period') }}</label>
                 <select 
                     id="period-select" 
                     v-model="selectedPeriod"
                     @change="handlePeriodChange"
                     class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 truncate"
                 >
-                    <option value="board" class="truncate">Entire Board ({{ formatDate(board.start_date) }} to {{ formatDate(board.end_date) }})</option>
+                    <option value="board" class="truncate">{{ __('Entire Board') }} ({{ formatDate(board.start_date) }} {{ __('to') }} {{ formatDate(board.end_date) }})</option>
                     <option 
                         v-for="sprint in sprints" 
                         :key="sprint.id" 
                         :value="sprint.id"
                         class="truncate"
                     >
-                        {{ sprint.title }} ({{ formatDate(sprint.start_date) }} to {{ formatDate(sprint.end_date) }})
+                        {{ sprint.title }} ({{ formatDate(sprint.start_date) }} {{ __('to') }} {{ formatDate(sprint.end_date) }})
                     </option>
                 </select>
             </div>
