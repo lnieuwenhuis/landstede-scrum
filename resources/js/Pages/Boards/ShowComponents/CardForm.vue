@@ -1,5 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
+import { useTranslations } from '@/translations';
+
+const { __ } = useTranslations();
 
 const props = defineProps({
     columnId: {
@@ -92,7 +95,7 @@ const handleCancel = () => {
 <template>
     <div class="bg-white p-3 rounded shadow-sm mb-2">
         <!-- Remove the heading when editing -->
-        <h4 v-if="!isEditingCard" class="font-medium text-gray-800 mb-2">Add Card</h4>
+        <h4 v-if="!isEditingCard" class="font-medium text-gray-800 mb-2">{{__('Add Card')}}</h4>
         
         <form @submit.prevent="handleSubmit">
             <div class="mb-3">
@@ -101,7 +104,7 @@ const handleCancel = () => {
                     v-model="title"
                     type="text"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Card title"
+                    :placeholder="__('Card title')"
                     required
                 />
             </div>
@@ -111,7 +114,7 @@ const handleCancel = () => {
                     id="card-description"
                     v-model="description"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Card description"
+                    :placeholder="__('Card description')"
                     rows="3"
                     style="resize: none"
                 ></textarea>
@@ -125,18 +128,18 @@ const handleCancel = () => {
                     inputmode="numeric"
                     pattern="[0-9]*"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Story points"
+                    :placeholder="__('Story points')"
                 />
             </div>
 
             <div class="mb-4">
-                <label for="card-category" class="block text-sm font-medium text-gray-700">Category</label>
+                <label for="card-category" class="block text-sm font-medium text-gray-700">{{__('Category')}}</label>
                 <select
                     id="card-category"
                     v-model="category"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
-                    <option :value="null">Choose a category</option>
+                    <option :value="null">{{__('Choose a category')}}</option>
                     <option v-for="cat in categories" :key="cat.id" :value="cat">{{ cat.name }}</option>
                 </select>
             </div>
@@ -147,7 +150,7 @@ const handleCancel = () => {
                     @click="handleCancel"
                     class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
                 >
-                    Cancel
+                    {{__('Cancel')}}
                 </button>
                 <button 
                     type="submit"
@@ -155,7 +158,7 @@ const handleCancel = () => {
                     :disabled="loading"
                 >
                     <span v-if="loading" class="animate-spin">⏳</span>
-                    {{ loading ? 'Saving...' : (isEditingCard ? 'Update' : 'Add') }}
+                    {{ loading ? __('Saving...') : (isEditingCard ? __('Update') : __('Add')) }}
                 </button>
             </div>
         </form>

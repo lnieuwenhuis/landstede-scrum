@@ -11,6 +11,8 @@ import {
     isValidHexColor,
     isLightColor
 } from '../../ShowHelpers/BoardTabHelper';
+import { useTranslations } from '@/translations';
+const { __ } = useTranslations();
 
 const toast = useToast();
 const loading = ref(false);
@@ -65,7 +67,7 @@ const toggleEditColumn = (column) => {
 
 const handleUpdateColumn = async ({ id, title }) => {
     if (!title.trim()) {
-        toast.error('Column title cannot be empty');
+        toast.error(__('Column title cannot be empty'));
         return;
     }
     
@@ -81,7 +83,7 @@ const handleUpdateColumn = async ({ id, title }) => {
             resetNewColumnForm();
         }
     } catch (error) {
-        toast.error('Failed to update column');
+        toast.error(__('Failed to update column'));
     } finally {
         loading.value = false;
     }
@@ -115,7 +117,7 @@ const handleDeleteColumn = async () => {
             emit('columns-updated', filteredColumns);
         }
     } catch (error) {
-        toast.error('Failed to delete column');
+        toast.error(__('Failed to delete column'));
         console.error(error);
     } finally {
         loading.value = false;
@@ -140,7 +142,7 @@ const handleDeleteCard = async () => {
 
     } catch (error) {
         // Error toast is likely handled within tryDeleteCard or BoardTab catches it
-        console.error("Error deleting card:", error);
+        console.error(__('Error deleting card:'), error);
         // Optionally add a toast here if the helper doesn't show one on error
         // toast.error('Failed to delete card on frontend.'); 
     } finally {
@@ -356,13 +358,13 @@ const handleTouchEnd = (event) => {
         <div class="flex-grow overflow-y-auto space-y-3 pr-1 min-h-[50px]"> 
             <!-- Placeholder: Show if there are no swimlanes or no cards in any swimlane -->
             <div v-if="!column.swimlanes || column.swimlanes.every(lane => !lane.cards || lane.cards.length === 0)" class="text-center text-gray-500 text-sm py-4">
-                No cards
+                {{__('No cards')}}
             </div>
             
             <!-- Swimlanes loop: Render only if there are swimlanes with cards -->
             <template v-else>
                 <!-- Use v-for on the <template> tag -->
-                <template v-for="swimlane in column.swimlanes" :key="swimlane.userId || 'unassigned'">
+                <template v-for="swimlane in column.swimlanes" :key="swimlane.userId || __('unassigned')">
                     <!-- Apply v-if to the inner div, ensuring swimlane is defined -->
                     <div 
                         v-if="swimlane && swimlane.cards && swimlane.cards.length > 0" 
@@ -383,7 +385,7 @@ const handleTouchEnd = (event) => {
                                 {{ getInitials(swimlane.userName) }}
                             </div>
                             <!-- Show 'Unassigned' header -->
-                            <span v-else class="text-gray-500 italic">Unassigned</span> 
+                            <span v-else class="text-gray-500 italic">{{__('Unassigned')}}</span> 
                             <span class="truncate">{{ swimlane.userId ? swimlane.userName : '' }}</span>
                             <span class="text-gray-400 text-xs">({{ swimlane.cards.length }})</span>
                         </div>
@@ -413,7 +415,7 @@ const handleTouchEnd = (event) => {
                                         :style="{
                                             color: isLightColor(props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6') ? '#000000' : '#ffffff'
                                         }"
-                                    >Points: {{ card.points || 0 }}</span>
+                                    >{{__('Points:')}} {{ card.points || 0 }}</span>
 
                                     <h2 
                                         class="text-xs px-2 py-1 leading-none"
@@ -421,7 +423,7 @@ const handleTouchEnd = (event) => {
                                             color: isLightColor(props.categories.find(c => c.id === card.category_id)?.color || '#3B82F6') ? '#000000' : '#ffffff'
                                         }"
                                     >
-                                        {{ props.categories.find(c => c.id === card.category_id)?.name || 'No category' }}
+                                        {{ props.categories.find(c => c.id === card.category_id)?.name || __('No category') }}
                                     </h2>
                                 </div>
                         <!-- Card Edit Form Slot -->
@@ -449,7 +451,7 @@ const handleTouchEnd = (event) => {
                                                     ? '#000000' 
                                                     : '#ffffff'
                                             }"
-                                            :title="users.find(u => u.id === card.user_id)?.name || 'Assign user'"
+                                            :title="users.find(u => u.id === card.user_id)?.name || __('Assign user')"
                                         >
                                             {{ card.user_id ? getInitials(users.find(u => u.id === card.user_id)?.name || '?') : '+' }}
                                         </button>
@@ -489,7 +491,7 @@ const handleTouchEnd = (event) => {
                 @click="$emit('add-card-toggle', column.id)"
                 class="w-full text-left px-3 py-2 text-sm text-gray-500 hover:bg-gray-200 rounded transition-colors" 
             >
-                + Add a card
+                {{__('+ Add a card')}}
             </button>
         </div>
 
