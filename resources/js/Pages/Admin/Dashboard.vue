@@ -2,10 +2,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';
 import ConfirmModal from '../Boards/ShowComponents/ConfirmModal.vue';
+import { useTranslations } from '../../translations.js';
 
+const { __ } = useTranslations();
 const toast = useToast();
 const page = usePage();
 
@@ -35,9 +37,9 @@ const handleDelete = () => {
         .then(response => {
             if (response.data.message) {
                 boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
-                searchResults.value.boards = searchResults.value.boards.filter(board => board.id!== boardToDelete.value);
+                searchResults.value.boards = searchResults.value.boards.filter(board => board.id !== boardToDelete.value);
                 toggleDeleteConfirmation();
-                toast.success(response.data.message);
+                toast.success(__('Board deleted successfully'));
             } else {
                 toast.error(response.data.error);
             }
@@ -82,21 +84,22 @@ const performSearch = async () => {
         };
     } catch (error) {
         console.error('Error searching:', error);
-        toast.error('Failed to perform search');
+        toast.error(__('Failed to perform search'));
         searchResults.value = { boards: [], users: [] }; 
     } finally {
         isSearching.value = false;
     }
 };
+
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="__('Dashboard')" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Dashboard
+                {{ __('Dashboard') }}
             </h2>
         </template>
 
@@ -104,7 +107,7 @@ const performSearch = async () => {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div v-if="showMessage" class="overflow-hidden bg-white shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6 text-gray-900 flex justify-between items-center">
-                        <span>You're logged in!</span>
+                        <span>{{ __('You\'re logged in!') }}</span>
                         <button 
                             @click="hideMessage" 
                             class="text-gray-500 hover:text-gray-700"
@@ -119,18 +122,16 @@ const performSearch = async () => {
                 <div class="bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="mb-4">
-                            <!-- Title with board count underneath -->
                             <div class="mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900">Search Boards & Users</h3>
-                                <span class="text-sm text-gray-500">({{ boardCount }} total boards)</span>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ __('Search Boards & Users') }}</h3>
+                                <span class="text-sm text-gray-500">({{ boardCount }} {{ __('total boards') }})</span>
                             </div>
                             
-                            <!-- Search Input with Create Board button positioned absolutely -->
                             <div class="relative mb-6">
                                 <input 
                                     v-model="searchInput"
                                     type="text" 
-                                    placeholder="Search by board title, user name or email..." 
+                                    :placeholder="__('Search by board title, user name or email')"
                                     class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                 />
                                 <div v-if="isSearching" class="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -140,26 +141,23 @@ const performSearch = async () => {
                                     </svg>
                                 </div>
                                 
-                                <!-- Create Board button positioned to the right -->
                                 <a href="/boards/create"
                                    class="absolute right-0 top-0 -mt-14 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:hidden" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                                     </svg>
-                                    <span class="hidden sm:inline">Create Board</span>
+                                    <span class="hidden sm:inline">{{ __('Create Board') }}</span>
                                 </a>
                             </div>
                         </div>
                         
-                        <!-- Search Results Area -->
                         <div v-if="!isSearching && searchInput.trim() && !searchResults.boards.length && !searchResults.users.length" class="text-center text-gray-500 py-4">
-                            No results found for "{{ searchInput }}".
+                            {{ __('No results found for') }} "{{ searchInput }}".
                         </div>
                         
                         <div v-if="searchResults.boards.length > 0 || searchResults.users.length > 0">
-                            <!-- Board Results -->
                             <div v-if="searchResults.boards.length > 0" class="mb-6">
-                                <h4 class="text-md font-semibold text-gray-700 mb-3 pb-2 border-b">Boards ({{ searchResults.boards.length }})</h4>
+                                <h4 class="text-md font-semibold text-gray-700 mb-3 pb-2 border-b">{{ __('Boards') }} ({{ searchResults.boards.length }})</h4>
                                 <div class="space-y-3">
                                     <div v-for="board in searchResults.boards" :key="'board-' + board.id" 
                                         class="border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors">
@@ -175,14 +173,14 @@ const performSearch = async () => {
                                                         <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                                         <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                                                     </svg>
-                                                    <span class="hidden sm:inline">View</span>
+                                                    <span class="hidden sm:inline">{{ __('View') }}</span>
                                                 </a>
                                                 <button @click="toggleDeleteConfirmation(board.id)" 
                                                         class="px-3 py-1.5 text-sm bg-red-500 text-white rounded-md hover:bg-red-700 shadow-sm text-center flex items-center justify-center">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:hidden" viewBox="0 0 20 20" fill="currentColor">
                                                         <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                                     </svg>
-                                                    <span class="hidden sm:inline">Delete</span>
+                                                    <span class="hidden sm:inline">{{ __('Delete') }}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -190,9 +188,8 @@ const performSearch = async () => {
                                 </div>
                             </div>
 
-                            <!-- User Results -->
                             <div v-if="searchResults.users.length > 0">
-                                <h4 class="text-md font-semibold text-gray-700 mb-3 pb-2 border-b">Users ({{ searchResults.users.length }})</h4>
+                                <h4 class="text-md font-semibold text-gray-700 mb-3 pb-2 border-b">{{ __('Users') }} ({{ searchResults.users.length }})</h4>
                                 <div class="space-y-3">
                                     <div v-for="user in searchResults.users" :key="'user-' + user.id" 
                                         class="border border-gray-200 rounded-lg p-4 hover:bg-gray-100 transition-colors">
@@ -207,21 +204,19 @@ const performSearch = async () => {
                                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                                     <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                                                 </svg>
-                                                <span class="ml-1 hidden sm:inline">View Boards</span>
+                                                <span class="ml-1 hidden sm:inline">{{ __('View Boards') }}</span>
                                             </a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- End Search Results Area -->
                     </div>
                 </div>
                 
-                <!-- Administration Management Section -->
                 <div class="bg-white shadow-sm sm:rounded-lg mt-6">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Administration</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Administration') }}</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <a href="/admin/vacations" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
                                 <div class="mr-4 bg-blue-100 p-3 rounded-lg">
@@ -230,8 +225,8 @@ const performSearch = async () => {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="font-medium text-gray-900">Manage Vacations</h4>
-                                    <p class="text-gray-500 mt-1">Create vacations for the new school year</p>
+                                    <h4 class="font-medium text-gray-900">{{ __('Manage Vacations') }}</h4>
+                                    <p class="text-gray-500 mt-1">{{ __('Create vacations for the new school year') }}</p>
                                 </div>
                             </a>
                             <a href="/admin/categories" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
@@ -241,8 +236,8 @@ const performSearch = async () => {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 class="font-medium text-gray-900">Manage Categories</h4>
-                                    <p class="text-gray-500 mt-1">Create Categories for Students</p>
+                                    <h4 class="font-medium text-gray-900">{{ __('Manage Categories') }}</h4>
+                                    <p class="text-gray-500 mt-1">{{ __('Create Categories for Students') }}</p>
                                 </div>
                             </a>
                         </div>
@@ -255,10 +250,10 @@ const performSearch = async () => {
     <ConfirmModal
         v-if="showDeleteConfirmation"
         :show="showDeleteConfirmation"
-        title="Delete Board"
-        message="Are you sure you want to delete this board? This action cannot be undone."
-        confirm-text="Delete"
-        cancel-text="Cancel"
+        :title="__('Delete Board')"
+        :message="__('Are you sure you want to delete this board? This action cannot be undone.')"
+        :confirm-text="__('Delete')"
+        :cancel-text="__('Cancel')"
         @cancel="toggleDeleteConfirmation()"
         @confirm="handleDelete"
     />

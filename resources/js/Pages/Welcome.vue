@@ -1,5 +1,8 @@
 <script setup>
 import {Head} from "@inertiajs/vue3"
+import { useTranslations } from '../translations';
+
+const { __ } = useTranslations();
 </script>
 
 <template>
@@ -11,7 +14,7 @@ import {Head} from "@inertiajs/vue3"
         <h1 class="text-2xl font-bold text-blue-600">Landstede Scrum</h1>
         <div>
           <a href="/login/azure" class="px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            Inloggen
+            {{__('Login') }}
           </a>
         </div>
       </header>

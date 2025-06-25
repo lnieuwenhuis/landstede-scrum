@@ -5,6 +5,8 @@ import axios from 'axios';
 import { ref } from 'vue';
 import { useToast } from 'vue-toastification';
 import ConfirmModal from './Boards/ShowComponents/ConfirmModal.vue';
+import { useTranslations } from '../translations';
+const { __ } = useTranslations();
 
 const toast = useToast();
 const page = usePage();
@@ -34,24 +36,24 @@ const handleDelete = async () => {
         if (response.data.message) {
             boards.value = boards.value.filter(board => board.id !== boardToDelete.value);
             toggleDeleteConfirmation();
-            toast.success('You have been removed from the board');
+            toast.success(__('You have been removed from the board'));
         } else {
-            throw new Error(response.data.error || 'Failed to leave board');
+            throw new Error(response.data.error || __('Failed to leave board'));
         }
     } catch (error) {
         console.error('Error leaving board:', error);
-        toast.error(error.message || 'Failed to leave board');
+        toast.error(error.message || __('Failed to leave board'));
     }
 };
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head :title="__('Dashboard')" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Dashboard
+                {{ __('Dashboard') }}
             </h2>
         </template>
 
@@ -59,7 +61,7 @@ const handleDelete = async () => {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div v-if="showMessage" class="overflow-hidden bg-white shadow-sm sm:rounded-lg mb-6">
                     <div class="p-6 text-gray-900 flex justify-between items-center">
-                        <span>You're logged in!</span>
+                        <span>{{ __("You're logged in!") }}</span>
                         <button 
                             @click="hideMessage" 
                             class="text-gray-500 hover:text-gray-700"
@@ -74,13 +76,13 @@ const handleDelete = async () => {
                 <div class="bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Boards</h3>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Your Boards') }}</h3>
                             <div class="flex justify-between mb-4">
                                 <a
                                     href="/boards/create"
                                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
-                                    Create Board
+                                    {{ __('Create Board') }}
                                 </a>
                             </div>
                         </div>
@@ -95,7 +97,7 @@ const handleDelete = async () => {
                                     <div class="flex items-center space-x-2">
                                         <a :href="`/boards/${board.id}`" 
                                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                            View Board
+                                            {{ __('View Board') }}
                                         </a>
                                         <button @click="toggleDeleteConfirmation(board.id)" class="px-2 py-2 bg-red-500 hover:bg-red-700 rounded-lg">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -116,10 +118,10 @@ const handleDelete = async () => {
     <ConfirmModal
         v-if="showDeleteConfirmation"
         :show="showDeleteConfirmation"
-        title="Leave Board"
-        message="Are you sure you want to leave this board? You will no longer have access to it."
-        confirm-text="Leave"
-        cancel-text="Cancel"
+        :title="__('Leave Board')"
+        :message="__('Are you sure you want to leave this board? You will no longer have access to it.')"
+        :confirm-text="__('Leave')"
+        :cancel-text="__('Cancel')"
         @cancel="toggleDeleteConfirmation()"
         @confirm="handleDelete"
     />
