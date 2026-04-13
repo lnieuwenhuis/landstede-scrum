@@ -27,6 +27,6 @@
         "vue-chartjs": "^5.3.2",
         "vue-color": "^3.0.2",
         "vue-toastification": "^2.0.0-rc.5",
-        "ziggy-js": "^2.5.1"
+        "ziggy-js": "^2.6.0"
     }
 }
